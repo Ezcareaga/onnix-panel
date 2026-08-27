@@ -3,8 +3,7 @@
 Covers:
 - _resolve_tipo_to_id: all 11 catalog types + aliases + edge cases
 - SQLFilterBuilder.build_query: normalized FK path vs ILIKE fallback
-- tools.py: tipo field is an explicit enum of 11 values
-- orchestrator.py: _PLURAL_MAP covers all catalog types
+(el caso que miraba el enum de `ai/tools.py` se fue con el bot)
 """
 import os
 
@@ -193,55 +192,3 @@ class TestSQLFiltersNormalized:
         result = self._build(operacion="venta")
         assert "property_type_normalized" not in result.sql
         assert "tipo_id" not in result.params
-
-
-# ===========================================================================
-# TestToolEnumDefinition
-# ===========================================================================
-
-
-class TestToolEnumDefinition:
-    """search_properties tool must define tipo as an explicit enum of 11 values."""
-
-    def _get_search_tool(self):
-        from app.bot.ai.tools import get_tools
-        tools = get_tools()
-        return next(t for t in tools if t["name"] == "search_properties")
-
-    def test_tipo_field_is_enum(self):
-        search_tool = self._get_search_tool()
-        tipo_prop = search_tool["input_schema"]["properties"]["tipo"]
-        assert "enum" in tipo_prop, "tipo debe ser un enum explícito"
-
-    def test_tipo_enum_has_all_catalog_types(self):
-        search_tool = self._get_search_tool()
-        tipo_prop = search_tool["input_schema"]["properties"]["tipo"]
-        expected = {
-            "casa", "departamento", "duplex", "terreno", "oficina",
-            "local", "deposito", "quinta", "campo", "edificio", "otro",
-        }
-        actual = set(tipo_prop["enum"])
-        assert expected == actual, f"Missing: {expected - actual}, Extra: {actual - expected}"
-
-    def test_tipo_enum_has_exactly_11_values(self):
-        search_tool = self._get_search_tool()
-        tipo_prop = search_tool["input_schema"]["properties"]["tipo"]
-        assert len(tipo_prop["enum"]) == 11
-
-
-# ===========================================================================
-# TestPluralMapCoverage
-# ===========================================================================
-
-
-class TestPluralMapCoverage:
-    """_PLURAL_MAP in orchestrator must cover all 10 main catalog types."""
-
-    def test_plural_map_has_all_catalog_types(self):
-        from app.bot.handlers._utils import _PLURAL_MAP
-        required = [
-            "casa", "departamento", "duplex", "terreno", "oficina",
-            "local", "deposito", "quinta", "campo", "edificio",
-        ]
-        missing = [t for t in required if t not in _PLURAL_MAP]
-        assert not missing, f"Missing _PLURAL_MAP entries: {missing}"

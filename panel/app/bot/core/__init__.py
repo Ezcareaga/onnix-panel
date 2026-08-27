@@ -1,4 +1,9 @@
-"""Bot core layer — orchestration, state, and response formatting."""
+"""Núcleo de la bandeja — tipos y manejo de conversaciones.
+
+`Orchestrator`, `ToolExecutor` y `ResponseBuilder` se fueron con el bot
+conversacional. Lo que queda es lo que la bandeja necesita para guardar un
+entrante y resolver a qué contacto y conversación pertenece.
+"""
 
 from app.bot.core.types import (
     BotRequest,
@@ -11,12 +16,8 @@ from app.bot.core.types import (
     PayloadMessage,
 )
 from app.bot.core.conversation import ConversationManager
-from app.bot.core.response_builder import ResponseBuilder
-from app.bot.core.orchestrator import Orchestrator
-from app.bot.core.tool_executor import ToolExecutor
 
 __all__ = [
-    # Types
     "BotRequest",
     "BotResponse",
     "ConversationState",
@@ -25,10 +26,5 @@ __all__ = [
     "ConversationInfo",
     "ChannelPayload",
     "PayloadMessage",
-    # Managers
     "ConversationManager",
-    "ResponseBuilder",
-    # Orchestration
-    "Orchestrator",
-    "ToolExecutor",
 ]

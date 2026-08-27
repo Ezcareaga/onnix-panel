@@ -19,7 +19,6 @@ from app.bot.scheduler.scheduler_service import SchedulerService
 from app.bot.scheduler.settings_manager import SettingsManager
 from app.bot.scheduler.tasks.cold_lead_check import run_cold_lead_check
 from app.bot.scheduler.tasks.daily_report import run_daily_report
-from app.bot.scheduler.tasks.followup_sender import run_followup_sender
 from app.bot.scheduler.tasks.heartbeat import run_heartbeat
 from app.bot.scheduler.tasks.cleanup_inactive_refs import run_cleanup_inactive_refs
 from app.bot.scheduler.tasks.infocasas_poll import run_infocasas_poll
@@ -107,17 +106,10 @@ async def scheduler_lifespan(app: FastAPI):
             else:
                 logger.info("Task skipped (disabled): infocasas_poll")
 
-            # --- Register followup_sender (10:00 PYT) ---
-            if await settings_mgr.is_task_enabled("followup_sender"):
-                scheduler.add_cron_task(
-                    "followup_sender",
-                    run_followup_sender,
-                    hour=10,
-                    minute=0,
-                )
-                logger.info("Task registered: followup_sender (cron 10:00 PYT)")
-            else:
-                logger.info("Task skipped (disabled): followup_sender")
+            # followup_sender se fue con el bot: mandaba plantillas de
+            # seguimiento solo, a las 10:00. Onnix manda las plantillas a mano
+            # desde el hilo. El toggle sigue en `bot_settings` para no romper
+            # la fila que ya existe en la base; no lo lee nadie.
 
             # --- Register cleanup_inactive_refs (02:00 PYT) ---
             # Este es el unico de los cuatro donde NO se movio la hora: ya

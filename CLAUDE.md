@@ -1,8 +1,12 @@
-# ONNIX SA — Panel Admin + Bot con tools
+# ONNIX SA — Bandeja unificada de canales
 
-Panel administrativo y bot conversacional multicanal para Onnix SA, Paraguay.
-El objetivo del proyecto es **centralizar en una sola bandeja los mensajes de
-WhatsApp, Instagram y Messenger**.
+Panel administrativo para Onnix SA, Paraguay. El producto es **una sola bandeja
+con los mensajes de WhatsApp, Instagram y Messenger**, contestados **a mano** por
+una persona, más un panel para crear y administrar las plantillas.
+
+**No hay chatbot y no vuelve a haber uno.** El cliente lo pidió explícitamente:
+quiere centralizar sus canales, no automatizarlos. Si una tarea empuja a
+"que conteste solo", está mal leída.
 
 - **Desarrollador:** Ez Careaga
 
@@ -22,14 +26,33 @@ solo uso atados a la cuenta de Twilio del cliente viejo.
 no hay nada más que dependa de él que las rutas de `panel/app/routes/properties.py`
 y `panel/app/routes/public.py`.
 
-## Las tools del bot
+## El bot que ya no está
 
-El LLM orquesta con tools. **No hay wizard, no hay intents hardcodeados, no hay
-switch/case por intención.** Si algo empuja a un `if intent ==`, está mal.
+El panel venía de un proyecto con un bot conversacional que contestaba solo por
+WhatsApp con tool-use de Claude. Se sacó entero el 2026-08-27: `app/bot/ai/`
+(prompts, tools, tool_use_loop, circuit_breaker), `app/bot/core/`
+(orchestrator, tool_executor, response_builder, name_gate), `app/bot/handlers/`
+completo, la tarea `followup_sender` y 46 archivos de test.
 
-Definidas en `panel/app/bot/ai/tools.py`, ejecutadas por
-`panel/app/bot/core/tool_executor.py` dentro del loop de
-`panel/app/bot/ai/tool_use_loop.py`:
+**El corte fue de una línea por webhook.** El entrante ya se persistía ANTES de
+todo lo que podía fallar (`persist_inbound`, en `panel/app/bot/core/conversation.py`),
+así que sacar `deps.wa_handler.handle(...)` deja la bandeja intacta: el mensaje
+entra, el SSE lo empuja al panel, y contesta una persona.
+
+Lo que quedó de `app/bot/` NO le habla a nadie:
+
+| Módulo | Para qué sigue |
+|---|---|
+| `channels/` | transporte de salida — lo usa el envío manual del panel |
+| `webhooks/` | entrada de mensajes |
+| `panel/app/bot/core/conversation.py` | `persist_inbound` + resolver contacto/conversación |
+| `search/` | búsqueda del panel de propiedades (SQL + pgvector + RRF) |
+| `panel/app/bot/ai/gemini_client.py` | embeddings de esa búsqueda |
+| `panel/app/bot/ai/claude_client.py` + `property_chatbot.py` | traduce la búsqueda en lenguaje natural **del panel** a filtros. Es una herramienta del agente, no un interlocutor del cliente. |
+
+`BOT_ENABLED` quedó sin lectores y se sacó de los compose: no apagaba nada.
+
+Definidas en los módulos de tool-use:
 
 | Tool | Qué hace |
 |---|---|
@@ -46,10 +69,10 @@ Definidas en `panel/app/bot/ai/tools.py`, ejecutadas por
 - **`recepcionista`**: las 6 menos `search_properties` — ese bot califica leads,
   no busca.
 
-## Tools vs RAG: ya es RAG
+## La búsqueda del panel sigue siendo híbrida
 
-`search_properties` **no** es un filtro SQL. Por dentro
-(`panel/app/bot/search/`) hace recuperación híbrida:
+`app/bot/search/` sobrevivió al bot porque lo usa el panel de propiedades vía
+`panel/app/services/panel_hybrid_search.py`. Por dentro:
 
 1. `sql_filters.py` arma los filtros duros (operación, precio, dormitorios…).
 2. `vector_search.py` embebe la consulta con Gemini y busca por distancia
@@ -58,37 +81,38 @@ Definidas en `panel/app/bot/ai/tools.py`, ejecutadas por
    (Cormack, Clarke & Butt 2009).
 4. `relaxation.py` afloja restricciones cuando no hay resultados.
 
-O sea: recuperar-y-generar, con el paso de recuperación **expuesto como tool**
-en vez de precocido antes del prompt. Eso es *agentic RAG*, y para
-conversación es la forma **mejor**, no la peor:
-
-- El RAG clásico recupera **una vez** con el último mensaje del usuario. En un
-  chat el último mensaje es «¿y con patio?» — solo, no recupera nada útil.
-- Con tools el modelo reformula la consulta desde el hilo entero, decide
-  **cuándo** recuperar y cuándo no hace falta, y puede recuperar varias veces
-  en un turno.
-- Y el mismo mecanismo cubre lo que el RAG no puede: `register_lead` y
-  `agendar_visita` **escriben**. Un RAG solo lee.
-
-**Conclusión: no hay nada que convertir.** Lo que sí falta para el caso de
-Onnix es una tool nueva si el conocimiento a consultar no son propiedades sino
-otro corpus (catálogo de servicios, precios, FAQ) — se agrega una tool que
-busque en ESE corpus, no se reemplaza la arquitectura.
-
 ## Lo que falta
 
-1. **Instagram y Messenger.** Hoy hay WhatsApp (Twilio) y Telegram. La
-   abstracción ya existe: `panel/app/bot/channels/base.py` define `BaseSender`,
-   y `panel/app/bot/webhooks/router.py` compone los sub-routers. Cada canal
-   nuevo es un sender + un webhook + una migración que extienda el CHECK de
-   `conversations.channel` (hoy `whatsapp | web | manual | telegram`, fijado en
-   `panel/alembic/versions/003_add_telegram_channel.py`). Instagram DM y
-   Messenger son la **misma** Graph API de Meta, así que van casi juntos.
-2. **Infraestructura.** No hay VPS, dominio, base ni pipeline definidos todavía.
+1. **Los tres canales, directo a Meta.** Hoy hay WhatsApp por **Twilio** y
+   Telegram. Van los tres por la Graph API de Meta, que comparten el mismo
+   handshake (`hub.mode` / `hub.verify_token` / `hub.challenge`), la misma
+   firma `X-Hub-Signature-256` con el app secret, y el mismo token de System
+   User. Lo único que cambia es el `object` del payload:
+   `whatsapp_business_account`, `page` (Messenger) o `instagram`.
+   Por eso va **un solo** `/webhooks/meta` que despacha por `object`, y no tres.
+   La abstracción ya existe: `panel/app/bot/channels/base.py` define
+   `BaseSender`, `panel/app/bot/webhooks/router.py` compone los sub-routers.
+   Falta además una migración que extienda el CHECK de `conversations.channel`
+   (hoy `whatsapp | web | manual | telegram`, fijado en
+   `panel/alembic/versions/003_add_telegram_channel.py`).
+2. **Panel de plantillas.** Hoy las plantillas son una lista de claves
+   **hardcodeada en Python** (`panel/app/schemas/template.py`), cada una
+   apuntando a un ContentSid de Twilio guardado en `bot_settings`. Crear una
+   plantilla nueva es editar código y desplegar. El cliente quiere crearlas
+   desde el panel: hace falta tabla propia, CRUD, alta contra la Message
+   Templates API de Meta y el estado de aprobación, que llega por el webhook
+   `message_template_status_update`.
+3. **Infraestructura.** No hay VPS, dominio, base ni pipeline definidos todavía.
    Los `docker-compose.yml` / `docker-compose.dev.yml` y los `nginx_*.conf`
    vienen del original con los nombres cambiados: **hay que revisarlos antes de
-   levantar nada**, no están verificados contra un servidor real.
-3. **El vertical inmobiliario**, si Onnix no lo usa: decidir si se borra.
+   levantar nada**, no están verificados contra un servidor real. Para probar
+   webhooks en la laptop va un túnel (`cloudflared tunnel --url
+   http://localhost:8010`); Meta exige HTTPS público.
+4. **Limpieza de UI del bot**: la pantalla «Salud del Bot», los toggles de bot
+   en Configuración y las métricas de IA siguen ahí y ya no miden nada.
+5. **El vertical inmobiliario** (propiedades, portal público, `landing/`,
+   `app/bot/search/`): sin bot, ¿Onnix lo usa? Si no, se borra y es el chunk
+   más grande que queda. Decisión de Ez.
 
 ## Marca
 
@@ -141,8 +165,6 @@ Staging hereda el `.env` de producción. Sin overrides usa credenciales reales y
 ```yaml
 - INFOCASAS_POLL_ENABLED=false
 - WA_SEND_ENABLED=false
-- BOT_ENABLED=false
-- FOLLOWUP_SENDER_ENABLED=false
 - TELEGRAM_NOTIFICATIONS_ENABLED=false
 ```
 

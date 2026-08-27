@@ -133,7 +133,6 @@ async def _process_telegram(request: BotRequest) -> None:
     """
     from app.bot.core.conversation import persist_inbound
     from app.bot.observability.context import set_request_context, clear_request_context
-    from app.bot.webhooks.dependencies import get_bot_dependencies
     from app.database import async_session_factory
 
     logger.info(
@@ -171,9 +170,14 @@ async def _process_telegram(request: BotRequest) -> None:
         await persist_inbound(session, request)
         await session.commit()
 
-        deps = get_bot_dependencies()
-        await deps.tg_handler.handle(request, session)
-        await session.commit()
+        # Acá arrancaba el bot: `deps.tg_handler.handle(...)` armaba el grafo de
+        # IA, resolvía el turno y contestaba solo. Onnix no quiere eso — quiere
+        # la bandeja, y que conteste una persona desde el panel.
+        #
+        # El entrante ya quedó guardado arriba, así que sacar la respuesta
+        # automática no le saca nada a la conversación: el mensaje entra, el SSE
+        # de abajo lo empuja al panel, y el agente responde con `reply_service`
+        # o con una plantilla desde el hilo.
         # Post-commit SSE: data is now visible to other sessions
         try:
             from sqlalchemy import text as _text

@@ -247,7 +247,16 @@ CREATE TABLE IF NOT EXISTS contacts (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   last_contact_at TIMESTAMPTZ,
-  baja_at TIMESTAMPTZ  -- era opted_out_at; renombrada en la migración 004
+  baja_at TIMESTAMPTZ,  -- era opted_out_at; renombrada en la migración 004
+
+  -- Las tres columnas de abajo son de las que este archivo llama «objetos que
+  -- producción tenía sin versionar»: ninguna migración las crea. La 014 dice
+  -- literalmente «already applied» y su upgrade() es `pass`, así que sobre una
+  -- base armada de cero no existían y el primer entrante moría con
+  --   column "search_context" of relation "conversations" does not exist
+  -- Se agregan acá, que es donde va lo pre-001.
+  consulta_date TIMESTAMPTZ,   -- fecha de la consulta original del lead
+  preferences JSONB
 );
 
 -- 3d. conversations — One conversation per contact interaction session.
@@ -259,6 +268,12 @@ CREATE TABLE IF NOT EXISTS conversations (
   channel VARCHAR(20) NOT NULL DEFAULT 'whatsapp'
     CHECK (channel IN ('whatsapp', 'web', 'manual')),
   last_search_criteria JSONB,
+  -- Sin versionar, como consulta_date y preferences. La escribe
+  -- `ConversationManager` en cada entrante y la LEE el panel: el resumen de
+  -- «qué buscaba» del lead sale de acá (`partials/lead_item.html`,
+  -- `lead_service`, `dashboard_service`). Sin la columna no entra ni un
+  -- mensaje: `persist_inbound` hace INSERT ... RETURNING search_context.
+  search_context JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   last_message_at TIMESTAMPTZ

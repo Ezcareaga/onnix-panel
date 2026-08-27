@@ -147,35 +147,6 @@ class TestStartupValidator:
             )
         assert "GEMINI_API_KEY" in caplog.text
 
-    def test_el_grafo_del_bot_no_muere_por_la_key_vacia(self):
-        """La key vacia degrada; no mata.
-
-        Este test decia lo contrario hasta el 2026-08-24: exigia que
-        `get_bot_dependencies()` levantara `RuntimeError`. Ese raise era la
-        respuesta equivocada a una config esperada —la key esta vacia a
-        proposito— y, como el grafo se arma perezosamente en la primera
-        request, se llevaba puesto el WhatsApp entrante entero.
-
-        Sigue habiendo un aviso, y sigue nombrando la key: el warning de
-        `validate_required_secrets` de mas arriba y el de `build_bot_dependencies`.
-        Lo que ya no hay es una excepcion.
-        """
-        from unittest.mock import patch as _patch
-
-        from app.bot.webhooks.dependencies import (
-            get_bot_dependencies,
-            reset_bot_dependencies,
-        )
-
-        reset_bot_dependencies()
-        try:
-            with _patch("app.bot.config.bot_settings.GEMINI_API_KEY", ""):
-                deps = get_bot_dependencies()
-            # Degradado: sin pierna vectorial, la busqueda queda SQL puro.
-            assert deps.wa_handler._orchestrator._search_service._vector_search is None
-        finally:
-            reset_bot_dependencies()
-
     def test_raises_when_production_and_twilio_token_missing(self):
         """RuntimeError raised when forced production + no Twilio token."""
         from app.config import validate_required_secrets

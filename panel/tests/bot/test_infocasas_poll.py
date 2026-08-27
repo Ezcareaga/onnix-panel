@@ -192,7 +192,6 @@ def _make_mock_settings_manager(
     daily_report_enabled: bool = True,
     heartbeat_enabled: bool = True,
     infocasas_poll_enabled: bool = True,
-    followup_sender_enabled: bool = True,
     cleanup_inactive_refs_enabled: bool = True,
 ) -> MagicMock:
     mgr = MagicMock()
@@ -203,7 +202,6 @@ def _make_mock_settings_manager(
             "daily_report": daily_report_enabled,
             "heartbeat": heartbeat_enabled,
             "infocasas_poll": infocasas_poll_enabled,
-            "followup_sender": followup_sender_enabled,
             "cleanup_inactive_refs": cleanup_inactive_refs_enabled,
         }
         return mapping.get(task_id, True)
@@ -299,14 +297,13 @@ class TestLifespanRegistration:
             patch("app.bot.scheduler.lifespan.run_daily_report"),
             patch("app.bot.scheduler.lifespan.run_heartbeat"),
             patch("app.bot.scheduler.lifespan.run_infocasas_poll"),
-            patch("app.bot.scheduler.lifespan.run_followup_sender"),
             patch("app.bot.scheduler.lifespan.run_cleanup_inactive_refs"),
         ):
             mock_settings.SCHEDULER_ENABLED = True
             async with scheduler_lifespan(test_app):
                 pass
 
-        # cold_lead_check + daily_report + followup_sender + cleanup_inactive_refs + verification_scraper → 5 cron calls
+        # cold_lead_check + daily_report + cleanup_inactive_refs + verification_scraper → 4 cron calls
         assert mock_svc.add_cron_task.call_count == 5
         # heartbeat + infocasas_poll → 2 interval calls
         assert mock_svc.add_interval_task.call_count == 2

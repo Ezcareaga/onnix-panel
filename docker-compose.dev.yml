@@ -27,11 +27,9 @@ services:
       - ENVIRONMENT=development
       # Staging isolation: prevent real WA sends and TG notifications to Ez
       - INFOCASAS_POLL_ENABLED=false
-      - FOLLOWUP_SENDER_ENABLED=false
       - TELEGRAM_EZ_CHAT_ID=
       # Guard en WhatsAppSender.send() — staging NUNCA envía WA real (incidente 2026-04-04 class)
       - WA_SEND_ENABLED=false
-      - BOT_ENABLED=false
       - TELEGRAM_NOTIFICATIONS_ENABLED=false
       - TWILIO_STATUS_CALLBACK_URL=https://dev.onnix.com.py/webhook/whatsapp/status
     volumes:

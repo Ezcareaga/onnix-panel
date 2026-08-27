@@ -1,23 +1,25 @@
 """Un mensaje entrante valido se persiste pase lo que pase despues.
 
-Que el bot no conteste es una decision del producto. Que el mensaje no exista
-es perdida de datos, y la administradora no puede perder la consulta.
+Este es EL invariante del producto. Onnix no quiere un bot: quiere que todo lo
+que entra por WhatsApp, Instagram o Messenger aparezca en la bandeja para que
+una persona conteste. Un entrante que no se guarda es una consulta perdida, y
+no hay reintento que la traiga de vuelta.
 
-Hasta el 2026-08-24 el INSERT del entrante vivia en el paso 4 del orquestador,
-DEBAJO de todo lo que podia cortar el turno:
+Historia, porque explica por que el orden del webhook es el que es: hasta el
+2026-08-24 el INSERT del entrante vivia DEBAJO del orquestador, o sea debajo
+del armado del grafo de IA, de `bot_enabled`, de `whatsapp_mode` y del cooldown
+humano. Cinco caminos podian cortar el turno y los cinco se llevaban el
+mensaje. El peor era `is_bot_active`, que `reply_service` apaga en CADA
+respuesta manual del panel: despues de que un asesor contestaba una vez, todo
+mensaje siguiente de ese cliente desaparecia.
 
-  - el armado del grafo de dependencias, que corre antes de que el orquestador
-    exista y levantaba `RuntimeError` con `GEMINI_API_KEY` vacia (3a75092);
-  - `bot_enabled` y `whatsapp_mode='manual'`, en MessageHandler;
-  - `is_bot_active` y el cooldown humano, en el orquestador.
+El grafo ya no existe —se fue con el bot— pero el invariante quedo, y con el
+envio manual importa mas que antes: la bandeja es ahora lo unico que hay. Lo
+que estos tests fijan es que `persist_inbound` corre ANTES que cualquier otra
+cosa del webhook y que su commit es propio, asi que ningun fallo posterior
+—el SSE, el registro de errores, lo que venga— puede deshacerlo.
 
-Cinco caminos, un solo efecto: el WhatsApp del cliente desaparecia. El peor era
-`is_bot_active`, porque `reply_service` lo apaga en CADA respuesta manual del
-panel: despues de que un asesor contesta una vez, todo mensaje siguiente de ese
-cliente se perdia.
-
-Estos tests fijan el invariante contra los cinco caminos. Ninguno mockea el
-guardado: todos leen la fila de `messages` en la base de test.
+Ninguno mockea el guardado: todos leen la fila de `messages` en la base de test.
 """
 from __future__ import annotations
 
@@ -98,229 +100,93 @@ def error_service_mudo():
         yield svc
 
 
-@pytest.fixture
-def sin_envio():
-    """Ningun test de este archivo puede postear a Twilio."""
-    with patch(
-        "app.bot.channels.whatsapp.WhatsAppSender.send", new_callable=AsyncMock
-    ) as doble:
-        yield doble
-
-
-@pytest.fixture
-def setting_pisado():
-    """Devuelve un context manager que fuerza UN valor de bot_settings.
-
-    Se parchea el repositorio y no la base: `bot_settings` no la limpia nadie,
-    y un test que escriba ahi deja la base de test con el bot apagado.
-    """
-    from app.repositories.bot_setting_repo import BotSettingRepository
-
-    real = BotSettingRepository.get_value
-
-    def _pisar(clave: str, valor: str):
-        async def falso(session, key):
-            if key == clave:
-                return valor
-            return await real(session, key)
-
-        return patch(
-            "app.repositories.bot_setting_repo.BotSettingRepository.get_value",
-            side_effect=falso,
-        )
-
-    return _pisar
-
-
-class TestElGrafoRotoNoSeLlevaElMensaje:
-    """El caso que vivio cinco semanas en produccion."""
-
-    async def test_se_guarda_aunque_el_grafo_reviente(
+class TestElEntranteSeGuarda:
+    async def test_un_mensaje_normal_queda_en_la_bandeja(
         self, db, telefono, error_service_mudo
     ):
-        with patch(
-            "app.bot.webhooks.dependencies.get_bot_dependencies",
-            side_effect=RuntimeError("FATAL: GEMINI_API_KEY vacia"),
-        ):
-            await _process_whatsapp(
-                _request(telefono, "el grafo revienta", "SM-GRAFO")
-            )
+        await _process_whatsapp(_request(telefono, "hola, consulto", "SM-OK"))
 
         filas = await _entrantes(db, telefono)
-        assert len(filas) == 1, (
-            "el entrante tiene que estar en messages aunque el armado del "
-            "grafo haya reventado"
-        )
-        assert filas[0].body == "el grafo revienta"
-        assert filas[0].external_id == "SM-GRAFO"
+        assert len(filas) == 1
+        assert filas[0].body == "hola, consulto"
+        assert filas[0].external_id == "SM-OK"
 
-    async def test_el_error_igual_se_registra(
+    async def test_no_se_contesta_solo(self, db, telefono, error_service_mudo):
+        """El webhook no puede generar un saliente: Onnix contesta a mano.
+
+        Es la contracara del test de arriba y no es redundante — un entrante
+        guardado y una respuesta automatica pueden convivir, y justamente eso
+        es lo que el cliente NO quiere.
+        """
+        await _process_whatsapp(_request(telefono, "hola", "SM-MUDO"))
+
+        result = await db.execute(
+            text(
+                "SELECT count(*) FROM messages m "
+                "JOIN contacts c ON c.id = m.contact_id "
+                "WHERE c.phone = :phone AND m.direction = 'outbound'"
+            ),
+            {"phone": telefono},
+        )
+        assert result.scalar() == 0, (
+            "el webhook genero un saliente. No hay bot: lo unico que sale del "
+            "sistema lo manda una persona desde el panel"
+        )
+
+    async def test_el_segundo_mensaje_tambien_entra(
         self, db, telefono, error_service_mudo
     ):
-        """Guardar primero no puede tapar el error: el contador lo sigue viendo."""
-        with patch(
-            "app.bot.webhooks.dependencies.get_bot_dependencies",
-            side_effect=RuntimeError("FATAL: GEMINI_API_KEY vacia"),
-        ):
-            await _process_whatsapp(_request(telefono, "hola", "SM-ERR"))
+        """El caso que se perdia con `is_bot_active` apagado.
 
-        error_service_mudo.record_error.assert_awaited_once()
-        assert (
-            error_service_mudo.record_error.await_args.kwargs["node"]
-            == "webhook_process"
-        )
-
-
-class TestLasCompuertasNoDescartanElEntrante:
-    """Cuatro formas de decidir «no contesto», ninguna borra el mensaje."""
-
-    async def test_bot_enabled_apagado(
-        self, db, telefono, error_service_mudo, sin_envio, setting_pisado
-    ):
-        with setting_pisado("bot_enabled", "false"):
-            await _process_whatsapp(_request(telefono, "bot apagado", "SM-BOTOFF"))
-
-        assert len(await _entrantes(db, telefono)) == 1
-
-    async def test_whatsapp_mode_manual(
-        self, db, telefono, error_service_mudo, sin_envio, setting_pisado
-    ):
-        with setting_pisado("whatsapp_mode", "manual"):
-            await _process_whatsapp(_request(telefono, "modo manual", "SM-MANUAL"))
-
-        assert len(await _entrantes(db, telefono)) == 1
-
-    async def test_is_bot_active_apagado(
-        self, db, telefono, error_service_mudo, sin_envio
-    ):
-        """El peor de los cuatro: `reply_service` lo apaga en cada respuesta manual."""
-        # Primer mensaje: crea contacto + conversacion. El grafo se corta a
-        # proposito para no llamar a Claude.
-        with patch(
-            "app.bot.webhooks.dependencies.get_bot_dependencies",
-            side_effect=RuntimeError("corte deliberado"),
-        ):
-            await _process_whatsapp(_request(telefono, "primero", "SM-ACT-1"))
-
+        `reply_service` apaga ese flag en cada respuesta manual del panel, o
+        sea siempre, en el modo de trabajo que Onnix quiere. Antes eso hacia
+        desaparecer todo mensaje posterior del cliente.
+        """
+        await _process_whatsapp(_request(telefono, "primero", "SM-SEQ-1"))
         await db.execute(
             text(
                 "UPDATE conversations SET is_bot_active = false "
-                "WHERE contact_id IN (SELECT id FROM contacts WHERE phone = :p)"
+                "WHERE contact_id = (SELECT id FROM contacts WHERE phone = :p)"
             ),
             {"p": telefono},
         )
         await db.commit()
 
-        await _process_whatsapp(_request(telefono, "segundo", "SM-ACT-2"))
-
-        filas = await _entrantes(db, telefono)
-        assert [f.body for f in filas] == ["primero", "segundo"], (
-            "con is_bot_active=false el bot calla, pero el mensaje se guarda"
-        )
-
-    async def test_cooldown_humano(
-        self, db, telefono, error_service_mudo, sin_envio
-    ):
-        with patch(
-            "app.bot.webhooks.dependencies.get_bot_dependencies",
-            side_effect=RuntimeError("corte deliberado"),
-        ):
-            await _process_whatsapp(_request(telefono, "primero", "SM-COOL-1"))
-
-        await db.execute(
-            text(
-                "UPDATE conversations SET last_human_reply_at = NOW() "
-                "WHERE contact_id IN (SELECT id FROM contacts WHERE phone = :p)"
-            ),
-            {"p": telefono},
-        )
-        await db.commit()
-
-        await _process_whatsapp(_request(telefono, "segundo", "SM-COOL-2"))
+        await _process_whatsapp(_request(telefono, "segundo", "SM-SEQ-2"))
 
         filas = await _entrantes(db, telefono)
         assert [f.body for f in filas] == ["primero", "segundo"]
 
 
-class TestRedeliveryDeTwilio:
-    """Guardar primero pone el ON CONFLICT en el camino de todos los reintentos."""
+class TestNadaPosteriorLoDeshace:
+    """El commit del entrante es propio: lo que falle despues no lo revierte."""
 
-    async def test_el_mismo_sid_no_duplica_ni_infla_el_contador(
+    async def test_se_guarda_aunque_reviente_el_SSE(
         self, db, telefono, error_service_mudo
     ):
         with patch(
-            "app.bot.webhooks.dependencies.get_bot_dependencies",
-            side_effect=RuntimeError("corte deliberado"),
+            "app.services.event_bus.event_bus.publish",
+            side_effect=RuntimeError("el bus se cayo"),
         ):
-            await _process_whatsapp(_request(telefono, "reintento", "SM-DUP"))
-            await _process_whatsapp(_request(telefono, "reintento", "SM-DUP"))
-
-        assert len(await _entrantes(db, telefono)) == 1
-
-        result = await db.execute(
-            text(
-                "SELECT message_count FROM conversations "
-                "WHERE contact_id IN (SELECT id FROM contacts WHERE phone = :p)"
-            ),
-            {"p": telefono},
-        )
-        assert result.scalar_one() == 1, (
-            "el redelivery no puede sumar al contador de la conversacion"
-        )
-
-
-class TestElWebhookCompletoConLaKeyVacia:
-    """La prueba que nadie corrio, y por eso el bug vivio cinco semanas.
-
-    No mockea el grafo: lo arma de verdad, con `GEMINI_API_KEY` vacia, entrando
-    por el POST de Twilio. `BOT_ENABLED=false` corta el turno DESPUES de armar
-    el grafo (MessageHandler paso 0), asi que el test ejercita el armado sin
-    llamar a Claude ni a Twilio.
-    """
-
-    async def test_post_de_twilio_con_gemini_vacia_deja_el_mensaje_en_la_base(
-        self, db, client, telefono, monkeypatch, error_service_mudo
-    ):
-        from app.bot.config import bot_settings
-        from app.bot.webhooks.dependencies import (
-            get_bot_dependencies,
-            reset_bot_dependencies,
-        )
-
-        monkeypatch.setenv("BOT_ENABLED", "false")
-        reset_bot_dependencies()
-        try:
-            with patch.object(bot_settings, "GEMINI_API_KEY", ""), patch(
-                "app.bot.webhooks.whatsapp._get_twilio_auth_token",
-                return_value="",
-            ):
-                resp = await client.post(
-                    "/webhook/whatsapp",
-                    data={
-                        "From": f"whatsapp:{telefono}",
-                        "To": "whatsapp:+595900000000",
-                        "Body": "Hola, vi una casa en Lambare",
-                        "MessageSid": "SM-E2E-KEY-VACIA",
-                        "ProfileName": "Pytest E2E",
-                    },
-                )
-                assert resp.status_code == 200
-
-                # El grafo se armo de verdad, y quedo degradado: sin pierna
-                # vectorial. Antes de este arreglo esta linea levantaba
-                # RuntimeError.
-                deps = get_bot_dependencies()
-                assert (
-                    deps.wa_handler._orchestrator._search_service._vector_search
-                    is None
-                )
-        finally:
-            reset_bot_dependencies()
+            await _process_whatsapp(_request(telefono, "sse roto", "SM-SSE"))
 
         filas = await _entrantes(db, telefono)
         assert len(filas) == 1, (
-            "el POST de Twilio con la key vacia tiene que dejar el mensaje "
-            "guardado"
+            "el fallo del SSE se llevo el mensaje: el commit del entrante no "
+            "es independiente del resto del webhook"
         )
-        assert filas[0].body == "Hola, vi una casa en Lambare"
-        assert filas[0].external_id == "SM-E2E-KEY-VACIA"
+        assert filas[0].body == "sse roto"
+
+    async def test_el_duplicado_no_entra_dos_veces(
+        self, db, telefono, error_service_mudo
+    ):
+        """Meta y Twilio reintentan un webhook que no contestaron a tiempo."""
+        peticion = _request(telefono, "reintento", "SM-DUP")
+        await _process_whatsapp(peticion)
+        await _process_whatsapp(peticion)
+
+        filas = await _entrantes(db, telefono)
+        assert len(filas) == 1, (
+            f"el mismo external_id entro {len(filas)} veces; un reintento del "
+            "proveedor duplica la conversacion en la bandeja"
+        )

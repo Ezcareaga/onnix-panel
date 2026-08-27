@@ -10,7 +10,7 @@ Three distinct code paths reach ``api.twilio.com/.../Messages.json``:
 1. ``twilio_post_with_retry`` — the bot sender (``WhatsAppSender._post``) and
    the four InfoCasas welcome/recurrente senders.
 2. ``TemplateService.send_template`` — panel "Confirmar envío" button and the
-   ``followup_sender`` scheduler task; posts on the shared ``_http_client``.
+   el panel; postea sobre el ``_http_client`` compartido.
 3. ``ReplyService._send_twilio_whatsapp`` — panel manual reply; same client.
 
 Each test pins: with ``WA_SEND_ENABLED=false`` the path must NOT issue the
@@ -98,7 +98,7 @@ async def test_twilio_post_with_retry_enabled_by_default_posts(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# 2. TemplateService.send_template — panel button + followup_sender
+# 2. TemplateService.send_template — el boton de plantilla del hilo
 # ---------------------------------------------------------------------------
 
 

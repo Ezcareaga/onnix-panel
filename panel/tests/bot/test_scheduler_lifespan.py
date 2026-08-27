@@ -40,7 +40,6 @@ def _make_mock_settings_manager(
     daily_report_enabled: bool = True,
     heartbeat_enabled: bool = True,
     infocasas_poll_enabled: bool = True,
-    followup_sender_enabled: bool = True,
     cleanup_inactive_refs_enabled: bool = True,
     verification_scraper_enabled: bool = True,
 ):
@@ -56,8 +55,6 @@ def _make_mock_settings_manager(
             return heartbeat_enabled
         if task_id == "infocasas_poll":
             return infocasas_poll_enabled
-        if task_id == "followup_sender":
-            return followup_sender_enabled
         if task_id == "cleanup_inactive_refs":
             return cleanup_inactive_refs_enabled
         if task_id == "verification_scraper":
@@ -143,7 +140,7 @@ class TestPerTaskSettings:
 
     @pytest.mark.asyncio
     async def test_cold_lead_disabled_heartbeat_enabled(self):
-        """When cold_lead_check is disabled, daily_report + followup_sender crons are registered."""
+        """When cold_lead_check is disabled, the other three crons are registered."""
         mock_svc = _make_mock_scheduler()
         mock_mgr = _make_mock_settings_manager(
             cold_lead_enabled=False,
@@ -159,15 +156,14 @@ class TestPerTaskSettings:
             patch("app.bot.scheduler.lifespan.run_daily_report"),
             patch("app.bot.scheduler.lifespan.run_heartbeat"),
             patch("app.bot.scheduler.lifespan.run_infocasas_poll"),
-            patch("app.bot.scheduler.lifespan.run_followup_sender"),
             patch("app.bot.scheduler.lifespan.run_cleanup_inactive_refs"),
         ):
             mock_bot_settings.SCHEDULER_ENABLED = True
             async with scheduler_lifespan(test_app):
                 pass
 
-        # cold_lead disabled → daily_report + followup_sender + cleanup_inactive_refs + verification_scraper crons registered
-        assert mock_svc.add_cron_task.call_count == 4
+        # cold_lead disabled → daily_report + cleanup_inactive_refs + verification_scraper
+        assert mock_svc.add_cron_task.call_count == 3
         # heartbeat + infocasas_poll are both interval tasks (both enabled by default)
         assert mock_svc.add_interval_task.call_count == 2
 
@@ -180,7 +176,6 @@ class TestPerTaskSettings:
             daily_report_enabled=False,
             heartbeat_enabled=False,
             infocasas_poll_enabled=False,
-            followup_sender_enabled=False,
             cleanup_inactive_refs_enabled=False,
             verification_scraper_enabled=False,
         )
@@ -194,7 +189,6 @@ class TestPerTaskSettings:
             patch("app.bot.scheduler.lifespan.run_daily_report"),
             patch("app.bot.scheduler.lifespan.run_heartbeat"),
             patch("app.bot.scheduler.lifespan.run_infocasas_poll"),
-            patch("app.bot.scheduler.lifespan.run_followup_sender"),
             patch("app.bot.scheduler.lifespan.run_cleanup_inactive_refs"),
         ):
             mock_bot_settings.SCHEDULER_ENABLED = True

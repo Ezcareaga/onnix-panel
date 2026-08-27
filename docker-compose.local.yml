@@ -58,8 +58,6 @@ services:
       # Los guardas de salida. Con estos en false nada de lo que corre local
       # puede escribirle a una persona real.
       - WA_SEND_ENABLED=false
-      - BOT_ENABLED=false
-      - FOLLOWUP_SENDER_ENABLED=false
       - TELEGRAM_NOTIFICATIONS_ENABLED=false
       - INFOCASAS_POLL_ENABLED=false
       - TELEGRAM_EZ_CHAT_ID=

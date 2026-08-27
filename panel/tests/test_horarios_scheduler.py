@@ -32,9 +32,10 @@ _SERVICE = _APP / "bot" / "scheduler" / "scheduler_service.py"
 # (tarea, hora de Paraguay). El número sale de lo que cada tarea dice que hace,
 # no de lo que hoy tiene escrito: si alguien mueve una hora, tiene que mover
 # también su promesa acá y decir por qué.
+# `followup_sender` se fue con el bot: mandaba plantillas de seguimiento sola
+# a las 10:00, y Onnix manda las plantillas a mano desde el hilo.
 HORARIOS_PYT = [
     ("daily_report", 8),
-    ("followup_sender", 10),
     ("cleanup_inactive_refs", 2),
     ("verification_scraper", 12),
 ]

@@ -24,13 +24,9 @@ from logging.handlers import RotatingFileHandler
 # Full module path → short alias for log output.
 _MODULE_ALIASES: dict[str, str] = {
     "app.bot.webhooks": "bot.webhook",
-    "app.bot.handlers": "bot.webhook",
     "app.bot.middleware.injection_guard": "bot.guard",
     "app.bot.middleware": "bot.middleware",
-    "app.bot.core.orchestrator": "bot.orchestrator",
     "app.bot.core.conversation": "bot.orchestrator",
-    "app.bot.core.response_builder": "bot.orchestrator",
-    "app.bot.core.tool_executor": "bot.orchestrator",
     "app.bot.ai": "bot.ai",
     "app.bot.search": "bot.search",
     "app.bot.channels": "bot.sender",
