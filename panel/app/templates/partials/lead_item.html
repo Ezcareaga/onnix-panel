@@ -1,0 +1,270 @@
+{# Una sola plantilla por lead. Abajo de 768px la fila se reacomoda como
+   card (.leads-table en custom.css), asi que el asesor en la calle tiene
+   las mismas 13 capacidades que el que mira la tabla: cambiar estado,
+   asignar asesor, abrir la conversacion, abrir la propiedad y ver hace
+   cuanto espera el lead. Las celdas se ubican por data-col. #}
+<tr id="lead-row-{{ lead.id }}" class="border-b border-gray-100 row-hover hover:bg-gray-50 transition-colors">
+    <td data-col="name" class="px-4 py-2.5 font-medium text-gray-800">
+        <a href="/contacts/{{ lead.id }}" class="hover:underline">{{ lead.name or '—' }}</a>
+        {# M6.1 ROLE-15 / Plan 111-07 — "Nuevo" badge: visible mientras el agent
+           dueño no haya abierto el detalle (agent_seen_at IS NULL o anterior a
+           agent_assigned_at). Desaparece tras GET /contacts/{id} por side-effect
+           mark_seen_by_agent. #}
+        {% if lead.agent_assigned_at and (lead.agent_seen_at is none or lead.agent_assigned_at > lead.agent_seen_at) %}
+        <span class="badge-new ml-1 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-onnix-accent text-white align-middle"
+              title="Asignado recientemente, aún no abierto">Nuevo</span>
+        {% endif %}
+    </td>
+    <td data-col="phone" class="px-4 py-2.5 text-gray-600 cursor-pointer"
+        onclick="window.location='/contacts/{{ lead.id }}'">{{ lead.phone or 'Sin teléfono' }}</td>
+    <td data-col="source" class="px-4 py-2.5 text-gray-500 text-xs cursor-pointer"
+        onclick="window.location='/contacts/{{ lead.id }}'">{% with badge_source=lead.source %}{% include 'partials/source_badge.html' %}{% endwith %}</td>
+    <td data-col="status" class="px-4 py-2.5" x-data="fixedMenu" @click.stop>
+        <button @click="toggle($el)" type="button"
+            title="Cambiar estado"
+            class="inline-flex min-h-11 items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+            {% with badge_status=lead.status %}{% include 'partials/status_badge.html' %}{% endwith %}
+            <svg class="w-3 h-3 text-onnix-ink-400 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        {# Inline (no x-teleport): position:fixed escapes .table-scroll-container's
+           overflow-x-auto without moving the node out of the DOM, so HTMX
+           continues to register the hx-post buttons on every swap.
+           x-ref="menu": fixedMenu (base.html) mide el menu para reposicionarlo
+           al scrollear y voltearlo hacia arriba si abajo no entra. #}
+        <div x-ref="menu" x-show="open" @click.away="close()" x-cloak
+            :style="`position:fixed;z-index:9999;top:${top}px;left:${left}px`"
+            class="bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-44">
+                {# Limpieza (a) — lista verificada contra el CHECK actual de
+                   contacts (= VALID_STATUSES, app/constants.py). OJO:
+                   visit_scheduled NO es estado muerto — mig 040 (M6.2) lo
+                   reintrodujo como flag auto-sincronizado por VisitService.
+                   'deleted' (sentinel soft-delete) queda fuera a propósito. #}
+                {% set status_options = [
+                    ('new', 'Nuevo'),
+                    ('bot_replied', 'Bot respondió'),
+                    ('agent_replied', 'Agente escribió'),
+                    ('visit_scheduled', 'Visita agendada'),
+                    ('interested', 'Interesado'),
+                    ('closed', 'Cerrado'),
+                    ('no_response', 'Sin respuesta'),
+                    ('discarded', 'Descartado'),
+                ] %}
+                {% for value, label in status_options %}
+                <button type="button"
+                    class="w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 flex items-center gap-2 {{ 'bg-gray-50' if lead.status == value else '' }}"
+                    {% if lead.status == 'discarded' and value != 'discarded' %}
+                    @click="if (confirm('Este contacto está descartado. ¿Seguro que querés reactivarlo?')) { $el.setAttribute('hx-trigger', 'confirmed'); htmx.trigger($el, 'confirmed'); } close()"
+                    hx-post="/leads/{{ lead.id }}/status"
+                    hx-vals='{"status": "{{ value }}"}'
+                    hx-target="#lead-row-{{ lead.id }}"
+                    hx-swap="outerHTML"
+                    hx-trigger="confirmed"
+                    {% else %}
+                    hx-post="/leads/{{ lead.id }}/status"
+                    hx-vals='{"status": "{{ value }}"}'
+                    hx-target="#lead-row-{{ lead.id }}"
+                    hx-swap="outerHTML"
+                    @click="close()"
+                    {% endif %}>
+                    {% with badge_status=value %}{% include 'partials/status_badge.html' %}{% endwith %}
+                    {% if lead.status == value %}
+                    <svg class="w-3 h-3 text-onnix-accent-ink ml-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                    {% endif %}
+                </button>
+                {% endfor %}
+        </div>
+    </td>
+    {% set prop_url = lead.property_url or lead.ic_url %}
+    {% if prop_url %}
+    <td data-col="interest" class="px-0 py-0 text-xs group">
+        {# <a> wraps all content — safe alternative to onclick="window.open()" which is vulnerable to javascript: URIs #}
+        <a href="{{ prop_url }}" target="_blank" rel="noopener noreferrer"
+           class="block px-4 py-2.5 cursor-pointer">
+    {% else %}
+    <td data-col="interest" class="px-4 py-2.5 text-xs text-gray-500">
+    {% endif %}
+        {% if lead.source == 'infocasas' %}
+            {% if lead.is_direct_ic %}
+                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-700 mb-0.5">Directa</span>
+            {% else %}
+                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-700 mb-0.5">Reenviada</span>
+            {% endif %}
+            {% if lead.has_inquiry_history %}
+                <span class="badge badge--strong">Nueva consulta</span>
+            {% endif %}
+            {% if lead.ic_title %}
+            <br><span class="text-gray-700 font-medium {% if prop_url %}group-hover:underline{% endif %}">{{ lead.ic_title[:50] }}</span>
+            {% endif %}
+            {% if lead.ic_city %}<br>{{ lead.ic_city }}{% endif %}
+            {% if lead.ic_price_sale %}<br>{{ 'Gs' if lead.ic_currency_sale == 'PYG' else 'USD' }} {{ miles(lead.ic_price_sale) }}
+                <span class="text-onnix-ink-400">Venta</span>
+            {% elif lead.ic_price_rent %}<br>{{ 'Gs' if lead.ic_currency_rent == 'PYG' else 'USD' }} {{ miles(lead.ic_price_rent) }}
+                <span class="text-onnix-ink-400">Alquiler</span>
+            {% endif %}
+            {% if lead.ic_ref %}<br><span class="text-onnix-ink-400">Ref: {{ lead.ic_ref }}</span>{% endif %}
+        {% elif lead.property_id %}
+            <span class="text-gray-700 font-medium {% if prop_url %}group-hover:underline{% endif %}">{{ (lead.property_title or 'Propiedad')[:50] }}</span>
+            {% set zona = [lead.property_neighborhood, lead.property_city]|select|join(', ') %}
+            {% if zona %}<br>{{ zona }}{% endif %}
+            {% if lead.property_price %}<br>{{ precio(lead.property_price) }}{% endif %}
+            {% if lead.property_operation %}<br><span class="text-onnix-ink-400">{{ lead.property_operation|capitalize }}</span>{% endif %}
+        {% elif lead.interest_summary %}
+            {# LEADS-02 — resumen del search_context de la última conversación #}
+            <span class="text-gray-600">{{ lead.interest_summary }}</span>
+        {% else %}
+            <span class="text-onnix-ink-400">—</span>
+        {% endif %}
+    {% if prop_url %}
+        </a>
+    {% endif %}
+    </td>
+    <td data-col="waiting" class="px-4 py-2.5 text-onnix-ink-400 text-xs">
+        {# Limpieza (c) — relativo unificado ("hace 2 h") con title=fecha
+           completa. last_contact_at/label computados en _enrich_lead_row
+           (IC → consulta_date; resto → last_activity_at o created_at). #}
+        {# Cuando la espera se cuenta desde el mismo momento que el ultimo
+           contacto, las dos lineas decian el mismo "hace 134 dias" una debajo
+           de la otra. En ese caso queda la que ademas explica por que importa. #}
+        {% set _misma_fecha = lead.waiting_bucket and lead.waiting_label == lead.last_contact_label %}
+        {% if lead.last_contact_label and not _misma_fecha %}
+            <span title="{{ lead.last_contact_at|pyt }}" class="text-gray-500">{{ lead.last_contact_label }}</span>
+            {% if lead.source == 'infocasas' and lead.consulta_date %}
+            <br><span class="text-onnix-ink-400">consulta</span>
+            {% endif %}
+        {% elif not lead.last_contact_label %}
+            —
+        {% endif %}
+        {# LEADS-01 — la espera dicha en palabras (decision 4 de Ez). El bucket
+           de compute_waiting sigue decidiendo SI se muestra y sigue ordenando
+           la cola; ya no pinta nada. #}
+        {% if lead.waiting_bucket %}
+        <div class="{{ '' if _misma_fecha else 'mt-1 ' }}text-[11px] text-onnix-ink-600"
+             title="{{ lead.waiting_since|pyt }}">Esperando {{ lead.waiting_label }}</div>
+        {% endif %}
+    </td>
+    <td data-col="actions" class="px-4 py-2.5 align-top">
+        <div class="flex flex-col gap-0.5">
+        <div class="flex items-center">
+            {# Plan 111-03 — admin-only "Asignar a…" dropdown.
+               Lists active admin|agent users; submits target_user_id form param.
+               Visible on all 3 tabs for admin; hidden for agent (Plan 111-04
+               will give agents their own UI). #}
+            {% if user.role == 'admin' and assignable_users %}
+            <div x-data="fixedMenu" @click.stop class="mr-1">
+                <button @click="toggle($el)" type="button"
+                        title="Asignar a asesor"
+                        class="inline-flex items-center justify-center w-11 h-11 rounded-lg
+                               text-onnix-accent-dark hover:text-onnix-accent-ink hover:bg-yellow-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                    </svg>
+                </button>
+                <div x-ref="menu" x-show="open" @click.away="close()" x-cloak
+                     :style="`position:fixed;z-index:9999;top:${top}px;left:${left}px`"
+                     class="bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-56">
+                    <div class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase border-b border-gray-100">
+                        Asignar a…
+                    </div>
+                    {% for u in assignable_users %}
+                    <button type="button"
+                            class="w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 flex items-center gap-2 {{ 'bg-gray-50 font-medium' if lead.agent_user_id == u.id else '' }}"
+                            hx-post="/leads/{{ lead.id }}/agent-assign"
+                            hx-vals='{"target_user_id": "{{ u.id }}"}'
+                            hx-target="#lead-row-{{ lead.id }}"
+                            hx-swap="outerHTML"
+                            @click="close()">
+                        <span class="text-gray-700">{{ u.display_name or u.name or u.email }}</span>
+                        {% if u.role == 'admin' %}
+                        <span class="ml-auto text-[10px] text-onnix-accent-dark uppercase">admin</span>
+                        {% endif %}
+                        {% if lead.agent_user_id == u.id %}
+                        <svg class="w-3 h-3 text-onnix-accent-ink ml-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                        {% endif %}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- LEAD-02: Ver conversación -->
+            {% if lead.conversation_id %}
+            <a href="/conversations/{{ lead.conversation_id }}"
+               title="Ver conversación"
+               class="inline-flex items-center justify-center w-11 h-11 rounded-lg
+                      text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+            </a>
+            {% else %}
+            <span title="Sin conversación"
+                  class="inline-flex items-center justify-center w-11 h-11 rounded-lg
+                         text-onnix-ink-400 opacity-40 cursor-not-allowed pointer-events-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+            </span>
+            {% endif %}
+
+            <!-- LEAD-03: WA Web -->
+            {% if lead.phone %}
+            {% set wa_phone = lead.phone | replace('+', '') %}
+            {# El guard mira el TITULO, no property_id. Para los leads de
+               InfoCasas —la unica fuente viva— property_id es NULL a proposito
+               desde el fix del 71 % de matches Remax equivocados
+               (infocasas_service._match_property): exigirlo hacia que la
+               condicion nunca se cumpliera y que el `or lead.ic_title` no se
+               llegara a evaluar nunca. El asesor abria WhatsApp con el texto
+               generico aun cuando la misma fila, dos celdas mas a la
+               izquierda, ya estaba mostrando el titulo de la propiedad. #}
+            {% if lead.property_title or lead.ic_title %}
+                {% set prop_name = (lead.property_title or lead.ic_title)[:40] %}
+                {% set zona = [lead.property_neighborhood or lead.ic_city, lead.property_city]|select|join(', ') %}
+                {% set wa_msg = "Hola " ~ (lead.name or "cliente") ~ ", le contactamos de Onnix SA respecto a la propiedad " ~ prop_name ~ ((" en " ~ zona) if zona else "") ~ ". ¿Tiene disponibilidad para conversar?" %}
+            {% else %}
+                {% set wa_msg = "Hola " ~ (lead.name or "cliente") ~ ", le contactamos de Onnix SA. ¿Tiene disponibilidad para conversar sobre propiedades en Paraguay?" %}
+            {% endif %}
+            <button type="button"
+               hx-post="/leads/{{ lead.id }}/agent-assign"
+               hx-target="#lead-row-{{ lead.id }}"
+               hx-swap="outerHTML"
+               hx-on:click="window.open('https://wa.me/{{ wa_phone }}?text={{ wa_msg | urlencode }}', '_blank')"
+               title="Asignar agente y abrir WhatsApp"
+               class="inline-flex items-center justify-center w-11 h-11 rounded-lg
+                      text-green-500 hover:text-green-700 hover:bg-green-50 transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+            </button>
+            {% else %}
+            <span title="Sin teléfono"
+                  class="inline-flex items-center justify-center w-11 h-11 rounded-lg
+                         text-onnix-ink-400 opacity-40 cursor-not-allowed pointer-events-none">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+            </span>
+            {% endif %}
+        </div>
+        {# Phase 116 UAT — assigned agent stacked under the action icons.
+           Two lines: label on top, name underneath, each truncating
+           independently. Fixes the column-stretch caused by long names
+           (e.g. "UATprobar hoymismo") on a single line. Admin-only. #}
+        {% if user.role == 'admin' %}
+        {% set agent_display = agents_display_map.get(lead.agent_user_id) if lead.agent_user_id else '' %}
+        <div class="mt-1 max-w-[160px] leading-tight">
+            <div class="text-[10px] text-onnix-ink-400">Asignado a:</div>
+            {% if agent_display %}
+            <div class="text-[11px] text-gray-600 truncate" title="{{ agent_display }}">{{ agent_display }}</div>
+            {% else %}
+            {# Limpieza (d) — chip ámbar chico en vez de texto gris #}
+            <span class="badge badge--strong">Sin asignar</span>
+            {% endif %}
+        </div>
+        {% endif %}
+        </div>
+    </td>
+</tr>

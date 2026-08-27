@@ -1,0 +1,84 @@
+{% from "partials/empty_state.html" import vacio %}
+{# Lazy-loaded by contacts_detail.html via hx-get="/contacts/{id}/visits"
+   hx-trigger="load, refreshVisits from:body".
+   Renderea el card completo (card wrapper + 2 secciones + empty state). #}
+<div class="bg-white rounded-lg shadow p-5" x-data="{ showCreate: false }">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold text-gray-700">Visitas</h2>
+        <button type="button" @click="showCreate = true"
+                class="text-xs text-onnix-accent-ink hover:text-onnix-accent-dark">
+            + Agendar visita
+        </button>
+    </div>
+
+    {# CASE 1: empty state (no visits at all) — CONTEXT §2.3 #}
+    {% if not proximas and not historico %}
+    {# La acción abre un modal de Alpine, no navega: entra por el `caller()`
+       del macro en vez de por `href`. Mismo alto de 44px que el `<a>`. #}
+    {% call vacio("Sin visitas agendadas",
+                  "Agendá la primera para que quede en el historial del contacto.",
+                  superficie=false) %}
+        <button type="button" @click="showCreate = true"
+                class="mt-5 inline-flex items-center justify-center min-h-[44px] px-4 rounded bg-onnix-accent text-white text-sm font-medium hover:bg-onnix-accent-dark transition-colors">
+            + Agendar visita
+        </button>
+    {% endcall %}
+
+    {% else %}
+    {# CASE 2: at least one visit — show 2 sections #}
+
+    {# SECCIÓN PRÓXIMAS — CONTEXT §2.4 #}
+    {% if proximas %}
+    <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+        Próximas
+    </h3>
+    <table class="w-full text-sm mb-4">
+        <thead>
+            <tr class="text-left text-xs text-onnix-ink-400 border-b">
+                <th class="py-1">Fecha</th>
+                <th>Propiedad</th>
+                <th>Estado</th>
+                <th>Reg. por</th>
+                <th>Notas</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in proximas %}
+            {% include "partials/visit_row.html" %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {# SECCIÓN HISTÓRICO — CONTEXT §2.4 (read-only, acciones grayed-out
+       en cada row para mantener la misma estructura visual que Próximas). #}
+    {% if historico %}
+    <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+        Histórico
+    </h3>
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="text-left text-xs text-onnix-ink-400 border-b">
+                <th class="py-1">Fecha</th>
+                <th>Propiedad</th>
+                <th>Estado</th>
+                <th>Reg. por</th>
+                <th>Notas</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in historico %}
+            {% include "partials/visit_row.html" %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% endif %}{# end empty-vs-populated #}
+
+    {# Modals (always rendered, controlled by Alpine x-show) #}
+    {% include "partials/visit_create_modal.html" %}
+    {# Reschedule modal is rendered inside visit_row.html with per-row context #}
+</div>

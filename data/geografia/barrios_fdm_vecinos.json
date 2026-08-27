@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "fuente": "ecured.cu, paraguay-streets.openalfa.com",
+    "fecha_extraccion": "2026-03-15",
+    "tipo": "barrios_fdm",
+    "ciudad": "Fernando de la Mora",
+    "notas": "15 barrios divididos en Zona Norte (6), Centro (1), Zona Sur (8). Av. Mariscal Estigarribia divide Norte y Sur. 2.6% de propiedades tienen datos de barrio en BD."
+  },
+  "barrios": {
+    "ita ka'aguy": {
+      "display": "Itá Ka'aguy",
+      "vecinos": ["pitiantuta", "tres bocas", "centro"],
+      "fuente": "inferida_geografica"
+    },
+    "pitiantuta": {
+      "display": "Pitiantuta",
+      "vecinos": ["ita ka'aguy", "tres bocas", "san juan"],
+      "fuente": "inferida_geografica"
+    },
+    "tres bocas": {
+      "display": "Tres Bocas",
+      "vecinos": ["ita ka'aguy", "pitiantuta", "centro"],
+      "fuente": "inferida_geografica"
+    },
+    "san juan": {
+      "display": "San Juan",
+      "vecinos": ["pitiantuta", "kokue guasu"],
+      "fuente": "inferida_geografica"
+    },
+    "kokue guasu": {
+      "display": "Kokue Guasú",
+      "vecinos": ["san juan", "bernardino caballero", "centro"],
+      "fuente": "inferida_geografica"
+    },
+    "bernardino caballero": {
+      "display": "Bernardino Caballero",
+      "vecinos": ["kokue guasu", "centro"],
+      "fuente": "inferida_geografica"
+    },
+    "centro": {
+      "display": "Centro",
+      "vecinos": ["ita ka'aguy", "tres bocas", "kokue guasu", "bernardino caballero", "domingo savio", "estanzuela"],
+      "fuente": "inferida_geografica"
+    },
+    "domingo savio": {
+      "display": "Domingo Savio",
+      "vecinos": ["centro", "estanzuela", "laguna grande"],
+      "fuente": "inferida_geografica"
+    },
+    "estanzuela": {
+      "display": "Estanzuela",
+      "vecinos": ["centro", "domingo savio", "las residentas"],
+      "fuente": "inferida_geografica"
+    },
+    "laguna grande": {
+      "display": "Laguna Grande",
+      "vecinos": ["domingo savio", "laguna sati"],
+      "fuente": "inferida_geografica"
+    },
+    "las residentas": {
+      "display": "Las Residentas",
+      "vecinos": ["estanzuela", "villa ofelia"],
+      "fuente": "inferida_geografica"
+    },
+    "villa ofelia": {
+      "display": "Villa Ofelia",
+      "vecinos": ["las residentas", "laguna sati"],
+      "fuente": "inferida_geografica"
+    },
+    "laguna sati": {
+      "display": "Laguna Satí",
+      "vecinos": ["laguna grande", "villa ofelia", "orilla del campo grande"],
+      "fuente": "inferida_geografica"
+    },
+    "orilla del campo grande": {
+      "display": "Orilla del Campo Grande",
+      "vecinos": ["laguna sati", "ipvu"],
+      "fuente": "inferida_geografica"
+    },
+    "ipvu": {
+      "display": "IPVU",
+      "vecinos": ["orilla del campo grande"],
+      "fuente": "sin_datos"
+    }
+  }
+}

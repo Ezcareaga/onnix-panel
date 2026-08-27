@@ -1,0 +1,10 @@
+[Unit]
+Description=Chequeo diario de drift entre producción y master
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

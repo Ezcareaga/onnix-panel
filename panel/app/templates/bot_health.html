@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Salud del Bot — Onnix SA{% endblock %}
+{% block page_title %}Salud del bot{% endblock %}
+
+{% block content %}
+<div x-data="{ tab: '{{ active_tab }}' }">
+    {# ── Tab nav ──────────────────────────────────────────────────────────── #}
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="flex -mb-px">
+            <button @click="tab = 'resumen'"
+                    :class="tab === 'resumen' ? 'border-onnix-accent text-onnix-accent-ink' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="px-6 py-3 border-b-2 font-medium text-sm transition-colors">
+                Resumen
+            </button>
+            <button @click="tab = 'detalle'"
+                    :class="tab === 'detalle' ? 'border-onnix-accent text-onnix-accent-ink' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="px-6 py-3 border-b-2 font-medium text-sm transition-colors">
+                Detalle técnico
+            </button>
+        </nav>
+    </div>
+
+    {# ── Polling container — HTMX swaps innerHTML every 30s ───────────────── #}
+    <div id="health-root"
+         hx-get="/stats/health?days={{ days }}"
+         hx-trigger="every 30s"
+         hx-target="#health-root"
+         hx-swap="innerHTML">
+        {% include "partials/bot_health_tabs_inner.html" %}
+    </div>
+</div>
+{% endblock %}

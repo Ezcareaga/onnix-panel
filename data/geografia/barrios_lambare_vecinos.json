@@ -1,0 +1,151 @@
+{
+  "metadata": {
+    "fuente": "paraguay-streets.openalfa.com",
+    "fecha_extraccion": "2026-03-15",
+    "tipo": "barrios_lambare",
+    "ciudad": "Lambaré",
+    "notas": "28 barrios. Adyacencias mayormente sin datos — Lambaré es primordialmente residencial con pocos landmarks. Solo 1% de propiedades tienen datos de barrio en BD."
+  },
+  "barrios": {
+    "centro": {
+      "display": "Centro",
+      "vecinos": ["mariscal lopez", "santa rosa i", "santa rosa ii"],
+      "fuente": "inferida_geografica"
+    },
+    "canada san miguel": {
+      "display": "Cañada San Miguel",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "cuatro mojones": {
+      "display": "Cuatro Mojones",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "felicidad": {
+      "display": "Felicidad",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "kennedy": {
+      "display": "Kennedy",
+      "vecinos": ["villa cerro cora"],
+      "fuente": "inferida_geografica"
+    },
+    "la victoria": {
+      "display": "La Victoria",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "mariscal lopez": {
+      "display": "Mariscal López",
+      "vecinos": ["centro"],
+      "fuente": "inferida_geografica"
+    },
+    "mbachio i": {
+      "display": "Mbachio I",
+      "vecinos": ["mbachio ii"],
+      "fuente": "inferida_geografica"
+    },
+    "mbachio ii": {
+      "display": "Mbachio II",
+      "vecinos": ["mbachio i"],
+      "fuente": "inferida_geografica"
+    },
+    "palomar": {
+      "display": "Palomar",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "panambi reta": {
+      "display": "Panambí Retá",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "parques del yacht": {
+      "display": "Parques del Yacht",
+      "vecinos": ["puerto pabla"],
+      "fuente": "inferida_geografica"
+    },
+    "pilar": {
+      "display": "Pilar",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "puerto pabla": {
+      "display": "Puerto Pabla",
+      "vecinos": ["parques del yacht"],
+      "fuente": "inferida_geografica"
+    },
+    "san antonio": {
+      "display": "San Antonio",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "san isidro": {
+      "display": "San Isidro",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "san rafael": {
+      "display": "San Rafael",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "san roque gonzalez": {
+      "display": "San Roque González",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "santa lucia": {
+      "display": "Santa Lucía",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "santa luisa": {
+      "display": "Santa Luisa",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "santa rosa i": {
+      "display": "Santa Rosa I",
+      "vecinos": ["centro", "santa rosa ii"],
+      "fuente": "inferida_geografica"
+    },
+    "santa rosa ii": {
+      "display": "Santa Rosa II",
+      "vecinos": ["centro", "santa rosa i"],
+      "fuente": "inferida_geografica"
+    },
+    "santo domingo": {
+      "display": "Santo Domingo",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "valle apu'a i": {
+      "display": "Valle Apu'a I",
+      "vecinos": ["valle apu'a ii"],
+      "fuente": "inferida_geografica"
+    },
+    "valle apu'a ii": {
+      "display": "Valle Apu'a II",
+      "vecinos": ["valle apu'a i"],
+      "fuente": "inferida_geografica"
+    },
+    "valle ybate": {
+      "display": "Valle Ybaté",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "villa cerro cora": {
+      "display": "Villa Cerro Corá",
+      "vecinos": ["kennedy"],
+      "fuente": "inferida_geografica"
+    },
+    "villa virginia": {
+      "display": "Villa Virginia",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    }
+  }
+}

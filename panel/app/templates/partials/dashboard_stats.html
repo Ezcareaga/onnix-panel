@@ -1,0 +1,159 @@
+<!-- DASH-02 — Dashboard 2 columnas: izquierda = acción (cola de trabajo, KPIs,
+     funnel), derecha = contexto (demanda 30d, tendencia 6m, operación).
+     Server-rendered, sin chart libs: sparkline SVG inline + donut conic-gradient.
+     Urgencia SOLO con microcopy naranja — cards blancas, sin acentos de fondo/borde. -->
+{% set sin_respuesta = stats.lead_tab_counts.get('sin_respuesta', 0) %}
+{% set interesados = stats.lead_tab_counts.get('interesados', 0) %}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+<!-- ============ COLUMNA IZQUIERDA — ACCIÓN ============ -->
+<div class="xl:col-span-2 flex flex-col gap-5 min-w-0">
+
+    <!-- Cola de trabajo: misma fuente que los tabs de /leads -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <a href="/leads?tab=sin_respuesta"
+           data-kpi="sin_respuesta" data-count="{{ sin_respuesta }}"
+           class="group block bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 cursor-pointer">
+            <div class="flex items-start justify-between gap-2">
+                <p class="text-xs font-medium uppercase tracking-wider text-onnix-ink-400">Sin respuesta</p>
+                {% if sin_respuesta > 0 %}
+                <span class="text-[11px] font-semibold text-orange-600 whitespace-nowrap">Requiere acción</span>
+                {% endif %}
+            </div>
+            <p class="mt-3 font-display text-4xl font-bold tracking-tight num-format {% if sin_respuesta > 0 %}text-gray-900{% else %}text-onnix-ink-400{% endif %}">{{ sin_respuesta }}</p>
+            <p class="mt-2 text-xs text-onnix-ink-400 group-hover:text-gray-600 transition-colors">Ver en Leads →</p>
+        </a>
+        <a href="/leads?tab=interesados"
+           data-kpi="interesados" data-count="{{ interesados }}"
+           class="group block bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 cursor-pointer">
+            <div class="flex items-start justify-between gap-2">
+                <p class="text-xs font-medium uppercase tracking-wider text-onnix-ink-400">Interesados sin asignar</p>
+                {% if interesados > 0 %}
+                <span class="text-[11px] font-semibold text-orange-600 whitespace-nowrap">Requiere acción</span>
+                {% endif %}
+            </div>
+            <p class="mt-3 font-display text-4xl font-bold tracking-tight num-format {% if interesados > 0 %}text-gray-900{% else %}text-onnix-ink-400{% endif %}">{{ interesados }}</p>
+            <p class="mt-2 text-xs text-onnix-ink-400 group-hover:text-gray-600 transition-colors">Ver en Leads →</p>
+        </a>
+    </div>
+
+    <!-- KPIs generales — strip con divisores hairline (gap-px) -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-px bg-gray-100 rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-900/5">
+        {# Se llamaba «Total leads» y linkeaba a /leads, que es la cola de trabajo
+           y cuenta otra cosa. El numero es el mismo total de contactos vivos que
+           imprime el pie del embudo, asi que dice lo mismo y lleva al mismo lado. #}
+        <a href="/contacts" class="block bg-white p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+            <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Total contactos</p>
+            <p class="mt-1.5 font-display text-2xl font-semibold text-gray-900 num-format">{{ stats.total_leads }}</p>
+        </a>
+        <a href="/leads?tab=leads" class="block bg-white p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+            <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Nuevos hoy</p>
+            <p class="mt-1.5 font-display text-2xl font-semibold num-format {% if stats.new_today > 0 %}text-gray-900{% else %}text-onnix-ink-400{% endif %}">{{ stats.new_today }}</p>
+        </a>
+        <a href="/settings" class="block bg-white p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+            <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Estado bot</p>
+            <p class="mt-1.5 flex items-center gap-2 font-display text-2xl font-semibold text-gray-900">
+                <span class="inline-block w-2 h-2 rounded-full {% if stats.bot_enabled %}bg-emerald-500{% else %}bg-red-500{% endif %}"></span>
+                {% if stats.bot_enabled %}Activo{% else %}Apagado{% endif %}
+            </p>
+        </a>
+        <a href="/conversations" class="block bg-white p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+            <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Mensajes (24h)</p>
+            <p class="mt-1.5 font-display text-2xl font-semibold text-gray-900 num-format">{{ stats.messages_24h }}</p>
+        </a>
+        {# Sin vista de errores en el panel — KPI no clickeable a propósito #}
+        <div class="bg-white p-4 col-span-2 md:col-span-1">
+            <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Errores (24h)</p>
+            <p class="mt-1.5 font-display text-2xl font-semibold num-format {% if stats.errors_24h > 0 %}text-red-600{% else %}text-onnix-ink-400{% endif %}">{{ stats.errors_24h }}</p>
+        </div>
+    </div>
+
+    <!-- Contactos por estado — todos los contactos vivos: sin import:excel y sin
+         los eliminados, que es lo que devuelve count_by_status. Distinto a los
+         tabs de /leads, que son la cola de trabajo. NO mezclar fuentes.
+         Colores semánticos: verde SOLO cerrados, ámbar = requiere atención.
+
+         Las filas cubren VALID_STATUSES entero. Si falta una, su gente
+         desaparece del embudo y el total de abajo deja de coincidir con
+         «Total leads» — que es exactamente lo que pasaba con visit_scheduled,
+         vivo desde la migración 040 y sincronizado por VisitService.
+
+         La tinta de cada barra está elegida por contraste medido contra su
+         fondo, no por parecido: cinco de las siete decían su número por debajo
+         de 3:1. La única que se pinta clara es slate-500, donde la tinta
+         oscura da 3,74:1 y la clara 4,76:1.
+
+         `bot_replied` se pintaba `sky-400` — uno de los cinco matices que
+         existían para 19 usos sin decir ningún estado (decisión 3 de Ez del
+         2026-08-23). Pasa a `gray-400`, que con `text-onnix-black` da 7,01:1: el
+         color de una serie de gráfico es decoración y sí gasta cupo. -->
+    {% set funnel_data = [
+        ('new',             'Nuevos',            'bg-blue-500',       'text-onnix-black'),
+        ('bot_replied',     'Bot respondió',     'bg-gray-400',       'text-onnix-black'),
+        ('agent_replied',   'Agente escribió',   'bg-slate-500',      'text-white'),
+        ('interested',      'Interesados',       'bg-onnix-accent',       'text-white'),
+        ('visit_scheduled', 'Visita agendada',   'bg-onnix-accent-dark',  'text-white'),
+        ('closed',          'Cerrados',          'bg-emerald-600',    'text-onnix-black'),
+        ('no_response',     'Sin resp.',         'bg-amber-500',      'text-onnix-black'),
+        ('discarded',       'Descartados',       'bg-gray-300',       'text-onnix-black'),
+    ] %}
+    {% set ns = namespace(total_funnel=0) %}
+    {% for status_key, label, bar_bg, bar_txt in funnel_data %}
+        {% set ns.total_funnel = ns.total_funnel + stats.status_counts.get(status_key, 0) %}
+    {% endfor %}
+
+    <div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 flex-1 flex flex-col">
+        <h3 class="text-sm font-semibold text-gray-800 mb-3">Contactos por estado (todos)</h3>
+
+        {% if ns.total_funnel > 0 %}
+        <!-- Composición — barra apilada 100% (los colores siguen las filas de abajo).
+             `gap-px` porque los segmentos se tocan y varios pares vecinos no se
+             distinguen entre si: el acento contra el acento oscuro dan 1,32:1 y
+             blue-500 contra gray-400, 1,45:1, contra un piso de 3 para superficie
+             adyacente. El hilo del fondo los separa sin sumar un matiz mas.
+             Es el mismo `gap-px` de la tira de KPIs de arriba. -->
+        <div class="flex gap-px h-2.5 rounded-full overflow-hidden bg-gray-100 mb-5">
+            {% for status_key, label, bar_bg, bar_txt in funnel_data %}
+            {% set count = stats.status_counts.get(status_key, 0) %}
+            {% if count > 0 %}
+            <div class="{{ bar_bg }}" style="width: {{ (count / ns.total_funnel * 100)|round(2) }}%;" title="{{ label }}: {{ count }}"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="flex-1 flex flex-col justify-evenly gap-3">
+        {% for status_key, label, bar_bg, bar_txt in funnel_data %}
+        {% set count = stats.status_counts.get(status_key, 0) %}
+        {% set pct = ((count / ns.total_funnel) * 100)|round(1) if ns.total_funnel > 0 else 0 %}
+        <a href="/contacts?status={{ status_key }}"
+           class="tap-44 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+           title="Ver contactos en estado {{ label }}">
+            <span class="text-xs text-gray-500 w-24 text-right shrink-0">{{ label }}</span>
+            <div class="flex-1 bg-gray-50 rounded overflow-hidden h-8">
+                <div class="funnel-bar {{ bar_bg }}" style="width: {{ [pct, 3]|max if count > 0 else 0 }}%;">
+                    <span class="{{ bar_txt }} num-format">{{ count }}</span>
+                </div>
+            </div>
+            <span class="text-[11px] text-onnix-ink-400 num-format w-10 shrink-0">{{ pct|round|int }}%</span>
+        </a>
+        {% endfor %}
+        </div>
+
+        {# La "tasa de cierre" que vivia aca dividia cerrados sobre nuevos, dos
+           conteos de estado ACTUAL, sin clamp: con 40 cerrados y 2 nuevos daba
+           2.000%. La proporcion honesta —cerrados sobre el total— ya esta
+           impresa un renglon arriba, en el % de la fila "Cerrado". #}
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Total contactos</p>
+            <p class="mt-1 font-display text-xl font-semibold text-gray-900 num-format">{{ ns.total_funnel }}</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============ COLUMNA DERECHA — CONTEXTO ============ -->
+<!-- Demanda 30d — partial compartido con /stats (partials/demand_section.html) -->
+{% include "partials/demand_section.html" %}
+</div>

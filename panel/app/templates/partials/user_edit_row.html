@@ -1,0 +1,78 @@
+<tr id="user-row-{{ target.id }}" class="border-b border-gray-100 bg-onnix-accent-wash">
+    <td colspan="5" class="px-4 py-4">
+
+        <!-- Editar datos -->
+        <form hx-post="/users/{{ target.id }}/edit"
+              hx-target="#user-row-{{ target.id }}"
+              hx-swap="outerHTML"
+              class="flex flex-wrap gap-3 items-end mb-4">
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Nombre</label>
+                <input name="name" type="text" required aria-label="Nombre del usuario"
+                       value="{{ target.display_name or target.name }}"
+                       class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-onnix-accent">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Email</label>
+                <input name="email" type="email" required aria-label="Email del usuario"
+                       value="{{ target.email }}"
+                       class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-onnix-accent">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Rol</label>
+                <select name="role" aria-label="Rol del usuario"
+                        class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-onnix-accent">
+                    <option value="agent" {% if target.role == 'agent' %}selected{% endif %}>Asesor (puede ver leads y clientes)</option>
+                    <option value="admin" {% if target.role == 'admin' %}selected{% endif %}>Administrador (acceso total al panel)</option>
+                    <option value="user" {% if target.role == 'user' %}selected{% endif %}>Usuario (acceso básico)</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="bg-onnix-accent text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-onnix-accent-dark">
+                    Guardar
+                </button>
+                <button type="button"
+                        hx-get="/users/{{ target.id }}/row"
+                        hx-target="#user-row-{{ target.id }}"
+                        hx-swap="outerHTML"
+                        class="bg-gray-200 text-gray-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-300">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+
+        <!-- Cambiar contraseña -->
+        <div class="border-t border-amber-200 pt-3">
+            <p class="text-xs text-gray-500 mb-2 font-medium">Cambiar contraseña</p>
+            <form hx-post="/users/{{ target.id }}/password"
+                  hx-target="#user-row-{{ target.id }}"
+                  hx-swap="outerHTML"
+                  hx-on::after-request="if(event.detail.successful) this.reset()"
+                  class="flex gap-3 items-end">
+                <div>
+                    {# 12, no 8. El servidor exige 12 en las dos rutas
+                       (`users.py:71` y `:205`) y los otros tres formularios de
+                       contrasena del panel ya declaraban 12: este era el unico
+                       desincronizado. Con 8, el navegador dejaba mandar una de
+                       entre 8 y 11, el servidor la rechazaba con un
+                       `HTTPException` crudo y HTMX no hace swap en 4xx — asi
+                       que la administradora apretaba «Cambiar contrasena» y no pasaba
+                       absolutamente nada, sin un solo mensaje. #}
+                    <input name="password" type="password" required minlength="12" aria-label="Nueva contraseña del usuario"
+                           placeholder="Nueva contraseña (mín. 12 caracteres)"
+                           {% if error_password %}aria-invalid="true" aria-describedby="pw-error-{{ target.id }}"{% endif %}
+                           class="border {% if error_password %}campo-invalido{% else %}border-gray-300{% endif %} rounded px-2 py-1.5 text-sm focus:outline-none focus:border-onnix-accent w-72">
+                    {% if error_password %}
+                    <p id="pw-error-{{ target.id }}" class="text-xs campo-error mt-1">{{ error_password }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit"
+                        class="bg-onnix-accent text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-onnix-accent-dark">
+                    Cambiar contraseña
+                </button>
+            </form>
+        </div>
+
+    </td>
+</tr>

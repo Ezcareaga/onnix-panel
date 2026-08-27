@@ -1,0 +1,45 @@
+{#
+  La respuesta del POST /conversations/{id}/reply.
+
+  Devuelve tres cosas por swap:
+    1. OOB — la burbuja nueva, al final del hilo
+    2. OOB — el composer, repuesto y vacío
+    3. target (#reply-status) — cómo le fue al envío
+
+  Las tres eran markup propio de este archivo, y las tres divergieron del
+  original:
+
+  - **La burbuja** repetía el markup a mano con `bg-indigo-600` y `opacity-60`.
+    Cuando la burbuja del hilo pasó a clara con tinta oscura, ésta se quedó
+    atrás: el mensaje que el asesor acaba de mandar se veía distinto de todos
+    los demás hasta que recargaba la página. Ahora usa `render_message`, que es
+    el mismo macro que pinta el resto del hilo.
+  - **El composer** perdía `hx-indicator`, `@htmx:beforeRequest` y el
+    `@submit.prevent` que chequea `submitting`, así que **desde el segundo
+    mensaje el doble envío era posible**. Ahora sale de `reply_composer.html`.
+  - **El estado** inventaba su propio markup con `text-green-600` y
+    `text-amber-600` — dos matices saturados más, y el noveno formato de
+    mensaje inline del panel. Ahora usa `error_message.html`, que es el patrón
+    único del carril B5.
+#}
+{% from "partials/_message_macro.html" import render_message %}
+{% from "partials/reply_composer.html" import composer %}
+
+{# 1. La burbuja nueva, al final del hilo #}
+<div hx-swap-oob="beforeend:#message-list">
+    {{ render_message(msg, {}) }}
+</div>
+
+{# 2. El composer, repuesto y vacío #}
+{{ composer(conv_id, oob=true) }}
+
+{# 3. Cómo le fue #}
+{% if warning %}
+    {% with message = 'Enviado con aviso: ' ~ warning, level = 'warning' %}
+        {% include "partials/error_message.html" %}
+    {% endwith %}
+{% else %}
+    {% with message = 'Mensaje enviado', level = 'info' %}
+        {% include "partials/error_message.html" %}
+    {% endwith %}
+{% endif %}

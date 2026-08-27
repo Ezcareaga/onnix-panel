@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "note": "FABRICATED — not from the real audit corpus. PII-free. Created for M6.3 BOT-09 to cover the 'pasame al asesor ya' resistente sub-path, which the 2 real exemplars (conv 193, 226) do not cover. Do NOT count toward real-corpus coverage.",
+  "flow_2_2": "resistente",
+  "sub_path": "pasame_al_asesor_ya",
+  "expected": {
+    "derives": true,
+    "partial_capture": true,
+    "contact_status": "interested"
+  },
+  "turns": [
+    { "role": "user", "text": "hola" },
+    { "role": "bot", "text": "Hola! Soy Onnix de Onnix SA. Con quien tengo el gusto?" },
+    { "role": "user", "text": "pasame al asesor ya" }
+  ]
+}

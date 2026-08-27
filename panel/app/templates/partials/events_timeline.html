@@ -1,0 +1,378 @@
+{% set EL = {
+    'status_change':      'Estado cambiado',
+    'created':            'Contacto creado',
+    'new_contact':        'Contacto creado',
+    'new_lead':           'Lead creado',
+    'updated':            'Datos actualizados',
+    'deleted':            'Contacto eliminado',
+    'agent_assigned':     'Lead asignado a agente',
+    'lead_registered':    'Registrado como interesado',
+    'linked_existing':    'Vinculado a contacto existente',
+    'note_created':       'Nota agregada',
+    'note_edited':        'Nota editada',
+    'note_deleted':       'Nota eliminada',
+    'visit_created':      'Visita agendada',
+    'visit_cancelled':    'Visita cancelada',
+    'visit_completed':    'Visita realizada',
+    'visit_rescheduled':  'Visita reagendada',
+    'visit_status_change': 'Estado de visita',
+    'callback_asesor':    'Solicitud de asesor',
+    'first_contact':      'Primer contacto',
+    'auto_status_change': 'Actualizacion automatica',
+    'notified_ez':        'Notificacion enviada',
+    'bot_interaction':    'Conversacion',
+    'search':             'Busqueda realizada',
+    'detail_view':        'Propiedad vista',
+    'new_inquiry':        'Nueva consulta sobre otra propiedad',
+    'wa_send_failed':     'Mensaje WhatsApp no entregado',
+    'client_responded_to_agent': 'Cliente respondió al asesor',
+    'client_declined_now':       'Cliente pidió no recibir opciones por ahora',
+    'followup_sent':             'Seguimiento automático enviado',
+    'mode_switch':               'Bot cambió a modo búsqueda',
+    'zero_results_offered':      'Bot ofreció alternativas (búsqueda sin resultados)',
+    'zero_results_accepted':     'Cliente aceptó ver alternativas',
+    'zero_results_abandoned':    'Búsqueda sin resultados abandonada'
+} %}
+
+{% set SL = {
+    'bot':               'Bot',
+    'bot_reply':         'Bot',
+    'bot_callback':      'Bot',
+    'infocasas_poll':    'InfoCasas',
+    'cold_lead_check':   'Sistema (seguimiento)',
+    'manual_fix':        'Correccion manual',
+    'Panel admin':       'Panel admin',
+    'panel_leads':       'Panel admin',
+    'panel_contacts':    'Panel admin',
+    'wa_callback':       'WhatsApp',
+    'followup_sender':   'Sistema (seguimiento)'
+} %}
+
+{% set STATUS_LABELS = {
+    'new':          'Nuevo',
+    'contacted':    'Contactado',
+    'interested':   'Interesado',
+    'visit_scheduled': 'Visita agendada',
+    'negotiation':  'Negociacion',
+    'closed':       'Cerrado',
+    'no_response':  'Sin respuesta',
+    'discarded':    'Descartado',
+    'deleted':      'Eliminado',
+    'hot':          'Caliente',
+    'cold':         'Frio',
+    'baja':         'Baja',
+    'interview':    'Entrevista',
+    'bot_replied':  'Bot respondio',
+    'agent_replied': 'Agente escribio'
+} %}
+
+{# ---- macros ---- #}
+
+{% macro dot_class(et) %}timeline-dot {% if et == 'status_change' %}border-blue-300{% elif et in ('created', 'new_contact', 'new_lead') %}border-emerald-300{% elif et == 'updated' %}border-amber-300{% elif et in ('deleted', 'wa_send_failed') %}border-red-300{% else %}border-gray-200{% endif %}{% endmacro %}
+
+{% macro event_icon(et) %}
+{% if et == 'status_change' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+{% elif et in ('created', 'new_contact', 'new_lead') %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"/></svg>
+{% elif et == 'updated' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+{% elif et == 'deleted' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+{% elif et == 'bot_toggle' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M12 3v8.25m0 0l-3-3m3 3l3-3"/></svg>
+{% elif et == 'agent_assigned' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+{% elif et == 'lead_registered' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3l1.664 9.526a2.25 2.25 0 002.238 1.974H15M3 3h-.75M3 3H21m0 0l-1.664 9.526a2.25 2.25 0 01-2.238 1.974H9.75M21 3H9.75m0 0l-1.5 9M9.75 3L8.25 12M5.25 8.25h15.75m-15.75 0L3 3m2.25 5.25L6.75 15"/></svg>
+{% elif et == 'linked_existing' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+{% elif et in ('note_created', 'note_edited') %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+{% elif et == 'note_deleted' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13.5H9m4.06-7.19l-1.06-1.06a1.5 1.5 0 00-1.06-.44H4.5A2.25 2.25 0 002.25 7.5v13.5A2.25 2.25 0 004.5 23.25h15A2.25 2.25 0 0021.75 21V9a2.25 2.25 0 00-2.25-2.25h-1.44a1.5 1.5 0 00-1.06.44l-1.06 1.06"/></svg>
+{% elif et == 'callback_asesor' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+{% elif et == 'first_contact' %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 013.15 0v1.5m0 0v-.075A1.575 1.575 0 0116.35 3v0a1.575 1.575 0 011.575 1.575V12a6 6 0 01-6 6h-2.25a6 6 0 01-6-6V7.575a1.575 1.575 0 011.575-1.575v0a1.575 1.575 0 011.575 1.575V12"/></svg>
+{% elif et == 'wa_send_failed' %}
+    <svg class="w-3.5 h-3.5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+{% elif et == 'visit_created' %}
+    {# calendar + plus, acento — agendada #}
+    <svg class="w-3.5 h-3.5 text-onnix-accent-ink shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14v3m0 0v3m0-3h3m-3 0H9M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+{% elif et == 'visit_cancelled' %}
+    {# calendar + x, red — cancelada #}
+    <svg class="w-3.5 h-3.5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5M9 16l3-3m0 0l3-3m-3 3L9 10m3 3l3 3"/></svg>
+{% elif et == 'visit_completed' %}
+    {# calendar + check, green — realizada (covers no_show too via label) #}
+    <svg class="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5M9 13l2 2 4-4"/></svg>
+{% elif et == 'visit_rescheduled' %}
+    {# calendar + arrow loop, blue — reagendada #}
+    <svg class="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+{% elif et == 'visit_status_change' %}
+    {# circular arrows, gray — contact.status sync #}
+    <svg class="w-3.5 h-3.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+{% else %}
+    <svg class="w-3.5 h-3.5 text-onnix-ink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+{% endif %}
+{% endmacro %}
+
+{% macro source_label(triggered_by) %}
+{% if triggered_by %}
+    {% if triggered_by.startswith('user:') %}
+        {% set uid = triggered_by[5:] | int(0) %}
+        {{ (users_map or {}).get(uid, 'Admin') }}
+    {% elif triggered_by.startswith('system:') %}Sistema
+    {% elif triggered_by.startswith('manual_template:') %}Plantilla manual
+    {% else %}{{ SL.get(triggered_by, triggered_by) }}
+    {% endif %}
+{% endif %}
+{% endmacro %}
+
+{% macro event_label(ev) %}
+{% if ev.event_type == 'bot_toggle' %}
+    {% if ev.event_metadata and ev.event_metadata.get('is_bot_active') %}Bot activado por agente{% else %}Bot desactivado por agente{% endif %}
+{% elif ev.event_type == 'visit_completed' %}
+    {% set result = (ev.event_metadata or {}).get('result') %}
+    {% if result == 'no_show' %}Cliente no se presentó
+    {% elif result == 'done' %}Visita realizada
+    {% else %}{{ EL['visit_completed'] }}{% endif %}
+{% else %}
+    {{ EL.get(ev.event_type, ev.event_type.replace('_', ' ')) }}
+{% endif %}
+{% endmacro %}
+
+{% macro collapsed_label(item) %}
+{% if item.event_type == 'bot_toggle' %}Bot alternado
+{% elif item.event_type == 'agent_assigned' %}Lead asignado
+{% else %}{{ EL.get(item.event_type, item.event_type.replace('_', ' ')) }}
+{% endif %}
+{% endmacro %}
+
+{# ---- template body ---- #}
+
+{% if grouped_events %}
+<div class="relative">
+    {% for item in grouped_events %}
+
+    {# ================================================================
+       SESSION — collapsible bot conversation block
+       ================================================================ #}
+    {% if item.type == "session" %}
+    <div class="flex gap-3 text-sm {% if not loop.last %}pb-5{% else %}pb-1{% endif %}"
+         x-data="{ expanded: false }">
+        <div class="flex flex-col items-center shrink-0">
+            <div class="timeline-dot border-gray-200"></div>
+            {% if not loop.last %}<div class="timeline-line flex-1"></div>{% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+            <button type="button" @click="expanded = !expanded"
+                    class="flex min-h-11 items-center gap-1.5 text-left text-gray-500 hover:text-gray-700 transition-colors w-full">
+                <svg class="w-3.5 h-3.5 shrink-0 transition-transform duration-200"
+                     :class="expanded ? 'rotate-90' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <span class="text-gray-800 font-medium text-sm">
+                    Conversacion
+                    <span class="text-onnix-ink-400 font-normal">({{ item.count }} evento{{ 's' if item.count != 1 else '' }} &middot; ultima actividad {{ item.last_activity|pyt('%H:%M') if item.last_activity else '—' }})</span>
+                </span>
+            </button>
+            <div x-show="expanded" x-cloak class="pl-4 mt-2 space-y-1 border-l border-gray-100">
+                {% for ev in item.events %}
+                <p class="text-xs text-gray-500">
+                    {% if ev.event_type == 'search' %}Busqueda realizada
+                    {% elif ev.event_type == 'detail_view' %}Propiedad vista
+                    {% elif ev.event_type == 'bot_interaction' %}Conversacion
+                    {% elif ev.event_type == 'notified_ez' %}Notificacion enviada
+                    {% elif ev.event_type == 'auto_status_change' %}Estado actualizado
+                    {% else %}{{ ev.event_type.replace('_', ' ') }}
+                    {% endif %}
+                    &middot; {{ ev.created_at|pyt('%d/%m %H:%M') if ev.created_at else '—' }}
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# ================================================================
+       COLLAPSED — rapid repeated events, shown as a summary badge
+       ================================================================ #}
+    {% elif item.type == "collapsed" %}
+    {% set rep = item.representative %}
+    <div class="flex gap-3 text-sm {% if not loop.last %}pb-5{% else %}pb-1{% endif %}">
+        <div class="flex flex-col items-center shrink-0">
+            <div class="timeline-dot border-gray-200"></div>
+            {% if not loop.last %}<div class="timeline-line flex-1"></div>{% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+                {{ event_icon(item.event_type) }}
+                <span class="text-gray-800 font-medium">{{ collapsed_label(item) }}</span>
+                <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{{ item.count }} veces</span>
+            </div>
+            <p class="text-xs text-onnix-ink-400 mt-0.5">
+                {% set src = source_label(item.triggered_by) | trim %}
+                {% if src %}{{ src }} &middot; {% endif %}
+                {{ rep.created_at|pyt('%d/%m/%Y %H:%M') if rep and rep.created_at else '—' }}
+            </p>
+        </div>
+    </div>
+
+    {# ================================================================
+       INDIVIDUAL — single business event
+       ================================================================ #}
+    {% else %}
+    {% set ev = item.event %}
+    {% set meta = ev.event_metadata or {} %}
+    <div class="flex gap-3 text-sm {% if not loop.last %}pb-5{% else %}pb-1{% endif %}">
+        <div class="flex flex-col items-center shrink-0">
+            <div class="{{ dot_class(ev.event_type) | trim }}"></div>
+            {% if not loop.last %}<div class="timeline-line flex-1"></div>{% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+            <!-- Label row -->
+            <div class="flex items-center gap-2 flex-wrap">
+                {{ event_icon(ev.event_type) }}
+                <span class="text-gray-800 font-medium">{{ event_label(ev) | trim }}</span>
+
+                {# Status transition badge #}
+                {% if ev.event_type == 'status_change' and ev.old_status and ev.new_status %}
+                <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                    {{ STATUS_LABELS.get(ev.old_status, ev.old_status) }} &rarr; {{ STATUS_LABELS.get(ev.new_status, ev.new_status) }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Metadata block -->
+            {% if meta %}
+            <div class="text-xs text-gray-500 mt-1 space-y-0.5 overflow-hidden">
+
+                {# updated: before/after diff #}
+                {% if meta.get('before') and meta.get('after') %}
+                    {% set field_labels = {
+                        'name': 'Nombre', 'phone': 'Telefono', 'email': 'Email',
+                        'preferences.operacion': 'Operacion', 'preferences.zona': 'Zona',
+                        'preferences.presupuesto': 'Presupuesto',
+                        'preferences.dormitorios': 'Dormitorios',
+                        'preferences.notas': 'Notas'
+                    } %}
+                    {% for key in meta.get('changed', []) %}
+                        {% set label = field_labels.get(key, key) %}
+                        {% set bv = meta['before'].get(key, '—') %}
+                        {% set av = meta['after'].get(key, '—') %}
+                        <p class="truncate" title="{{ label }}: {{ bv }} → {{ av }}">
+                            <span class="text-onnix-ink-400">{{ label }}:</span>
+                            <span class="line-through text-onnix-ink-400">{{ bv if bv not in (None, '', '—') else '—' }}</span>
+                            &rarr;
+                            <span class="text-gray-700">{{ av if av not in (None, '', '—') else '—' }}</span>
+                        </p>
+                    {% endfor %}
+                {% elif meta.get('changed') %}
+                    <p class="truncate" title="{{ meta['changed'] | join(', ') }}">Campos: {{ meta['changed'] | join(', ') }}</p>
+                {% endif %}
+
+                {# status transition via from/to (alternative encoding) #}
+                {% if meta.get('from') and meta.get('to') %}
+                <p>{{ meta['from'] }} &rarr; {{ meta['to'] }}</p>
+                {% endif %}
+
+                {# lead_registered: reason #}
+                {% if ev.event_type == 'lead_registered' and meta.get('motivo') %}
+                <p class="text-gray-500">{{ meta['motivo'] }}</p>
+                {% endif %}
+
+                {# linked_existing: lead name #}
+                {% if ev.event_type == 'linked_existing' and meta.get('lead_name') %}
+                <p>{{ meta['lead_name'] }}</p>
+                {% endif %}
+
+                {# agent_assigned: agent name #}
+                {% if ev.event_type == 'agent_assigned' and meta.get('agent_user_id') %}
+                    {% set agent_name = (users_map or {}).get(meta['agent_user_id']) %}
+                    {% if agent_name %}<p>Agente: {{ agent_name }}</p>{% endif %}
+                {% endif %}
+
+                {# note events: content detail #}
+                {% if ev.event_type == 'note_created' and meta.get('content') %}
+                <p class="italic">"{{ meta['content'] }}"</p>
+                {% elif ev.event_type == 'note_edited' and meta.get('old') %}
+                <p><span class="line-through text-onnix-ink-400">{{ meta['old'] }}</span> &rarr; {{ meta.get('new', '') }}</p>
+                {% elif ev.event_type == 'note_deleted' and meta.get('content') %}
+                <p class="italic line-through text-onnix-ink-400">"{{ meta['content'] }}"</p>
+                {% endif %}
+
+                {# visit_rescheduled: notes diff (only present if it changed) #}
+                {% if ev.event_type == 'visit_rescheduled' and (meta.get('old_notes') is not none or meta.get('new_notes') is not none) %}
+                <p>
+                    Notas:
+                    <span class="line-through text-onnix-ink-400">{{ meta.get('old_notes') or '—' }}</span>
+                    &rarr;
+                    <span>{{ meta.get('new_notes') or '—' }}</span>
+                </p>
+                {% endif %}
+
+                {# generic lead fields #}
+                {% if meta.get('lead_name') and ev.event_type != 'linked_existing' %}
+                <p>Nombre: {{ meta['lead_name'] }}</p>
+                {% endif %}
+                {% if meta.get('lead_phone') %}
+                <p>Tel: {{ meta['lead_phone'] }}</p>
+                {% endif %}
+                {% if meta.get('lead_email') %}
+                <p>Email: {{ meta['lead_email'] }}</p>
+                {% endif %}
+                {% if meta.get('consulta_id') %}
+                <p>Consulta #{{ meta['consulta_id'] }}</p>
+                {% endif %}
+                {% if meta.get('property_title') %}
+                    {% if ev.event_type == 'new_inquiry' and meta.get('property_code') %}
+                <p>Propiedad: {{ meta['property_title'] }} (Ref: {{ meta['property_code'] }})</p>
+                    {% else %}
+                <p>Propiedad: {{ meta['property_title'] }}</p>
+                    {% endif %}
+                {% endif %}
+
+                {# wa_send_failed: delivery failure details #}
+                {% if ev.event_type == 'wa_send_failed' %}
+                <p class="text-red-500 font-medium">
+                    {{ meta.get('attempts', '?') }} intentos fallidos
+                    {% if meta.get('twilio_error_code') %}&middot; código {{ meta['twilio_error_code'] }}{% endif %}
+                    {% if meta.get('status_code') %}&middot; HTTP {{ meta['status_code'] }}{% endif %}
+                </p>
+                {% if meta.get('to_number') %}
+                <p class="text-onnix-ink-400">Destino: {{ meta['to_number'] }}</p>
+                {% endif %}
+                {% if meta.get('message_type') %}
+                <p class="text-onnix-ink-400">Tipo: {{ meta['message_type'] }}</p>
+                {% endif %}
+                {% endif %}
+
+                {# source within metadata #}
+                {% set src_label_map = {
+                    'infocasas_poll': 'InfoCasas', 'infocasas': 'InfoCasas',
+                    'manual': 'Panel admin', 'panel': 'Panel admin',
+                    'telegram': 'Telegram', 'whatsapp': 'WhatsApp'
+                } %}
+                {% if meta.get('source') %}
+                <p class="text-onnix-ink-400">Fuente: {{ src_label_map.get(meta['source'], meta['source']) }}</p>
+                {% endif %}
+
+            </div>
+            {% endif %}
+
+            <!-- Footer: source · date -->
+            <p class="text-xs text-onnix-ink-400 mt-0.5">
+                {% set src = source_label(ev.triggered_by) | trim %}
+                {% if src %}{{ src }} &middot; {% endif %}
+                {{ ev.created_at|pyt('%d/%m/%Y %H:%M') if ev.created_at else '—' }}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-onnix-ink-400 text-sm">Sin eventos registrados</p>
+{% endif %}

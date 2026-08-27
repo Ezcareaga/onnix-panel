@@ -1,0 +1,60 @@
+{#
+  Estado vacío — un solo patrón para todo el panel.
+
+  `ui.md` pide "estados vacíos con acción, no disculpas", y pide un solo
+  parcial por estado. Hasta ahora cada vista escribía el suyo: la tabla de
+  propiedades tenía uno con ilustración y sugerencias, la grilla de leads un
+  `<div>` con una frase suelta, y varias pantallas no tienen ninguno. Con HTMX
+  eso se nota más que en una SPA: dos `hx-swap` que resuelven el mismo estado
+  con markup distinto se ven al instante cuando uno reemplaza al otro.
+
+  Uso mínimo:
+      {% from "partials/empty_state.html" import vacio %}
+      {{ vacio("Sin propiedades", "No hay resultados con los filtros actuales.",
+               href="/properties", cta="Ver todas") }}
+
+  Con contenido extra (las sugerencias de filtro relajado, por ejemplo):
+      {% call vacio("Sin propiedades", "…") %}
+          <ul>…</ul>
+      {% endcall %}
+
+  La acción es opcional en la firma y obligatoria en el criterio: si una vista
+  no tiene ninguna acción que ofrecer, es que el estado vacío no está pensado,
+  no que no corresponda un botón.
+
+  `superficie=false` saca la caja blanca y deja solo el contenido. Es para los
+  vacíos que viven ADENTRO de algo que ya es una superficie: la celda de una
+  tabla, un `<details>`, una card. Con la caja puesta serían cards adentro de
+  cards, que `ui.md` prohíbe por nombre — y era el motivo real por el que este
+  parcial no se había propagado: la mitad de los estados vacíos del panel no
+  son de página, son de sección.
+
+  El botón se queda en los dos casos. Lo que cambia es la caja, nunca el
+  criterio: mismo icono, misma jerarquía de título y detalle, misma acción de
+  44px.
+#}
+{% macro vacio(titulo, detalle="", href="", cta="", superficie=true) -%}
+<div class="{% if superficie %}bg-white rounded-lg shadow p-8{% else %}py-8{% endif %} text-center" data-empty-state>
+    {#- El icono va solo con la caja. Es una casa, y una casa en «sin
+        conversaciones» o en «sin notas» no dice nada: dice propiedad. Además
+        una ilustración adentro de una card ya es lo que hace que la sección se
+        lea como una card adentro de otra, aunque la caja no esté. La pantalla
+        entera vacía se la gana; una sección de una card, no. -#}
+    {%- if superficie %}
+    <svg class="w-12 h-12 mx-auto text-onnix-rule-strong mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+    </svg>
+    {%- endif %}
+    <p class="text-base font-medium text-gray-700">{{ titulo }}</p>
+    {%- if detalle %}
+    <p class="text-sm text-gray-500 mt-1">{{ detalle }}</p>
+    {%- endif %}
+    {%- if href and cta %}
+    {# 44px de alto: el panel se usa parado frente a una casa, no solo sentado. #}
+    <a href="{{ href }}" data-empty-action
+       class="mt-5 inline-flex items-center justify-center min-h-[44px] px-4 rounded bg-onnix-accent text-white text-sm font-medium hover:bg-onnix-accent-dark transition-colors">{{ cta }}</a>
+    {%- endif %}
+    {%- if caller is defined %}{{ caller() }}{% endif %}
+</div>
+{%- endmacro %}

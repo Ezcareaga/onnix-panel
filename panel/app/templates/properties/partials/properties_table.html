@@ -1,0 +1,267 @@
+{% from "properties/partials/_resumen.html" import resumen %}
+{# Properties listing — tabla con thumbnails, estilo consistente con leads.html #}
+{% from "partials/property_photo.html" import foto %}
+{% from "partials/empty_state.html" import vacio %}
+<div id="properties-table">
+
+{# Microcopy stats (M6.5) — texto plano, nunca cards #}
+<p class="text-sm text-gray-500 mb-2" data-results-microcopy>
+    <span class="font-semibold text-gray-700">{{ miles(total) }}</span>
+    resultado{% if total != 1 %}s{% endif %}
+    <span class="text-onnix-ink-400 mx-1">·</span> {{ miles(state_counts.active) }} activas
+</p>
+
+{% if ia_active %}
+{# Badge discreto modo IA (M6.5) — el redesign visual completo viene aparte #}
+<p class="text-xs text-onnix-ink-400 mb-2 flex items-center gap-1" data-ia-badge>
+    <span class="inline-block w-1.5 h-1.5 rounded-full bg-onnix-accent"></span>
+    Resultados con búsqueda IA
+</p>
+{% endif %}
+
+{% if rows %}
+{# Tabla — solo escritorio (≥768px). El `min-w-[760px]` es lo que la hacía
+   inservible en el celular: siete columnas empujando scroll horizontal en la
+   pantalla que el asesor abre parado frente a una casa. Debajo de md no se
+   renderiza y en su lugar van las cards; mismo `rows`, cero queries extra.
+   Wrapper responsive igual al de partials/leads_views.html. #}
+<div class="hidden md:block bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
+    <table class="w-full text-sm min-w-[760px]">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+                <th class="px-3 py-3 text-left w-20"></th>
+                <th class="px-3 py-3 text-left">Propiedad</th>
+                <th class="px-3 py-3 text-left">Tipo / Op</th>
+                <th class="px-3 py-3 text-right">Precio</th>
+                <th class="px-3 py-3 text-left">Estado</th>
+                <th class="px-3 py-3 text-left">Actualizada</th>
+                <th class="px-3 py-3 text-right w-24"><span class="sr-only">Links</span></th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for row in rows %}
+            {% set is_inactive = not row.is_active %}
+            {% set is_on_hold = row.is_active and row.on_hold %}
+            <tr class="hover:bg-onnix-accent-wash cursor-pointer transition-colors"
+                onclick="window.location='/properties/{{ row.id }}'">
+
+                {# Thumbnail — la foto sale del partial único (partials/property_photo.html).
+                   Si el .webp local no está, cae al placeholder; NUNCA a main_image_url,
+                   que apunta al portal de origen. #}
+                {# El path lo arma `url_foto` (app/utils/fotos.py): el nombre del portal de origen no va en la URL. #}
+                {% set thumb_src = url_foto(row.source, row.external_id) if row.local_image_count else row.main_image_url %}
+                <td class="px-3 py-2 align-middle">
+                    <div class="w-16 h-14 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {% call foto(thumb_src, img_class="w-full h-full object-cover", img_attrs=' loading="lazy"',
+                                     ph_class="w-full h-full flex items-center justify-center text-onnix-ink-400") %}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        {% endcall %}
+                    </div>
+                </td>
+
+                {# Propiedad: title + ubicación + ref.
+                   w-full + max-w-0: la celda absorbe el sobrante del w-full de la tabla
+                   y su min-content es ~0 → títulos largos NUNCA generan overflow-x;
+                   truncate corta contra el ancho impuesto (no contra el contenido). #}
+                <td class="px-3 py-2.5 align-middle w-full max-w-0">
+                    <div class="font-medium text-gray-800 truncate">{{ row.title or "Sin título" }}</div>
+                    <div class="text-xs text-gray-500 mt-0.5 truncate">
+                        {% if row.city and row.neighborhood %}{{ row.neighborhood }}, {{ row.city }}
+                        {% elif row.city %}{{ row.city }}
+                        {% elif row.neighborhood %}{{ row.neighborhood }}
+                        {% else %}—{% endif %}
+                    </div>
+                    <div class="text-[0.65rem] text-onnix-ink-400 mt-0.5 font-mono">#{{ row.external_id }}</div>
+                </td>
+
+                {# Tipo / Op #}
+                <td class="px-3 py-2.5 align-middle">
+                    <div class="flex flex-col gap-0.5">
+                        {% if row.operation %}
+                        <span class="text-xs text-gray-600">{{ row.operation | title }}</span>
+                        {% endif %}
+                        {% if row.property_type %}
+                        <span class="text-[0.65rem] text-onnix-ink-400">{{ row.property_type | replace("_", " ") | title }}</span>
+                        {% endif %}
+                        {# whitespace-nowrap: con la celda Propiedad en w-full/max-w-0 esta
+                           columna queda en min-content — sin nowrap el meta se parte feo
+                           ("2 / dorm"). Una línea entera son ~150px, entra siempre. #}
+                        <div class="flex items-center gap-2 mt-1 text-[0.65rem] text-onnix-ink-400 whitespace-nowrap">
+                            {% if row.bedrooms is not none %}<span>{{ row.bedrooms }} dorm</span>{% endif %}
+                            {% if row.bathrooms is not none %}<span>· {{ row.bathrooms }} baños</span>{% endif %}
+                            {% if row.total_area_m2 is not none %}<span>· {{ row.total_area_m2 }} m²</span>{% endif %}
+                        </div>
+                    </div>
+                </td>
+
+                {# Precio #}
+                <td class="px-3 py-2.5 align-middle text-right whitespace-nowrap">
+                    {% if row.price_usd or row.price_pyg %}
+                        <div class="font-semibold text-gray-800">{{ precio(row.price_usd, row.price_pyg) }}</div>
+                        {% if row.price_usd and row.price_pyg %}
+                        <div class="text-[0.65rem] text-onnix-ink-400 mt-0.5">{{ precio(None, row.price_pyg) }}</div>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-xs text-onnix-ink-400 italic">A consultar</span>
+                    {% endif %}
+                </td>
+
+                {# Estado #}
+                <td class="px-3 py-2.5 align-middle">
+                    {% if is_inactive %}
+                        {% set days_inactive = ((now - row.updated_at).days) if row.updated_at else 0 %}
+                        <span class="inline-flex items-center text-[0.65rem] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-onnix-accent/10 text-onnix-accent-dark border border-onnix-accent/30">
+                            Oportunidad{% if days_inactive > 0 %} · {{ days_inactive }}d{% endif %}
+                        </span>
+                    {% elif is_on_hold %}
+                        <span class="inline-flex items-center text-[0.65rem] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                            Pausada
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center text-[0.65rem] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
+                            Activa
+                        </span>
+                    {% endif %}
+                </td>
+
+                {# Actualizada #}
+                <td class="px-3 py-2.5 align-middle text-xs text-gray-500 whitespace-nowrap">
+                    {% if row.updated_at %}
+                        {% set delta = (now - row.updated_at).days %}
+                        {% if delta == 0 %}Hoy
+                        {% elif delta == 1 %}Ayer
+                        {% else %}hace {{ delta }}d{% endif %}
+                    {% else %}—{% endif %}
+                </td>
+
+                {# Links (M6.5 T6): copiar link público (acumulador) + ver original.
+                   priceLabel = EXACTAMENTE lo que muestra la celda Precio. #}
+                {% set price_label = precio(row.price_usd, row.price_pyg) %}
+                <td class="px-3 py-2.5 align-middle text-right whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1.5">
+                        {% if row.public_path %}
+                        <button type="button"
+                                data-prop-id="{{ row.id }}"
+                                data-title="{{ row.title or 'Sin título' }}"
+                                data-price-label="{{ price_label }}"
+                                data-meta="{{ resumen(row) }}"
+                                data-public-url="{{ public_base_url }}{{ row.public_path }}{{ asesor_a_suffix }}"
+                                @click.stop="$store.basket.copyAndToggle($el.dataset).then(r => $dispatch('showToast', r.ok
+                                    ? { type: 'success', message: r.added ? ('Link copiado · ' + r.count + ' en lista') : 'Link copiado · quitado de la lista' }
+                                    : { type: 'error', message: 'No se pudo copiar' }))"
+                                :class="$store.basket?.has('{{ row.id }}')
+                                    ? 'border-onnix-accent bg-onnix-accent/10 text-onnix-accent-dark'
+                                    : 'border-gray-200 text-onnix-ink-400 hover:border-onnix-accent/50 hover:text-onnix-accent-dark'"
+                                class="tap-44 inline-flex items-center justify-center w-8 h-8 rounded border bg-white transition-colors"
+                                title="Copiar link público"
+                                aria-label="Copiar link público">
+                            <svg x-show="!$store.basket?.has('{{ row.id }}')" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                            </svg>
+                            <svg x-show="$store.basket?.has('{{ row.id }}')" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </button>
+                        {% endif %}
+                        {% if row.url %}
+                        <button type="button"
+                                data-original-url="{{ row.url }}"
+                                @click.stop="window.open($el.dataset.originalUrl, '_blank', 'noopener,noreferrer')"
+                                class="tap-44 inline-flex items-center justify-center w-8 h-8 rounded border border-gray-200 bg-white text-onnix-ink-400 hover:border-gray-300 hover:text-gray-600 transition-colors"
+                                title="Ver original"
+                                aria-label="Ver original">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# Cards — solo móvil (<768px) #}
+<div class="md:hidden space-y-3" data-properties-cards>
+    {% for row in rows %}
+        {% include "properties/partials/property_card.html" %}
+    {% endfor %}
+</div>
+
+{% else %}
+{# Estado vacío — parcial único del panel (partials/empty_state.html).
+   Las sugerencias de filtro relajado son propias de esta pantalla y entran
+   por el `caller()` del macro; la caja, el icono y la acción son los mismos
+   que va a usar el resto del panel. #}
+{% call vacio("Sin propiedades",
+              "No se encontraron resultados con los filtros actuales.",
+              href="/properties", cta="Ver todas las activas") %}
+    {% if empty_hints %}
+    <div class="mt-5 max-w-md mx-auto text-left">
+        <p class="text-xs uppercase tracking-wider text-onnix-ink-400 font-semibold mb-2 text-center">Probá relajar un filtro</p>
+        <ul class="space-y-1.5">
+            {% set hint_labels = {
+                'property_type': 'tipo',
+                'city': 'ciudad',
+                'neighborhood': 'barrio',
+            } %}
+            {% for hint in empty_hints %}
+            {# urlencode sobre los pares, no concatenación: `city=Ciudad del Este`
+               crudo corta el href en el primer espacio y la sugerencia lleva a
+               otra búsqueda. Lo mismo con `&` o `+` dentro de un barrio. #}
+            {% set qs_remove = [] %}
+            {% for k, v in request.query_params.multi_items() %}
+                {% if k != hint.drop and k != 'page' %}
+                    {% set _ = qs_remove.append((k, v)) %}
+                {% endif %}
+            {% endfor %}
+            <li>
+                <a href="/properties{% if qs_remove %}?{{ qs_remove | urlencode }}{% endif %}"
+                   data-empty-hint="{{ hint.drop }}"
+                   class="flex items-center justify-between gap-3 px-3 py-2 min-h-[44px] bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded text-sm text-gray-700 transition-colors">
+                    <span>
+                        Sin filtro de <strong>{{ hint_labels.get(hint.drop, hint.drop) }}</strong>
+                        <span class="text-gray-500">«{{ hint.dropped_value }}»</span>
+                    </span>
+                    <span class="text-xs font-semibold text-onnix-accent-dark whitespace-nowrap">
+                        {{ miles(hint.count) }} prop.
+                    </span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+{% endcall %}
+{% endif %}
+
+{# ── Pagination ── #}
+{% if total_pages > 1 %}
+{# Mismo motivo que en el estado vacío: los valores van urlencodeados o un
+   barrio con espacio rompe el link a la página 2. #}
+{% set qs_parts = [] %}
+{% for k, v in request.query_params.multi_items() %}
+    {% if k != 'page' %}{% set _ = qs_parts.append((k, v)) %}{% endif %}
+{% endfor %}
+{% set base_qs = qs_parts | urlencode %}
+<div class="flex justify-center items-center gap-2 mt-4">
+    {% if page > 1 %}
+    <a href="?{{ base_qs }}{% if base_qs %}&{% endif %}page={{ page - 1 }}"
+       class="tap-44 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">← Anterior</a>
+    {% endif %}
+    <span class="text-sm text-gray-500">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="?{{ base_qs }}{% if base_qs %}&{% endif %}page={{ page + 1 }}"
+       class="tap-44 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">Siguiente →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+</div>

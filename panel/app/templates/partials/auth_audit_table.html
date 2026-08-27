@@ -1,0 +1,188 @@
+<!-- Auth Audit Table partial — used by settings.html tab "accesos"
+     Required context: rows, total, page, per_page, filters, filters_querystring,
+                       locked_emails_in_view (set[str])
+     The form action + pagination links use `audit_base_url` (default: /admin/auth-audit).
+-->
+{% set audit_base_url = audit_base_url if audit_base_url is defined else '/admin/auth-audit' %}
+{% set locked_emails_in_view = locked_emails_in_view if locked_emails_in_view is defined else [] %}
+
+<div class="space-y-6" x-data="{ unlockTarget: null }">
+
+    {# <dialog> nativo, el patron que abrio contacts.html. El navegador pone el
+       focus trap, el Escape, el ::backdrop y la inertizacion del resto de la
+       pagina. Alpine sigue mandando el estado via x-effect para no tocar los
+       disparadores que ya existen, y `@close` devuelve la variable a null: el
+       Escape cierra el <dialog> sin avisarle a Alpine, y sin eso el modal no
+       vuelve a abrir. #}
+    <dialog x-effect="unlockTarget !== null ? ($el.open || $el.showModal()) : ($el.open && $el.close())"
+            @close="unlockTarget = null"
+            @click.self="unlockTarget = null"
+            aria-labelledby="unlock-email-title"
+            class="modal">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 id="unlock-email-title" class="text-lg font-semibold text-gray-900 mb-2">Desbloquear email</h3>
+            <p class="text-sm text-gray-600 mb-5">
+                ¿Confirmás desbloquear <strong class="text-onnix-black" x-text="unlockTarget"></strong>?
+                <br>
+                <span class="text-xs text-gray-500">
+                    Se va a insertar un evento de admin-unlock que rompe la ventana de lockout actual.
+                </span>
+            </p>
+            <div class="flex justify-end gap-3">
+                <button @click="unlockTarget = null"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors">
+                    Cancelar
+                </button>
+                <form method="post"
+                      action="/admin/auth-audit/unlock-email"
+                      hx-post="/admin/auth-audit/unlock-email"
+                      hx-target="#audit-table-zone"
+                      hx-swap="outerHTML"
+                      {# Sin la guarda, un 4xx cerraba el modal igual y el desbloqueo
+                         fallido quedaba invisible. #}
+                      @htmx:after-request="if ($event.detail.successful) unlockTarget = null">
+                    <input type="hidden" name="email" :value="unlockTarget">
+                    <button type="submit"
+                            class="bg-onnix-accent text-white px-4 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark transition-colors">
+                        Sí, desbloquear
+                    </button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Filtros -->
+    <form method="get" action="{{ audit_base_url }}"
+          autocomplete="off"
+          class="bg-white rounded-lg shadow p-5 grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div class="md:col-span-2">
+            <label class="block text-xs text-gray-500 mb-1">Email</label>
+            <input type="text" name="email" aria-label="Filtrar por email"
+                   value="{{ filters.email or '' }}"
+                   autocomplete="off"
+                   placeholder="usuario@dominio.com"
+                   class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">IP</label>
+            <input type="text" name="ip" aria-label="Filtrar por IP"
+                   value="{{ filters.ip or '' }}"
+                   autocomplete="off"
+                   placeholder="1.2.3.4"
+                   class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Desde</label>
+            <input type="date" name="date_from" aria-label="Desde qué fecha"
+                   value="{{ filters.date_from.isoformat() if filters.date_from else '' }}"
+                   class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Hasta</label>
+            <input type="date" name="date_to" aria-label="Hasta qué fecha"
+                   value="{{ filters.date_to.isoformat() if filters.date_to else '' }}"
+                   class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent">
+        </div>
+        <input type="hidden" name="tab" value="accesos">
+        <div class="md:col-span-5 flex items-center justify-between gap-2">
+            <p class="text-xs text-gray-500">
+                {{ total }} resultado{{ 's' if total != 1 else '' }}
+                {% if filters.email or filters.ip or filters.date_from or filters.date_to %}
+                    con los filtros aplicados
+                {% endif %}
+            </p>
+            <div class="flex items-center gap-2">
+                <button type="submit"
+                        class="bg-onnix-accent text-white px-4 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark transition-colors">
+                    Filtrar
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabla -->
+    <div id="audit-table-zone" class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto table-scroll-container">
+        <table class="tabla-card w-full text-sm md:min-w-[860px]">
+            <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                <tr>
+                    <th class="px-4 py-3 text-left">Timestamp (PYT)</th>
+                    <th class="px-4 py-3 text-left">Email</th>
+                    <th class="px-4 py-3 text-left">IP</th>
+                    <th class="px-4 py-3 text-left">User-Agent</th>
+                    <th class="px-4 py-3 text-left">Result</th>
+                    <th class="px-4 py-3 text-left">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr class="border-t border-gray-100 hover:bg-gray-50">
+                        <td data-label="Fecha" class="px-4 py-2 whitespace-nowrap text-gray-700">{{ row.created_at|pyt('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td data-label="Email" class="px-4 py-2 text-gray-700">{{ row.email }}</td>
+                        <td data-label="IP" class="px-4 py-2 text-gray-700 font-mono text-xs">{{ row.ip or '—' }}</td>
+                        <td data-label="Navegador" class="px-4 py-2 text-gray-500 text-xs truncate max-w-[280px]"
+                            title="{{ row.user_agent or '' }}">
+                            {{ (row.user_agent or '')[:60] }}
+                        </td>
+                        <td data-label="Resultado" class="px-4 py-2">
+                            {% if row.result == 'success' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">success</span>
+                            {% elif row.result == 'wrong_password' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">wrong_password</span>
+                            {% elif row.result == 'not_found' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">not_found</span>
+                            {% elif row.result == 'inactive' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">inactive</span>
+                            {% elif row.result == 'locked' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">locked</span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{{ row.result }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2">
+                            {% if row.result == 'locked' and row.email in locked_emails_in_view %}
+                                {# Unlock icon — click sets unlockTarget en el container; modal overlay maneja el confirm #}
+                                <button type="button"
+                                        @click="unlockTarget = '{{ row.email }}'"
+                                        title="Desbloquear {{ row.email }}"
+                                        class="text-onnix-accent-ink hover:text-onnix-accent-dark transition-colors">
+                                    {# Heroicons lock-open (outline) w-5 h-5 #}
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
+                                    </svg>
+                                </button>
+                            {% else %}
+                                <span class="text-onnix-ink-400 text-xs">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if not rows %}
+            <div class="text-center py-10 text-gray-500 text-sm">
+                Sin resultados con esos filtros.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación -->
+    {% if total > per_page %}
+    <nav class="flex items-center justify-between text-sm text-gray-600">
+        <div>
+            Página {{ page }} de {{ (total / per_page)|round(0, 'ceil')|int }} —
+            mostrando {{ rows|length }} de {{ total }}
+        </div>
+        <div class="space-x-2">
+            {% if page > 1 %}
+                <a href="{{ audit_base_url }}?{{ filters_querystring }}{% if filters_querystring %}&{% endif %}page={{ page - 1 }}"
+                   class="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">Anterior</a>
+            {% endif %}
+            {% if (page * per_page) < total %}
+                <a href="{{ audit_base_url }}?{{ filters_querystring }}{% if filters_querystring %}&{% endif %}page={{ page + 1 }}"
+                   class="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">Siguiente</a>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+</div>

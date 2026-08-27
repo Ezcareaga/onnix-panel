@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {# El <title> se deriva de page_title, que es texto plano. Antes eran dos
+       strings sueltos y se desincronizaron: el menu decia «Stats» y la
+       pantalla «Estadisticas». Una vista con titulo propio igual puede pisar
+       el bloque. #}
+    <title>{% block title %}{{ self.page_title()|trim }} — Onnix{% endblock %}</title>
+    {# Outfit sale del propio dominio (@font-face en custom.css). Antes eran 13
+       variantes de 3 familias contra fonts.bunny.net: dos handshakes con un
+       tercero antes de pintar. El preload es solo del subset latin, que es el
+       que cubre el castellano entero. #}
+    <link rel="preload" href="/static/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/css/tailwind.css?v=30">
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/static/img/favicon-180.png">
+    <link rel="stylesheet" href="/static/css/custom.css?v=12">
+    {# CSRF double-submit cookie — meta tag for non-HTMX JS consumers (D1) #}
+    <meta name="csrf-token" content="{{ request.state.csrf_token }}">
+    {# csrf.js wires htmx:configRequest to inject X-CSRFToken header on every HTMX request.
+       External file (not inline) for future CSP tightening compatibility. #}
+    <script defer src="/static/js/csrf.js"></script>
+    <script defer src="/static/js/vendor/htmx-2.0.4.min.js"></script>
+    <script defer src="/static/js/vendor/idiomorph-ext-0.3.0.min.js"></script>
+    <script defer src="/static/js/vendor/htmx-ext-sse-2.2.4.min.js"></script>
+    {# M6.5 — acumulador de links públicos (link basket).
+       link_basket.js (UMD → window.LinkBasket) va ANTES del vendor de Alpine:
+       ambos son deferred y corren en orden de documento; Alpine dispara
+       alpine:init en un microtask apenas evalúa, así que LinkBasket y el
+       listener deben existir antes. El store vive FUERA del DOM swapeado por
+       HTMX → las filas re-renderizadas leen $store.basket. #}
+    <script defer src="/static/js/link_basket.js"></script>
+    <script>
+      document.addEventListener("alpine:init", () => {
+        const LinkBasket = window.LinkBasket;
+        Alpine.store("basket", {
+          state: LinkBasket.deserialize(window.sessionStorage.getItem(LinkBasket.STORAGE_KEY)),
+          get count() { return this.state.items.length; },
+          has(id) { return LinkBasket.has(this.state, id); },
+          toggle(item) {
+            this.state = LinkBasket.toggle(this.state, item);
+            this._persist();
+          },
+          clearAll() {
+            this.state = LinkBasket.clear();
+            this._persist();
+          },
+          // Botón por fila/detalle: copia el link público y togglea en la lista.
+          // Lee SOLO del dataset del botón (d = $el.dataset).
+          async copyAndToggle(d) {
+            try {
+              await navigator.clipboard.writeText(d.publicUrl);
+            } catch (e) {
+              return { ok: false };
+            }
+            this.toggle({ id: d.propId, title: d.title, priceLabel: d.priceLabel, url: d.publicUrl });
+            return { ok: true, count: this.count, added: this.has(d.propId) };
+          },
+          // Barra flotante: copia el bloque completo (texto plano para WA).
+          async copyAll() {
+            try {
+              await navigator.clipboard.writeText(LinkBasket.formatBlock(this.state));
+            } catch (e) {
+              return { ok: false };
+            }
+            return { ok: true, count: this.count };
+          },
+          _persist() {
+            try {
+              window.sessionStorage.setItem(LinkBasket.STORAGE_KEY, LinkBasket.serialize(this.state));
+            } catch (e) { /* sessionStorage no disponible → estado solo en memoria */ }
+          },
+        });
+
+        // Menú desplegable anclado a su botón con position:fixed. El fixed está
+        // a propósito: escapa el overflow-x-auto de .table-scroll-container sin
+        // sacar el nodo del DOM con x-teleport (si se teletransporta, HTMX deja
+        // de registrar los hx-post en cada swap). Como fixed posiciona contra el
+        // viewport, la posición se recalcula mientras el menú está abierto
+        // (scroll en capture: el scroll del contenedor no burbujea) y se voltea
+        // hacia arriba cuando abajo no entra.
+        Alpine.data("fixedMenu", () => ({
+          open: false,
+          top: 0,
+          left: 0,
+          btn: null,
+          _reposition: null,
+          toggle(btn) {
+            if (this.open) { this.close(); return; }
+            this.btn = btn;
+            // Posición aproximada antes de mostrar: place() necesita medir el
+            // menú y solo puede hacerlo cuando ya está en el layout.
+            const r0 = btn.getBoundingClientRect();
+            this.top = r0.bottom + 4;
+            this.left = r0.left;
+            this.open = true;
+            this._reposition = () => this.place();
+            window.addEventListener("scroll", this._reposition, true);
+            window.addEventListener("resize", this._reposition);
+            this.$nextTick(() => this.place());
+          },
+          close() {
+            this.open = false;
+            if (this._reposition) {
+              window.removeEventListener("scroll", this._reposition, true);
+              window.removeEventListener("resize", this._reposition);
+              this._reposition = null;
+            }
+          },
+          destroy() { this.close(); },
+          place() {
+            if (!this.open || !this.btn) return;
+            const r = this.btn.getBoundingClientRect();
+            const menu = this.$refs.menu;
+            const h = menu ? menu.offsetHeight : 0;
+            const w = menu ? menu.offsetWidth : 0;
+            const gap = 4;
+            const roomBelow = window.innerHeight - r.bottom - gap;
+            const roomAbove = r.top - gap;
+            this.top = (h > roomBelow && roomAbove > roomBelow)
+              ? Math.max(gap, r.top - gap - h)
+              : Math.max(gap, Math.min(r.bottom + gap, window.innerHeight - gap - h));
+            this.left = Math.max(gap, Math.min(r.left, window.innerWidth - gap - w));
+          },
+        }));
+      });
+    </script>
+    <script defer src="/static/js/vendor/alpinejs-3.15.9.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen {% block body_class %}{% endblock %}"
+      x-data="{
+        _toast: null,
+        showToast(t) {
+          this._toast = t;
+          clearTimeout(this._toastTimer);
+          this._toastTimer = setTimeout(() => { this._toast = null; }, 3500);
+        }
+      }"
+      {# .camel es lo que faltaba. El servidor manda
+         HX-Trigger: {"showToast": {...}} y {"userCreated": {...}}, y HTMX
+         dispara eventos con ESE nombre, en camelCase. Un atributo HTML no
+         puede llevar mayusculas, asi que @show-toast escuchaba «show-toast» y
+         el evento del servidor no lo tomaba nadie: los toast de /me/password,
+         /me/profile y el alta de usuario nunca se veian. Lo unico que se veia
+         era el $dispatch del cliente, puesto encima para tapar el sintoma. #}
+      @show-toast.camel.window="showToast($event.detail)"
+      @user-created.camel.window="showToast({ type: 'success', message: 'Usuario ' + ($event.detail?.email ?? '') + ' creado correctamente' })"
+>
+    <!-- Mobile topbar (hamburger) — only visible below md breakpoint -->
+    {# Aca y en la canasta de abajo la tinta va blanca: las dos superficies son
+       bg-onnix-black, y el acento ES ese negro — como tinta daria 1,00:1. Sobre
+       claro el acento si es tinta (text-onnix-accent-ink, 17,80:1), que es lo que
+       usa el resto del panel. Lo cubre tests/test_accent_contrast.py. #}
+    <div class="md:hidden fixed top-0 left-0 right-0 z-50 bg-onnix-black h-14 flex items-center px-4 shadow-md">
+        <button id="sidebar-open-btn" onclick="openSidebar()" aria-label="Abrir menu" class="tap-44 text-white p-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+        <img src="/static/img/onnix_logo.svg" alt="Onnix SA" decoding="async" class="h-7 w-auto ml-3">
+    </div>
+
+    <!-- Overlay (mobile) -->
+    <div id="sidebar-overlay"
+         class="hidden fixed inset-0 bg-black bg-opacity-60 z-30 md:hidden"
+         onclick="closeSidebar()"></div>
+
+    {# `shell-row` y `shell-column` no pintan nada: son el asidero para que una
+       vista pueda pedir que la pantalla NO scrollee y scrollee solo su panel.
+       Hoy lo usa Conversaciones — ver `.page-conversations` en custom.css. #}
+    <div class="shell-row flex min-h-screen pt-14 md:pt-0">
+        {% include "partials/sidebar.html" %}
+        <div class="shell-column flex-1 flex flex-col min-w-0">
+            {# El <h2> que vivia aca repetia el <h1> de cada vista y ademas venia
+               ANTES en el DOM, asi que un lector de pantalla anunciaba el nivel 2
+               antes del 1. Se fue: la cabecera se queda con la identidad. #}
+            <header role="banner" aria-label="Cabecera de página" class="bg-white shadow-sm border-b border-b-onnix-accent/20 px-4 md:px-6 py-3 flex items-center justify-end">
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-600">{{ user.display_name or user.name }}</span>
+                    <a href="/logout" class="tap-44 text-sm text-gray-500 hover:text-gray-800">Cerrar Sesión</a>
+                </div>
+            </header>
+            <main role="main" aria-label="Contenido principal" class="flex-1 p-4 md:p-6 main-content">
+                {# page_actions es el UNICO lugar donde puede haber un .btn-primary.
+                   Eso convierte «una sola accion primaria por vista» de una regla
+                   que alguien recuerda en un lugar que solo tiene lugar para una. #}
+                <div class="page-head">
+                    <h1 class="page-head-title">{% block page_title %}{% endblock %}</h1>
+                    <div class="page-head-actions">{% block page_actions %}{% endblock %}</div>
+                </div>
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {# UNA region aria-live en toda la aplicacion. Habia dos — esta y el
+       #toast-container de app.js — asi que el lector de pantalla anunciaba
+       todo dos veces. Y tres sistemas de toast: este, el de app.js y el que
+       leads.html armaba con createElementNS.
+
+       Dos variantes, no cuatro: neutro y error. Los colores viejos no
+       pasaban AA (blanco sobre #16a34a da 3,30:1 y sobre #d97706 da 3,19:1);
+       estos dan 15,88:1 y 6,57:1. #}
+    <div x-cloak
+         x-show="_toast"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-out duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-2"
+         class="toast-live"
+         :class="_toast?.type === 'error' ? 'toast-live--error' : 'toast-live--neutral'"
+         role="status"
+         aria-live="polite">
+        <span x-text="_toast?.message"></span>
+    </div>
+
+    <!-- M6.5 Link basket — barra flotante del acumulador de links públicos -->
+    <div id="link-basket-bar"
+         x-cloak
+         x-show="($store.basket?.count ?? 0) > 0"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-4"
+         class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-2 bg-onnix-black text-white rounded-full shadow-xl border border-onnix-accent/40 pl-5 pr-2 py-2"
+         role="region"
+         aria-label="Links públicos acumulados">
+        <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+        <span class="text-sm font-medium whitespace-nowrap"
+              x-text="($store.basket?.count ?? 0) === 1 ? '1 propiedad' : ($store.basket?.count ?? 0) + ' propiedades'"></span>
+        <span class="text-white/30 mx-1" aria-hidden="true">·</span>
+        <button type="button"
+                @click="$store.basket.copyAll().then(r => $dispatch('showToast', r.ok
+                    ? { type: 'success', message: r.count + (r.count === 1 ? ' link copiado' : ' links copiados') }
+                    : { type: 'error', message: 'No se pudo copiar' }))"
+                class="inline-flex items-center gap-1.5 bg-onnix-accent hover:bg-onnix-accent-dark text-white text-sm font-semibold px-3.5 py-1.5 rounded-full transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Copiar todas
+        </button>
+        <button type="button"
+                @click="$store.basket.clearAll(); $dispatch('showToast', { type: 'info', message: 'Lista de links vaciada' })"
+                class="text-white/60 hover:text-white text-sm px-2.5 py-1.5 rounded-full transition-colors"
+                aria-label="Vaciar lista de links">
+            Vaciar
+        </button>
+    </div>
+    {# htmx_error_policy.js (UMD → window.HtmxErrorPolicy) va ANTES de app.js:
+       los dos son NO deferred y corren en orden de documento, así que la
+       política existe cuando app.js registra sus handlers de error. #}
+    <script src="/static/js/htmx_error_policy.js"></script>
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+    <script>
+      // El menu cerrado en movil solo se corre con translateX(-100%), asi que
+      // seguia en el orden de tabulacion: con Tab se recorrian los ocho items
+      // de un menu que no esta en pantalla. `inert` lo saca de verdad — del
+      // foco, del lector y del hit-testing.
+      //
+      // Se sincroniza en vez de togglearse porque el estado depende de dos
+      // cosas: si esta abierto Y si estamos abajo del breakpoint. En escritorio
+      // el menu siempre esta visible y nunca debe quedar inerte.
+      var _mobile = window.matchMedia('(max-width: 767px)');
+      function syncSidebarInert() {
+        var s = document.getElementById('sidebar');
+        if (!s) { return; }
+        var oculto = _mobile.matches && !s.classList.contains('sidebar-open');
+        if (oculto) { s.setAttribute('inert', ''); } else { s.removeAttribute('inert'); }
+      }
+      _mobile.addEventListener('change', syncSidebarInert);
+      document.addEventListener('DOMContentLoaded', syncSidebarInert);
+
+      function openSidebar() {
+        var s = document.getElementById('sidebar');
+        var o = document.getElementById('sidebar-overlay');
+        s.classList.add('sidebar-open');
+        o.classList.remove('hidden');
+        o.offsetHeight;
+        o.classList.add('overlay-visible');
+        syncSidebarInert();
+      }
+      function closeSidebar() {
+        var s = document.getElementById('sidebar');
+        var o = document.getElementById('sidebar-overlay');
+        s.classList.remove('sidebar-open');
+        o.classList.remove('overlay-visible');
+        setTimeout(function() { o.classList.add('hidden'); }, 250);
+        syncSidebarInert();
+        // El boton que lo abrio es donde el foco tiene que volver: sin esto
+        // queda en un elemento que acaba de volverse inerte y el navegador lo
+        // manda al <body>, o sea al principio de la pagina.
+        var abrir = document.getElementById('sidebar-open-btn');
+        if (abrir && _mobile.matches) { abrir.focus(); }
+      }
+    </script>
+</body>
+</html>

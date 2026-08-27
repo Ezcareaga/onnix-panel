@@ -1,0 +1,143 @@
+{# Los estilos que las dos paginas publicas tienen identicos.
+
+   La ficha y el listado se escribieron por separado y terminaron con el mismo
+   preambulo copiado: las dos caras de Outfit byte a byte iguales, once tokens
+   con el mismo nombre y el mismo valor, el reset, la base de `html` y `body`, y
+   el header con su wordmark. Son ~100 lineas por template.
+
+   Que ya habia costado tenerlo dos veces: el comentario de `.wordmark` decia
+   una cosa en la ficha y otra —recortada— en el listado, o sea que el porque
+   de A7 solo estaba completo en un lado. Y un test de `@font-face` se
+   conformaba con que UNA de las dos caras fuera variable, porque miraba la
+   pagina que le tocara.
+
+   Lo que NO entra aca, a proposito: `--max-w` (960 en la ficha, 1180 en el
+   listado), `--border-lb` y los dos verdes de WhatsApp (solo la ficha) y
+   `--border-control` (solo el listado). Cada template los declara despues, en
+   su propio `:root`, y la segunda declaracion de un custom property gana.
+
+   Va inline y no como archivo servido: sacarlo a un `.css` agrega una request
+   bloqueante antes de pintar, que es justo lo que el portal evita.
+
+   Decision de Ez del 2026-08-23 (docs/audit/DECISIONES_PENDIENTES.md, la 10).
+   La misma decision dice que con la landing NO se comparte archivo: comparte
+   los valores pero no el vocabulario, y eso lo vigila
+   `tests/test_tokens_publicos.py`. #}
+    <style>
+        /* Outfit self-hosteada, la misma que ya sirven el panel
+           (static/css/custom.css:17) y la landing. Antes de esto el portal
+           pedia Cormorant Garamond + Outfit al CDN de Google: 313,3 KB
+           declarados, 168,3 KB bajados, 33 @font-face y dos origenes de
+           terceros bloqueando el render — con 94,5 KB de Outfit que eran
+           duplicado exacto de este archivo de 32,2 KB, que ya es variable
+           100-900. Tres caras de Cormorant se pedian y no se usaban. */
+        @font-face {
+            font-family: 'Outfit';
+            font-style: normal;
+            font-weight: 100 900;
+            font-display: swap;
+            src: url('/static/fonts/outfit-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC,
+                           U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+                           U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                           U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        @font-face {
+            font-family: 'Outfit';
+            font-style: normal;
+            font-weight: 100 900;
+            font-display: swap;
+            src: url('/static/fonts/outfit-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+                           U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                           U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+                           U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+    </style>
+    <style>
+        /* ------------------------------------------------------------------ */
+        /* Reset & base                                                        */
+        /* ------------------------------------------------------------------ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:          #0A0A0A;
+            --surface-1:   #141414;
+            --surface-2:   #1A1A1A;
+            --border:      #2A2A2A;
+            --accent:        #FFFFFF;
+            --accent-hover:  #E5E5E3;
+            --accent-press:  #C9C9C6;
+            --text:        #F5F0E8;
+            --text-sec:    #9A9A9A;
+            --sans:        'Outfit', system-ui, sans-serif;
+            --radius:      4px;
+        }
+
+        /* D15 — el header es sticky y mide 56px: sin scroll-padding, un salto a
+           un ancla deja el objetivo tapado abajo del header (WCAG 2.4.11). */
+        html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        img { display: block; max-width: 100%; }
+
+        /* ------------------------------------------------------------------ */
+        /* Header                                                              */
+        /* ------------------------------------------------------------------ */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: color-mix(in srgb, var(--bg) 92%, transparent);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            padding: 0 1.25rem;
+            /* A2 — con `height` fijo, a 200% de texto el wordmark mide 112,6px
+               y el header lo recortaba: el ancho de scroll se iba a 473px en un
+               viewport de 390 (WCAG 1.4.4 / 1.4.10). Con min-height el header
+               crece con el texto en vez de cortarlo. */
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .wordmark {
+            /* A7 — medía 170x28,2px. Es el unico link al home de la vista, y
+               ui.md pide 44x44. El inline-flex + min-height agranda el area
+               tactil sin mover el texto ni el alto del header. */
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            font-family: var(--sans);
+            font-weight: 400;
+            font-size: 1.1rem;
+            letter-spacing: 0.08em;
+            /* Sin versalitas: `ui.md` pide sentence case, y el criterio del
+               benchmark es que uppercase vale para etiquetas de 10-12px con
+               letter-spacing. Esto mide 17,6px — no es una etiqueta. */
+            color: var(--accent);
+        }
+
+        .wordmark span {
+            font-weight: 300;
+            color: var(--text-sec);
+        }
+    </style>

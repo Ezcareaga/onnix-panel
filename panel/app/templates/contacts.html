@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}Base de Clientes — Onnix{% endblock %}
+{% block page_title %}Base de clientes{% endblock %}
+
+{# TODO(carril G): el boton «Agregar contacto» deberia estar en page_actions,
+   pero depende de `createOpen` del x-data que envuelve todo el content. Mover
+   el x-data al <body> o pasar a un <dialog> nativo lo destraba. #}
+{% block content %}
+{% from "partials/empty_state.html" import vacio %}
+<div x-data="{
+  createOpen: false,
+  selectedIds: [],
+  bulkStatus: '',
+  bulkResult: '',
+  get allPageIds() {
+    return Array.from(document.querySelectorAll('.contact-row-check')).map(el => parseInt(el.value));
+  },
+  get pageSelected() {
+    const ids = this.allPageIds;
+    return ids.length > 0 && ids.every(id => this.selectedIds.includes(id));
+  },
+  togglePage() {
+    const ids = this.allPageIds;
+    if (this.pageSelected) {
+      this.selectedIds = this.selectedIds.filter(id => !ids.includes(id));
+    } else {
+      ids.forEach(id => { if (!this.selectedIds.includes(id)) this.selectedIds.push(id); });
+    }
+  },
+  toggleOne(id) {
+    const idx = this.selectedIds.indexOf(id);
+    if (idx === -1) this.selectedIds.push(id);
+    else this.selectedIds.splice(idx, 1);
+  },
+  clearSelection() { this.selectedIds = []; this.bulkResult = ''; },
+}"
+hx-on:contacts-table-refresh="window.location.reload()"
+>
+
+<div class="flex items-center justify-end gap-3 mb-4">
+    <span class="text-sm text-gray-500">{{ total }} total</span>
+    <button @click="createOpen = true"
+        class="tap-44 bg-onnix-accent text-white px-4 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark flex items-center gap-1">
+        <span class="text-lg leading-none">+</span> Agregar contacto
+    </button>
+</div>
+
+<!-- Filtros -->
+<form method="GET" class="flex flex-wrap gap-2 mb-4">
+    <input type="text" name="search" value="{{ search or '' }}"
+        aria-label="Buscar contactos por nombre, teléfono o email"
+        placeholder="Buscar nombre, teléfono, email..."
+        class="tap-44-nativo flex-1 min-w-48 border rounded px-3 py-1.5 text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+    <select name="status" onchange="this.form.submit()" aria-label="Filtrar por estado"
+        class="tap-44-nativo border rounded px-2 py-1.5 text-sm bg-white">
+        <option value="">Todos los estados</option>
+        {% for s in filter_statuses %}
+        <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ badge_map.get(s, (None, s))[1] }}</option>
+        {% endfor %}
+    </select>
+    <select name="source" onchange="this.form.submit()" aria-label="Filtrar por fuente"
+        class="tap-44-nativo border rounded px-2 py-1.5 text-sm bg-white">
+        <option value="">Todas las fuentes</option>
+        <option value="whatsapp" {% if source_filter == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+        <option value="telegram" {% if source_filter == 'telegram' %}selected{% endif %}>Telegram</option>
+        <option value="infocasas" {% if source_filter == 'infocasas' %}selected{% endif %}>InfoCasas</option>
+        <option value="manual" {% if source_filter == 'manual' %}selected{% endif %}>Manual</option>
+        <option value="import:excel" {% if source_filter == 'import:excel' %}selected{% endif %}>Import</option>
+    </select>
+    <select name="phone" onchange="this.form.submit()" aria-label="Filtrar por teléfono"
+        class="tap-44-nativo border rounded px-2 py-1.5 text-sm bg-white">
+        <option value="">Todos los contactos</option>
+        <option value="with" {% if phone_filter == 'with' %}selected{% endif %}>Con teléfono</option>
+        <option value="without" {% if phone_filter == 'without' %}selected{% endif %}>Sin teléfono</option>
+    </select>
+    <button type="submit"
+        class="tap-44 bg-onnix-accent text-white px-3 py-1.5 rounded text-sm hover:bg-onnix-accent-dark">
+        Buscar
+    </button>
+    {% if status_filter or search or phone_filter or source_filter %}
+    <a href="/contacts" class="tap-44 px-3 py-1.5 text-sm border rounded hover:bg-gray-50">Limpiar</a>
+    {% endif %}
+    <a href="/contacts/export?{% if status_filter %}status={{ status_filter }}&{% endif %}{% if source_filter %}source={{ source_filter }}&{% endif %}{% if search %}search={{ search }}&{% endif %}{% if phone_filter %}phone={{ phone_filter }}{% endif %}"
+       class="tap-44 px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 text-gray-600"
+       title="Exportar contactos filtrados a CSV">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        CSV
+    </a>
+</form>
+
+<!-- Tabla -->
+<div class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto table-scroll-container">
+    <table class="tabla-card w-full text-sm md:min-w-[700px]">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+                <th class="px-3 py-3 w-8">
+                    {# El `<label>` es el area tactil, no el checkbox. Un
+                       `input` no renderiza `::after`, asi que `.tap-44` no le
+                       hace nada; y agrandar el dibujo de 13 a 44 seria otro
+                       diseno. El label envuelve al input, o sea que un toque en
+                       cualquier punto de sus 44x44 lo activa. #}
+                    <label class="tap-44 inline-flex">
+                        <input type="checkbox" class="rounded border-gray-300 text-onnix-accent-ink focus:ring-onnix-accent"
+                            :checked="pageSelected"
+                            @change="togglePage()"
+                            aria-label="Seleccionar todos los contactos de esta página"
+                            title="Seleccionar página">
+                    </label>
+                </th>
+                <th class="px-4 py-3 text-left">Nombre</th>
+                <th class="px-4 py-3 text-left">Teléfono</th>
+                <th class="px-4 py-3 text-left">Email</th>
+                <th class="px-4 py-3 text-left">Estado</th>
+                <th class="px-4 py-3 text-left">Fuente</th>
+                <th class="px-4 py-3 text-left">Propiedad</th>
+                <th class="px-4 py-3 text-left">Creado</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for c in contacts %}
+            <tr class="hover:bg-onnix-accent-wash {% if c.status == 'deleted' %}opacity-60{% endif %}">
+                <td class="px-3 py-2.5" @click.stop>
+                    {# Mismo caso que el checkbox de la cabecera: el target es
+                       el label, no el input de 13x13. #}
+                    <label class="tap-44 inline-flex">
+                        <input type="checkbox" class="contact-row-check rounded border-gray-300 text-onnix-accent-ink focus:ring-onnix-accent"
+                            aria-label="Seleccionar a {{ c.name or c.phone or 'este contacto' }}"
+                            :value="{{ c.id }}"
+                            :checked="selectedIds.includes({{ c.id }})"
+                            @change="toggleOne({{ c.id }})">
+                    </label>
+                </td>
+                <td data-label="Nombre" class="px-4 py-2.5 font-medium text-gray-800 cursor-pointer" onclick="window.location='/contacts/{{ c.id }}'">
+                    {{ c.name or 'Sin nombre' }}
+                    {% if c.baja_at %}
+                    {# text-red-700, no -600: es el mismo badge que la ficha
+                       (contacts_detail.html) y ahi ya iba en -700. Sobre
+                       bg-red-100, -600 da 3,95:1 y -700 da 5,30:1. #}
+                    <span class="ml-1 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full align-middle" title="Opt-out (baja {{ c.baja_at|pyt('%d/%m/%Y') }})">baja</span>
+                    {% endif %}
+                    {% if overdue_contacts is defined and c.id in overdue_contacts %}
+                    {# El unico punto rojo que queda en la fila. Mientras convivio con
+                       la temperatura, el mismo color decia "lead caliente" (bueno) y
+                       "recordatorio vencido" (malo). #}
+                    <span class="inline-block w-2 h-2 rounded-full bg-red-600 ml-1 align-middle" aria-hidden="true"></span>
+                    <span class="sr-only">Recordatorio vencido</span>{% endif %}
+                </td>
+                <td data-label="Teléfono" class="px-4 py-2.5 text-gray-500 cursor-pointer" onclick="window.location='/contacts/{{ c.id }}'">{{ c.phone or '-' }}</td>
+                <td data-label="Email" class="px-4 py-2.5 text-onnix-ink-400 text-xs truncate max-w-40 cursor-pointer" onclick="window.location='/contacts/{{ c.id }}'">{{ c.email or '-' }}</td>
+                <td data-label="Estado" class="px-4 py-2.5 cursor-pointer" onclick="window.location='/contacts/{{ c.id }}'">
+                    {% with badge_status=c.status %}{% include 'partials/status_badge.html' %}{% endwith %}
+                </td>
+                <td data-label="Fuente" class="px-4 py-2.5 cursor-pointer" onclick="window.location='/contacts/{{ c.id }}'">
+                    {# Esto reimplementaba source_badge.html inline y con otros
+                       colores: `manual` era morado aca y gris en el parcial. #}
+                    {% with badge_source=c.source %}{% include 'partials/source_badge.html' %}{% endwith %}
+                </td>
+                <td data-label="Propiedad" class="px-4 py-2.5 text-xs truncate max-w-36 cursor-pointer" onclick="window.location='/contacts/{{ c.id }}'">
+                    {% set ic_prop = infocasas_props_map.get(c.infocasas_ref) if c.source == 'infocasas' and c.infocasas_ref else None %}
+                    {% set prop = props_map.get(c.property_id) if c.property_id and not ic_prop else None %}
+                    {% if ic_prop and ic_prop.url %}
+                    <a href="{{ ic_prop.url }}" target="_blank" onclick="event.stopPropagation()"
+                       class="text-onnix-accent-ink hover:text-onnix-accent-dark hover:underline" title="{{ ic_prop.title }}">
+                        {{ ic_prop.title[:30] }}{{ '...' if ic_prop.title and ic_prop.title|length > 30 else '' }}
+                    </a>
+                    {% elif ic_prop %}
+                    <span class="text-onnix-ink-400" title="{{ ic_prop.title }}">{{ ic_prop.title[:30] if ic_prop.title else '—' }}</span>
+                    {% elif prop and prop.url %}
+                    <a href="{{ prop.url }}" target="_blank" onclick="event.stopPropagation()"
+                       class="text-onnix-accent-ink hover:text-onnix-accent-dark hover:underline" title="{{ prop.title }}">
+                        {{ prop.title[:30] }}{{ '...' if prop.title and prop.title|length > 30 else '' }}
+                    </a>
+                    {% elif prop %}
+                    <span class="text-onnix-ink-400" title="{{ prop.title }}">{{ prop.title[:30] if prop.title else '—' }}</span>
+                    {% else %}
+                    <span class="text-onnix-ink-400">—</span>
+                    {% endif %}
+                </td>
+                <td data-label="Creado" class="px-4 py-2.5 text-onnix-ink-400 text-xs cursor-pointer" onclick="window.location='/contacts/{{ c.id }}'">
+                    {{ c.created_at|pyt('%d/%m/%Y') if c.created_at else '-' }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="px-4">
+                    {{ vacio("No se encontraron contactos",
+                             "Ningún contacto coincide con los filtros de arriba."
+                                 if (search or status_filter or source_filter)
+                                 else "Todavía no hay contactos cargados.",
+                             href="/contacts", cta="Limpiar los filtros",
+                             superficie=false) }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Barra de acciones bulk (C1.3) -->
+<div x-show="selectedIds.length > 0" x-cloak x-transition
+     class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white border border-gray-200 rounded-xl shadow-xl px-4 py-3 flex items-center gap-3 min-w-[340px]">
+    <span class="text-sm text-gray-700 font-medium whitespace-nowrap" x-text="selectedIds.length + ' seleccionado' + (selectedIds.length !== 1 ? 's' : '')"></span>
+    <select x-model="bulkStatus" aria-label="Cambiar el estado de los contactos seleccionados"
+            class="border rounded px-2 py-1 text-sm bg-white focus:ring-onnix-accent focus:border-onnix-accent">
+        <option value="">— Cambiar estado —</option>
+        {% for s in filter_statuses %}
+        <option value="{{ s }}">{{ badge_map.get(s, (None, s))[1] }}</option>
+        {% endfor %}
+    </select>
+    <button type="button"
+        x-bind:disabled="!bulkStatus"
+        x-bind:class="bulkStatus ? 'bg-onnix-accent hover:bg-onnix-accent-dark text-white' : 'bg-gray-200 text-onnix-ink-400 cursor-not-allowed'"
+        class="px-3 py-1.5 rounded text-sm font-medium transition-colors"
+        @click="
+            if (!bulkStatus) return;
+            if (!confirm('¿Cambiar ' + selectedIds.length + ' contacto' + (selectedIds.length !== 1 ? 's' : '') + ' a «' + bulkStatus + '»?')) return;
+            const form = new FormData();
+            selectedIds.forEach(id => form.append('ids[]', id));
+            form.append('new_status', bulkStatus);
+            htmx.ajax('POST', '/contacts/bulk-status', {
+                values: Object.fromEntries(form),
+                target: '#bulk-result',
+                swap: 'innerHTML'
+            });
+        ">
+        Aplicar
+    </button>
+    <button type="button" @click="clearSelection()" class="text-onnix-ink-400 hover:text-gray-600 text-xs px-1">✕</button>
+</div>
+<div id="bulk-result" class="mt-2" x-show="bulkResult" x-html="bulkResult"></div>
+
+<!-- Paginación -->
+{% if total_pages > 1 %}
+<div class="flex justify-center items-center gap-2 mt-4">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if phone_filter %}&phone={{ phone_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}"
+        class="tap-44 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">← Anterior</a>
+    {% endif %}
+    <span class="text-sm text-gray-500">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if phone_filter %}&phone={{ phone_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}"
+        class="tap-44 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">Siguiente →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{# Modal: crear contacto.
+
+   <dialog> nativo. Da de arriba: focus trap, Escape, ::backdrop, y el resto
+   de la pagina inertizada mientras esta abierto — las cuatro cosas que el
+   audit marco y que antes no tenia ninguna.
+
+   Alpine sigue mandando el estado: x-effect llama showModal()/close() cuando
+   `createOpen` cambia, asi que los disparadores que ya existen
+   (`@click="createOpen = true"`) no se tocan. El camino inverso tambien: el
+   Escape del navegador cierra el <dialog> sin avisarle a Alpine, y por eso
+   `@close` devuelve la variable a false. Sin eso el modal no vuelve a abrir. #}
+<dialog id="create-contact-dialog"
+        x-effect="createOpen ? ($el.open || $el.showModal()) : ($el.open && $el.close())"
+        @close="createOpen = false"
+        @click.self="createOpen = false"
+        aria-labelledby="create-contact-title"
+        class="modal">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between px-6 py-4 border-b">
+            <h2 id="create-contact-title" class="text-lg font-semibold text-gray-800">Agregar contacto</h2>
+            <button @click="createOpen = false" aria-label="Cerrar" class="text-onnix-ink-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form hx-post="/contacts"
+              hx-target="#create-error"
+              hx-swap="innerHTML"
+              class="px-6 py-5 space-y-4">
+            <div id="create-error" aria-live="assertive"></div>
+
+            {% with form_mode='create', contact=None, phone_info=None %}
+            {% include 'partials/contact_form.html' %}
+            {% endwith %}
+
+            <div class="flex gap-3 pt-2">
+                <button type="submit"
+                    class="flex-1 bg-onnix-accent text-white py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark">
+                    Crear contacto
+                </button>
+                <button type="button" @click="createOpen = false"
+                    class="px-4 py-2 border rounded text-sm text-gray-600 hover:bg-gray-50">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+</div><!-- end x-data -->
+
+{% endblock %}

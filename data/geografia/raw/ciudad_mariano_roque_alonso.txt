@@ -1,0 +1,9 @@
+Fuente: https://es.wikipedia.org/wiki/Mariano_Roque_Alonso_(Paraguay)
+
+Párrafo relevante:
+"Limita al norte con Limpio en los lugares conocidos como Paso Ñandejára y estancia Surubi'y sobre el arroyo Itay, al sur con Asunción, al este con Luque y Limpio, sirviendo como divisoria con estas ciudades el arroyo Itay y al oeste con el río Paraguay."
+
+Vecinas extraídas (solo Dep. Central):
+- Limpio
+- Asunción
+- Luque

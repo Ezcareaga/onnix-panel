@@ -1,0 +1,70 @@
+{#
+  El composer del hilo — UNA sola definición para el render inicial y para el
+  swap OOB que lo repone después de cada envío.
+
+  Por qué existe este archivo: estaban duplicados. `conversation_thread.html`
+  traía el form con `hx-indicator`, `@htmx:beforeRequest` y el
+  `@submit.prevent` que chequea `submitting`; `reply_response.html` lo
+  reemplazaba entero por OOB **sin esos tres**. O sea: el primer mensaje estaba
+  protegido contra el doble envío y desde el segundo, no — en la pantalla que
+  le manda WhatsApp a gente real.
+
+  Dos plantillas para el mismo elemento no divergen "si alguien se descuida":
+  divergen siempre. Por eso el arreglo no es agregarle los atributos que le
+  faltaban a la copia, es que no haya copia.
+
+  `submitting` NO se declara acá: vive en el `x-data` del contenedor, que el
+  swap OOB no toca. Es a propósito — si viviera en el form, cada swap lo
+  reiniciaría y el estado de "enviando" se perdería a mitad del pedido.
+
+  Uso:
+    {% from "partials/reply_composer.html" import composer %}
+    {{ composer(conv_id) }}            → render inicial, adentro del x-data
+    {{ composer(conv_id, oob=true) }}  → respuesta del POST, se repone solo
+#}
+{% macro composer(conv_id, oob=false) -%}
+<form id="reply-form"{% if oob %} hx-swap-oob="true"{% endif %}
+      hx-post="/conversations/{{ conv_id }}/reply"
+      hx-target="#reply-status"
+      hx-swap="innerHTML"
+      hx-indicator="#reply-spinner"
+      @htmx:beforeRequest="submitting = true"
+      @submit.prevent="if (!submitting) { submitting = true; $el.dispatchEvent(new Event('htmx:submit', {bubbles:true})); htmx.trigger($el, 'submit'); }">
+    <div class="flex gap-2">
+        <textarea name="message" rows="1" aria-label="Escribir una respuesta"
+            class="composer-input flex-1"
+            placeholder="Escribí tu respuesta…"
+            required minlength="1" maxlength="4096"
+            {# M9 — Enter acá dispara `requestSubmit()`, que dispara el
+               `@submit.prevent` de arriba, que pone `submitting`: el textarea se
+               apagaba con su propio handler y el foco se caía al <body>.
+               `aria-disabled` lo deja enfocable, y `readonly` es lo que impide
+               escribir — `aria-disabled` solo no impide nada. El guard contra el
+               doble envío no depende de esto: vive en el `@submit.prevent` y en el
+               `disabled` duro del botón, que es `type="submit"` y no se toca. #}
+            :aria-disabled="submitting"
+            :readonly="submitting"
+            @keydown.enter="if (!$event.shiftKey && !submitting) { $event.preventDefault(); $el.closest('form').requestSubmit(); }"></textarea>
+        {# El estado deshabilitado va con token de color, nunca con opacidad
+           (ui.md), y se dice en palabras: el botón cambia a "Enviando…". #}
+        <button type="submit"
+            class="composer-send"
+            :disabled="submitting"
+            hx-disabled-elt="this">
+            <span x-show="!submitting" class="flex items-center gap-1.5">
+                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/>
+                </svg>
+                Enviar
+            </span>
+            {# `.htmx-spinner` es el spinner del sistema, y es el único que
+               sobrevive a `prefers-reduced-motion`: sin él el asesor no sabe
+               si el panel está trabajando. #}
+            <span x-show="submitting" x-cloak class="flex items-center gap-1.5">
+                <span class="htmx-spinner htmx-spinner-sm" aria-hidden="true"></span>
+                Enviando…
+            </span>
+        </button>
+    </div>
+</form>
+{%- endmacro %}

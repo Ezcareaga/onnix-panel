@@ -1,0 +1,77 @@
+{#
+  Formulario de alta de usuario, con el error al lado del campo que lo causo.
+
+  El patron viene de users_create_agent.html, que era el unico formulario del
+  panel que lo hacia bien y que estaba muerto: su GET redirige con 301 desde
+  hace fases. Se rescata aca, que es el alta que la administradora usa de verdad.
+
+  Antes el error de este formulario volvia dentro de users_table.html y se
+  swapeaba en #settings-users-table — o sea, DEBAJO del <dialog> abierto, que
+  inertiza el resto de la pagina. El usuario apretaba "Guardar", no pasaba
+  nada visible, y el mensaje estaba tapado por el modal.
+
+  Ahora users.py retarget-ea la respuesta de error a este mismo form
+  (HX-Retarget + HX-Reswap: outerHTML), asi que el 422 se pinta donde el
+  usuario esta mirando. El camino de exito no cambia: sigue devolviendo la
+  tabla al #settings-users-table.
+
+  Contexto: `errors` (dict campo -> mensaje) y `form` (valores tipeados).
+  Los dos opcionales: en el alta limpia no vienen.
+#}
+{% set errors = errors | default({}) %}
+{% set form = form | default({}) %}
+
+{# errors/form van por parametro: un macro no deberia depender de que el
+   contexto del include tenga un nombre suelto. #}
+{% macro campo(errors, form, nombre, etiqueta, tipo='text', requerido=false, placeholder='', autocomplete='', extra='') %}
+{%- set err = errors.get(nombre) -%}
+<label class="block text-xs text-gray-500 mb-1" for="nu-{{ nombre }}">
+    {{ etiqueta }}{% if requerido %} <span class="text-red-500" aria-hidden="true">*</span>{% endif %}
+</label>
+<input id="nu-{{ nombre }}" name="{{ nombre }}" type="{{ tipo }}"
+       value="{{ form.get(nombre, '') }}"
+       {% if requerido %}required{% endif %}
+       {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+       {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+       {% if err %}aria-invalid="true" aria-describedby="nu-{{ nombre }}-error"{% endif %}
+       {{ extra | safe }}
+       class="w-full border {% if err %}border-red-500{% else %}border-gray-300{% endif %} rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+{% if err %}
+<p id="nu-{{ nombre }}-error" class="text-xs text-red-600 mt-1">{{ err }}</p>
+{% endif %}
+{% endmacro %}
+
+<form id="create-user-form"
+      hx-post="/users"
+      hx-target="#settings-users-table"
+      hx-swap="innerHTML"
+      {# El toast lo manda users.py con HX-Trigger userCreated, y trae el email.
+         El $dispatch de aca decia otro texto para el mismo acto. #}
+      @htmx:after-request="if ($event.detail.successful) { $el.reset(); showModal = false; }"
+      class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+        <div>{{ campo(errors, form, 'name', 'Nombre', requerido=true) }}</div>
+        <div>{{ campo(errors, form, 'display_name', 'Nombre visible (opcional)', placeholder='Ej: la administradora') }}</div>
+    </div>
+    <div>{{ campo(errors, form, 'email', 'Email', tipo='email', requerido=true) }}</div>
+    <div>{{ campo(errors, form, 'phone', 'Teléfono (opcional)', tipo='tel', placeholder='+595981234567') }}</div>
+    <div>{{ campo(errors, form, 'password', 'Contraseña', tipo='password', requerido=true,
+                  placeholder='Mínimo 12 caracteres', autocomplete='new-password',
+                  extra='minlength="12"') }}</div>
+    <div>
+        <label class="block text-xs text-gray-500 mb-1" for="nu-role">Rol</label>
+        <select id="nu-role" name="role"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent">
+            {% set rol = form.get('role', 'agent') %}
+            <option value="agent" {% if rol == 'agent' %}selected{% endif %}>Asesor (puede ver leads y clientes)</option>
+            <option value="admin" {% if rol == 'admin' %}selected{% endif %}>Administrador (acceso total al panel)</option>
+            <option value="user" {% if rol == 'user' %}selected{% endif %}>Usuario (acceso básico)</option>
+        </select>
+    </div>
+    <div class="flex justify-end gap-3 pt-2">
+        <button type="button" @click="showModal = false"
+                class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">Cancelar</button>
+        <button type="submit"
+                class="bg-onnix-accent text-white px-5 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark transition-colors">Guardar</button>
+    </div>
+</form>

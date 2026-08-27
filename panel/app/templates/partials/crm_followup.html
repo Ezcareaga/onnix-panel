@@ -1,0 +1,183 @@
+{% from "partials/empty_state.html" import vacio %}
+{# Carril G — notas y recordatorios en un solo carril cronologico.
+
+   Eran dos cards con el mismo esqueleto (encabezado + boton que despliega
+   un form + lista con borde izquierdo), y la de recordatorios ademas traia
+   su propio id="reminders-list" adentro de otro id="reminders-list" del
+   detalle: dos nodos con el mismo id, y HTMX swapeando el de afuera.
+
+   Ahora hay un solo id (#followup-list, declarado en contacts_detail.html)
+   y una sola lista, ordenada por fecha: arriba lo que viene (recordatorio
+   pendiente), abajo lo que paso. `followup` lo arma _followup_ctx en
+   routes/contacts.py. #}
+<div x-data="{ adding: null }">
+    <div class="flex items-center justify-between gap-2 mb-3">
+        <h2 class="font-semibold text-gray-700">
+            Seguimiento{% if followup %} ({{ followup|length }}){% endif %}
+        </h2>
+        <div class="flex items-center gap-1">
+            <button type="button"
+                @click="adding = adding === 'nota' ? null : 'nota'; $nextTick(() => adding && $el.closest('div[x-data]').querySelector('textarea')?.focus())"
+                class="min-h-11 px-2.5 whitespace-nowrap text-xs text-onnix-accent-ink hover:text-onnix-accent-dark font-medium transition-colors"
+                x-text="adding === 'nota' ? 'Cancelar' : '+ Nota'"></button>
+            <button type="button"
+                @click="adding = adding === 'recordatorio' ? null : 'recordatorio'; $nextTick(() => adding && $el.closest('div[x-data]').querySelector('input[name=note]')?.focus())"
+                class="min-h-11 px-2.5 whitespace-nowrap text-xs text-onnix-accent-ink hover:text-onnix-accent-dark font-medium transition-colors"
+                x-text="adding === 'recordatorio' ? 'Cancelar' : '+ Recordatorio'"></button>
+        </div>
+    </div>
+
+    <!-- Alta de nota -->
+    <div x-show="adding === 'nota'" x-cloak class="mb-4">
+        <form hx-post="/contacts/{{ contact_id }}/notes"
+              hx-target="#followup-list"
+              hx-swap="innerHTML"
+              hx-on::after-request="if(event.detail.successful) adding = null">
+            <textarea name="content" rows="3" required aria-label="Nueva nota sobre este contacto"
+                placeholder="Escribí una nota sobre este contacto..."
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-onnix-accent resize-none"></textarea>
+            <div class="flex gap-2 mt-2">
+                <button type="submit"
+                    class="min-h-11 px-3 bg-onnix-accent text-white text-xs font-medium rounded-md hover:bg-onnix-accent-dark transition-colors">
+                    Guardar
+                </button>
+                <button type="button" @click="adding = null"
+                    class="min-h-11 px-3 text-gray-500 text-xs rounded-md hover:bg-gray-100 transition-colors">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Alta de recordatorio -->
+    <div x-show="adding === 'recordatorio'" x-cloak class="mb-4">
+        <form hx-post="/contacts/{{ contact_id }}/reminders"
+              hx-target="#followup-list"
+              hx-swap="innerHTML"
+              hx-on::after-request="if(event.detail.successful) adding = null">
+            <div class="space-y-2">
+                <div>
+                    <label class="text-xs text-onnix-ink-400 block mb-0.5" for="followup-due-at">Fecha y hora</label>
+                    <input type="datetime-local" name="due_at" id="followup-due-at" required
+                        class="w-full min-h-11 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-onnix-accent">
+                </div>
+                <div>
+                    <label class="text-xs text-onnix-ink-400 block mb-0.5" for="followup-note">Nota</label>
+                    <input type="text" name="note" id="followup-note" maxlength="500" required
+                        placeholder="Ej: Llamar para confirmar visita..."
+                        class="w-full min-h-11 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-onnix-accent">
+                </div>
+            </div>
+            <div class="flex gap-2 mt-2">
+                <button type="submit"
+                    class="min-h-11 px-3 bg-onnix-accent text-white text-xs font-medium rounded-md hover:bg-onnix-accent-dark transition-colors">
+                    Guardar
+                </button>
+                <button type="button" @click="adding = null"
+                    class="min-h-11 px-3 text-gray-500 text-xs rounded-md hover:bg-gray-100 transition-colors">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if followup %}
+    <ol class="space-y-3">
+        {% for item in followup %}
+        {% if item.kind == 'nota' %}
+        {% set note = item.obj %}
+        <li class="border-l-2 border-onnix-accent pl-3 py-1"
+            x-data='{ "editing": false, "content": {{ note.content | tojson }} }'>
+            <div x-show="!editing">
+                <div class="flex items-center gap-2 text-xs text-onnix-ink-400 mb-0.5">
+                    <span class="font-medium text-onnix-ink-600">Nota</span>
+                    <span>{{ note.created_at|pyt('%d/%m/%Y %H:%M') if note.created_at else '' }}</span>
+                </div>
+                <p class="text-sm text-gray-700 whitespace-pre-wrap" x-text="content"></p>
+                <div class="flex justify-end gap-1 mt-0.5">
+                    <button type="button" @click="editing = true"
+                        class="min-h-11 px-2 text-xs text-onnix-ink-600 hover:text-onnix-ink-900 transition-colors">Editar</button>
+                    <button type="button"
+                        onclick="if(confirm('¿Eliminar esta nota?')) htmx.trigger(this, 'confirmed')"
+                        hx-delete="/contacts/{{ contact_id }}/notes/{{ note.id }}"
+                        hx-trigger="confirmed"
+                        hx-target="#followup-list"
+                        hx-swap="innerHTML"
+                        class="min-h-11 px-2 text-xs text-red-600 hover:text-red-700 transition-colors">Eliminar</button>
+                </div>
+            </div>
+            <div x-show="editing" x-cloak>
+                <form hx-patch="/contacts/{{ contact_id }}/notes/{{ note.id }}"
+                      hx-target="#followup-list"
+                      hx-swap="innerHTML"
+                      hx-on::after-request="editing = false">
+                    <textarea name="content" rows="3" x-model="content" required aria-label="Editar la nota"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-onnix-accent resize-none"></textarea>
+                    <div class="flex gap-2 mt-2">
+                        <button type="submit"
+                            class="min-h-11 px-3 bg-onnix-accent text-white text-xs font-medium rounded-md hover:bg-onnix-accent-dark transition-colors">
+                            Guardar
+                        </button>
+                        <button type="button" @click='editing = false; content = {{ note.content | tojson }}'
+                            class="min-h-11 px-3 text-gray-500 text-xs rounded-md hover:bg-gray-100 transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </li>
+        {% else %}
+        {% set r = item.obj %}
+        {% set is_done = r.done_at is not none %}
+        {% set is_overdue = r.id in overdue_ids %}
+        <li class="border-l-2 {% if is_done %}border-onnix-rule{% elif is_overdue %}border-red-600{% else %}border-onnix-accent{% endif %} pl-3 py-1">
+            <div class="flex items-start justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap text-xs">
+                        <span class="font-medium text-onnix-ink-600">Recordatorio</span>
+                        <span class="{% if is_done %}text-onnix-ink-400 line-through{% elif is_overdue %}text-red-700 font-medium{% else %}text-gray-700{% endif %}">
+                            {{ r.due_at|pyt('%d/%m/%Y %H:%M') if r.due_at else '—' }}
+                        </span>
+                        {% if is_overdue %}
+                        <span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">Vencido</span>
+                        {% elif is_done %}
+                        <span class="text-xs bg-gray-100 text-onnix-ink-600 px-1.5 py-0.5 rounded-full">Hecho {{ r.done_at|pyt('%d/%m/%Y') if r.done_at else '' }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm {% if is_done %}text-onnix-ink-400{% else %}text-gray-700{% endif %} mt-0.5" title="{{ r.note }}">
+                        {{ r.note }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    {% if not is_done %}
+                    <button type="button"
+                        hx-post="/contacts/{{ contact_id }}/reminders/{{ r.id }}/done"
+                        hx-target="#followup-list"
+                        hx-swap="innerHTML"
+                        title="Marcar como hecho"
+                        class="min-h-11 px-2 text-xs text-green-700 hover:text-green-800 transition-colors rounded hover:bg-green-50">
+                        Hecho
+                    </button>
+                    {% endif %}
+                    <button type="button"
+                        onclick="if(confirm('¿Eliminar este recordatorio?')) htmx.trigger(this, 'confirmed')"
+                        hx-delete="/contacts/{{ contact_id }}/reminders/{{ r.id }}"
+                        hx-trigger="confirmed"
+                        hx-target="#followup-list"
+                        hx-swap="innerHTML"
+                        title="Eliminar recordatorio"
+                        class="min-h-11 px-2 text-xs text-red-600 hover:text-red-700 transition-colors rounded hover:bg-red-50">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ol>
+    {% else %}
+    {{ vacio("Sin notas ni recordatorios",
+             "Anotá lo que hablaste o poné un recordatorio para no perder el hilo.",
+             superficie=false) }}
+    {% endif %}
+</div>

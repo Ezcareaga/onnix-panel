@@ -1,0 +1,33 @@
+{% from "partials/empty_state.html" import vacio %}
+{% for lead in leads %}
+    {% include "partials/lead_item.html" %}
+{% endfor %}
+{% if not leads %}
+<tr>
+    <td data-col="empty" colspan="7" class="px-4">
+        {# Sin superficie: ya está adentro de la tabla. Al asesor no se le
+           ofrece acción porque no hay ninguna que pueda tomar — asignarse un
+           lead no es suyo—, y `ui.md` pide estados vacíos con acción, no
+           botones que no hacen nada. #}
+        {% if user.role == 'agent' %}
+            {{ vacio("No tenés leads asignados",
+                     "Cuando te asignen uno, va a aparecer acá.",
+                     superficie=false) }}
+        {% elif tab == 'interesados' %}
+            {{ vacio("No hay leads interesados sin asignar",
+                     "Los interesados que ya tienen asesor están en «Asignados».",
+                     href="/leads?tab=asignados", cta="Ver los asignados",
+                     superficie=false) }}
+        {% elif tab == 'asignados' %}
+            {{ vacio("No hay leads asignados todavía",
+                     "Asignás un lead desde su fila en la cola de trabajo.",
+                     href="/leads", cta="Ir a la cola", superficie=false) }}
+        {% else %}
+            {{ vacio("No hay leads pendientes",
+                     "Todo lo que entró ya está atendido.",
+                     href="/contacts", cta="Ver todos los contactos",
+                     superficie=false) }}
+        {% endif %}
+    </td>
+</tr>
+{% endif %}

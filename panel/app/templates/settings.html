@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block title %}Configuración — Onnix{% endblock %}
+{% block page_title %}Configuración{% endblock %}
+
+{% block content %}
+{# Tab shell — Alpine.js reads ?tab= from URL on init; SSE reload preserves it via location.reload() #}
+<div x-data="{
+    activeTab: (new URLSearchParams(window.location.search).get('tab')) || '{% if user.role == "admin" %}bot{% else %}mi-cuenta{% endif %}',
+    setTab(tab) {
+        this.activeTab = tab;
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState({}, '', url);
+    }
+}">
+
+    <!-- Tab Bar -->
+    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+        {% set tabs = [
+            ('bot',       'Configuración del Bot'),
+            ('accesos',   'Accesos'),
+            ('usuarios',  'Usuarios'),
+            ('mi-cuenta', 'Mi Cuenta'),
+        ] %}
+        {% for tab_key, tab_label in tabs %}
+            {% if tab_key == 'mi-cuenta' or user.role == 'admin' %}
+            <button @click="setTab('{{ tab_key }}')"
+                    :class="activeTab === '{{ tab_key }}'
+                        ? 'border-b-2 border-onnix-accent text-onnix-accent-ink font-semibold'
+                        : 'text-gray-500 hover:text-gray-800'"
+                    class="px-5 py-3 text-sm whitespace-nowrap transition-colors focus:outline-none">
+                {{ tab_label }}
+            </button>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- ── Tab: bot ─────────────────────────────────────────────────── -->
+    {% if user.role == 'admin' %}
+    <div x-show="activeTab === 'bot'" x-cloak>
+        <div id="settings-content" aria-live="polite">
+            {% include "partials/settings_form.html" %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Tab: accesos ─────────────────────────────────────────────── -->
+    {% if user.role == 'admin' %}
+    <div x-show="activeTab === 'accesos'" x-cloak>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">Auditoría de Login</h2>
+            <a href="/settings?tab=accesos" class="text-sm text-gray-500 hover:text-gray-800">Limpiar filtros</a>
+        </div>
+        {% set audit_base_url = '/settings' %}
+        {% with %}
+            {% set audit_base_url = '/settings' %}
+            {% include "partials/auth_audit_table.html" %}
+        {% endwith %}
+    </div>
+    {% endif %}
+
+    <!-- ── Tab: usuarios ────────────────────────────────────────────── -->
+    {% if user.role == 'admin' %}
+    <div x-show="activeTab === 'usuarios'" x-cloak
+         x-data="{ showModal: false }">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-800">Usuarios</h2>
+            <button @click="showModal = true"
+                    class="bg-onnix-accent text-white px-4 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark transition-colors">
+                + Crear usuario
+            </button>
+        </div>
+
+        <!-- Modal crear usuario -->
+        {# <dialog> nativo, el patron que abrio contacts.html. El navegador
+           pone el focus trap, el Escape, el ::backdrop y la inertizacion del
+           resto de la pagina. Alpine sigue mandando el estado via x-effect
+           para no tocar los disparadores que ya existen, y `@close` devuelve
+           la variable a false: el Escape cierra el <dialog> sin avisarle a
+           Alpine, y sin eso el modal no vuelve a abrir. #}
+        <dialog x-effect="showModal ? ($el.open || $el.showModal()) : ($el.open && $el.close())"
+                @close="showModal = false"
+                @click.self="showModal = false"
+                aria-labelledby="create-user-title"
+                class="modal">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 id="create-user-title" class="text-lg font-semibold text-gray-800">Crear usuario</h3>
+                    <button @click="showModal = false"
+                            class="text-onnix-ink-400 hover:text-gray-600 transition-colors" aria-label="Cerrar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                {% include "partials/user_create_form.html" %}
+            </div>
+        </dialog>
+
+        <!-- Filtros usuarios -->
+        <form method="get" action="/settings" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+            <input type="hidden" name="tab" value="usuarios">
+            <input type="text" name="user_search" value="{{ user_filters.search if user_filters is defined else '' }}"
+                   aria-label="Buscar usuarios por nombre o email"
+                   placeholder="Buscar por nombre o email..."
+                   autocomplete="off"
+                   class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+            <select name="user_role" aria-label="Filtrar por rol"
+                    class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent">
+                <option value="">Todos los roles</option>
+                <option value="admin" {% if user_filters is defined and user_filters.role == 'admin' %}selected{% endif %}>Administrador</option>
+                <option value="agent" {% if user_filters is defined and user_filters.role == 'agent' %}selected{% endif %}>Asesor</option>
+                <option value="user"  {% if user_filters is defined and user_filters.role == 'user'  %}selected{% endif %}>Usuario</option>
+            </select>
+            <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                <input type="checkbox" name="user_active" value="0"
+                       {% if user_filters is defined and not user_filters.active %}checked{% endif %}
+                       class="rounded border-gray-300 text-onnix-accent-ink focus:ring-onnix-accent">
+                Mostrar inactivos
+            </label>
+            <button type="submit"
+                    class="bg-onnix-accent text-white px-4 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark transition-colors">
+                Filtrar
+            </button>
+        </form>
+
+        <!-- Tabla de usuarios -->
+        <div class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto table-scroll-container">
+            <table class="tabla-card w-full text-sm md:min-w-[500px]">
+                <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Nombre</th>
+                        <th class="px-4 py-3 text-left">Email</th>
+                        <th class="px-4 py-3 text-left">Rol</th>
+                        <th class="px-4 py-3 text-left">Estado</th>
+                        <th class="px-4 py-3 text-left">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="settings-users-table">
+                    {% include "partials/users_table.html" %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Tab: mi-cuenta ───────────────────────────────────────────── -->
+    <div x-show="activeTab === 'mi-cuenta'" x-cloak>
+        <div class="max-w-md">
+            <h2 class="text-lg font-semibold text-gray-800 mb-6">Mi Cuenta</h2>
+
+            <!-- B3: Datos de cuenta (read-only) -->
+            <div class="bg-white rounded-lg shadow p-5 mb-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-onnix-accent flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ user.display_name or user.name }}</p>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-onnix-accent/10 text-onnix-accent-ink">{{ user.role }}</span>
+                    </div>
+                </div>
+                <div class="border-t border-gray-100 pt-4 space-y-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="text-xs text-gray-500 shrink-0 pt-0.5">Email</span>
+                        <div class="text-right">
+                            <span class="text-sm text-gray-700">{{ user.email }}</span>
+                            <p class="text-xs text-onnix-ink-400 mt-0.5">Para cambiar tu email, contactá al admin</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs text-gray-500 shrink-0">Rol / Permisos</span>
+                        <span class="text-sm text-gray-700 capitalize">{{ user.role }}</span>
+                    </div>
+                    {% if user.created_at %}
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs text-gray-500 shrink-0">Miembro desde</span>
+                        <span class="text-sm text-gray-700">{{ user.created_at.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- B1+B2: Editar perfil (phone + display_name) -->
+            <div class="bg-white rounded-lg shadow p-5 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Editar perfil</h3>
+                <form id="edit-profile-form"
+                      hx-post="/me/profile"
+                      hx-target="#profile-feedback"
+                      hx-swap="innerHTML"
+                      hx-confirm="¿Aplicar cambios a tu perfil?"
+                      {# me.py:135 ya manda este toast por HX-Trigger. #}
+                      class="space-y-4">
+                    <div>
+                        <label for="perfil-display-name" class="block text-xs text-gray-500 mb-1">Nombre para mostrar</label>
+                        <input name="display_name" id="perfil-display-name" type="text" maxlength="200"
+                               value="{{ user.display_name or '' }}"
+                               placeholder="Ej: la administradora V."
+                               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+                        <p class="text-xs text-onnix-ink-400 mt-1">Usado en el bot y el link de WhatsApp. Dejar vacío para usar el nombre de cuenta.</p>
+                    </div>
+                    <div>
+                        <label for="perfil-phone" class="block text-xs text-gray-500 mb-1">Teléfono</label>
+                        <input name="phone" id="perfil-phone" type="tel"
+                               value="{{ user.phone or '' }}"
+                               placeholder="Ej: 0981123456 o +595981123456"
+                               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+                        <p class="text-xs text-onnix-ink-400 mt-1">Formato PY (0981…) o E.164 (+595…). Vacío para quitar.</p>
+                    </div>
+                    <div id="profile-feedback"></div>
+                    <div class="flex justify-end">
+                        <button type="submit"
+                                class="bg-onnix-accent text-white px-5 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark transition-colors">
+                            Aplicar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Cambiar contraseña -->
+            <div class="bg-white rounded-lg shadow p-5">
+                <h3 class="font-semibold text-gray-800 mb-4">Cambiar contraseña</h3>
+                <form id="change-pw-form"
+                      hx-post="/me/password"
+                      hx-target="#pw-feedback"
+                      hx-swap="innerHTML"
+                      {# me.py:86 ya manda este toast por HX-Trigger. #}
+                      @htmx:after-request="if ($event.detail.successful) { $el.reset(); }"
+                      class="space-y-4">
+                    <div>
+                        <label for="perfil-current-password" class="block text-xs text-gray-500 mb-1">Contraseña actual</label>
+                        <input name="current_password" id="perfil-current-password" type="password" required
+                               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+                    </div>
+                    <div>
+                        <label for="perfil-new-password" class="block text-xs text-gray-500 mb-1">Nueva contraseña</label>
+                        <input name="new_password" id="perfil-new-password" type="password" required minlength="12"
+                               placeholder="Mínimo 12 caracteres"
+                               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+                    </div>
+                    <div>
+                        <label for="perfil-confirm-password" class="block text-xs text-gray-500 mb-1">Confirmar contraseña</label>
+                        <input name="confirm_password" id="perfil-confirm-password" type="password" required minlength="12"
+                               placeholder="Repetir nueva contraseña"
+                               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
+                    </div>
+                    <div id="pw-feedback"></div>
+                    <div class="flex justify-end">
+                        <button type="submit"
+                                class="bg-onnix-accent text-white px-5 py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark transition-colors">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div><!-- end x-data tabs -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var evtSource = new EventSource('/events');
+    var debounceTimer = null;
+
+    evtSource.addEventListener('settings.changed', function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () {
+            // location.reload() preserves ?tab= automatically
+            window.location.reload();
+        }, 300);
+    });
+
+    window.addEventListener('beforeunload', function () {
+        evtSource.close();
+        clearTimeout(debounceTimer);
+    });
+}());
+</script>
+{% endblock %}

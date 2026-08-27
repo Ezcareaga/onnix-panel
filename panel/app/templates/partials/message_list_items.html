@@ -1,0 +1,29 @@
+{% from "partials/_message_macro.html" import render_message %}
+
+{# ====================================================================== #}
+{# RENDER MESSAGES                                                        #}
+{# ====================================================================== #}
+{% set ns = namespace(last_date=none) %}
+{% for msg in messages %}
+
+    {% set msg_date = msg.created_at.date() if msg.created_at else none %}
+    {% if msg_date and msg_date != ns.last_date %}
+    <div id="date-{{ msg_date }}" class="flex items-center gap-3 py-2">
+        <div class="flex-1 h-px bg-gray-200"></div>
+        <span class="text-[11px] text-onnix-ink-400 font-medium px-2 whitespace-nowrap">
+            {{ msg.created_at|pyt('%d %b %Y') }}
+        </span>
+        <div class="flex-1 h-px bg-gray-200"></div>
+    </div>
+    {% set ns.last_date = msg_date %}
+    {% endif %}
+
+    {{ render_message(msg, properties_map) }}
+
+{% endfor %}
+
+{% if not messages %}
+<div class="text-center text-onnix-ink-400 text-sm py-8">
+    No hay mensajes en esta conversación
+</div>
+{% endif %}

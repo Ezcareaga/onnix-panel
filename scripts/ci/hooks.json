@@ -1,0 +1,77 @@
+[
+  {
+    "id": "onnix",
+    "execute-command": "/usr/local/bin/onnix-enqueue",
+    "command-working-directory": "/var/lib/onnixci",
+    "response-message": "encolado",
+    "include-command-output-in-response": true,
+    "trigger-rule-mismatch-http-response-code": 403,
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "ref"
+      },
+      {
+        "source": "payload",
+        "name": "after"
+      },
+      {
+        "source": "payload",
+        "name": "pusher.name"
+      },
+      {
+        "source": "header",
+        "name": "X-GitHub-Delivery"
+      }
+    ],
+    "trigger-rule": {
+      "and": [
+        {
+          "match": {
+            "type": "payload-hmac-sha256",
+            "secret": "__SECRETO_VA_ACA__",
+            "parameter": {
+              "source": "header",
+              "name": "X-Hub-Signature-256"
+            }
+          }
+        },
+        {
+          "match": {
+            "type": "value",
+            "value": "push",
+            "parameter": {
+              "source": "header",
+              "name": "X-GitHub-Event"
+            }
+          }
+        },
+        {
+          "or": [
+            {
+              "match": {
+                "type": "value",
+                "value": "refs/heads/dev",
+                "parameter": {
+                  "source": "payload",
+                  "name": "ref"
+                }
+              }
+            },
+            {
+              "match": {
+                "type": "value",
+                "value": "refs/heads/master",
+                "parameter": {
+                  "source": "payload",
+                  "name": "ref"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "include-command-output-in-response-on-error": true
+  }
+]

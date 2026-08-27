@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0A0A0A">
+    <title>Propiedad no disponible — Onnix SA</title>
+    <style>
+        /* N2 — este archivo quedo fuera de la tanda 2 y la CSP cerrada lo
+           rompio: pedia Cormorant al CDN de Google, el navegador lo bloqueaba
+           con style-src-elem y la pagina caia a Georgia. Es lo que ve el
+           visitante cuando una ficha se cae, o sea la peor pagina para verse
+           de otra tipografia que el resto del portal.
+
+           El host NO se nombra a proposito: este comentario viaja al cliente y
+           un grep sobre el HTML servido lo confunde con un <link> vivo. Paso
+           al verificar el deploy de b0911fa. */
+        @font-face {
+            font-family: 'Outfit';
+            font-style: normal;
+            font-weight: 100 900;
+            font-display: swap;
+            src: url('/static/fonts/outfit-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC,
+                           U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+                           U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                           U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        @font-face {
+            font-family: 'Outfit';
+            font-style: normal;
+            font-weight: 100 900;
+            font-display: swap;
+            src: url('/static/fonts/outfit-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+                           U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                           U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+                           U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg:        #0A0A0A;
+            --surface:   #141414;
+            --border:    #2A2A2A;
+            --accent:      #FFFFFF;
+            --text:      #F5F0E8;
+            --text-sec:  #9A9A9A;
+            --sans:      'Outfit', system-ui, sans-serif;
+        }
+        html, body {
+            height: 100%;
+            -webkit-font-smoothing: antialiased;
+        }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem 1.25rem;
+            text-align: center;
+        }
+        .monogram {
+            font-family: var(--sans);
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 0.22em;
+            color: var(--accent);
+            opacity: 0.55;
+            margin-bottom: 0.5rem;
+        }
+        .divider {
+            width: 48px;
+            height: 1px;
+            background: var(--accent);
+            opacity: 0.3;
+            margin: 1.25rem auto;
+        }
+        h1 {
+            font-family: var(--sans);
+            font-size: 1.55rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.01em;
+        }
+        p {
+            font-family: var(--sans);
+            font-size: 0.88rem;
+            font-weight: 300;
+            color: var(--text-sec);
+            max-width: 340px;
+            line-height: 1.65;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            display: inline-block;
+            font-family: var(--sans);
+            font-size: 0.82rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 3px;
+            padding: 0.65rem 1.6rem;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-top: 1px solid var(--border);
+            padding: 0.85rem 1.25rem;
+            text-align: center;
+        }
+        footer p {
+            font-family: var(--sans);
+            font-size: 0.72rem;
+            color: var(--text-sec);
+            margin: 0;
+        }
+        .footer-brand {
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: var(--accent);
+            letter-spacing: 0.06em;
+        }
+    </style>
+</head>
+<body>
+    <div class="monogram" aria-hidden="true">Onnix</div>
+    <div class="divider" aria-hidden="true"></div>
+    <h1>Propiedad no disponible</h1>
+    <p>Esta propiedad ya no está disponible o el enlace es incorrecto. Nuestros asesores pueden ayudarle a encontrar la propiedad ideal.</p>
+    <a class="btn" href="https://onnix.com.py">Volver al inicio</a>
+    <footer>
+        <p class="footer-brand">Onnix SA</p>
+        <p>Asunción, Paraguay</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,162 @@
+# Onnix SA — Docker Compose
+# Compose Specification (no version key — Docker Compose v5+)
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: onnix-postgres
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    shm_size: 256m
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=2GB"
+      - "-c"
+      - "effective_cache_size=4GB"
+      - "-c"
+      - "work_mem=8MB"
+      - "-c"
+      - "maintenance_work_mem=256MB"
+      - "-c"
+      - "wal_buffers=64MB"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "max_worker_processes=6"
+      - "-c"
+      - "max_parallel_workers_per_gather=2"
+      - "-c"
+      - "max_parallel_workers=4"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "min_wal_size=1GB"
+      - "-c"
+      - "max_wal_size=4GB"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # n8n: DESACTIVADO 2026-04-04 — bot migrado a FastAPI v7
+  # Workflows activos: infocasas_poll, cold_lead_check (6 total)
+  # Para reactivar: descomentar este bloque y reconstruir
+  #n8n:
+  #  image: docker.n8n.io/n8nio/n8n
+  #  container_name: onnix-n8n
+  #  restart: unless-stopped
+  #  env_file: .env
+  #  environment:
+  #    - DB_TYPE=${DB_TYPE}
+  #    - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST}
+  #    - DB_POSTGRESDB_PORT=${DB_POSTGRESDB_PORT}
+  #    - DB_POSTGRESDB_DATABASE=${DB_POSTGRESDB_DATABASE}
+  #    - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER}
+  #    - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD}
+  #    - DB_POSTGRESDB_SCHEMA=${DB_POSTGRESDB_SCHEMA}
+  #    - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+  #    - N8N_HOST=${N8N_HOST}
+  #    - N8N_PROTOCOL=${N8N_PROTOCOL}
+  #    - WEBHOOK_URL=${WEBHOOK_URL}
+  #    - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+  #    - EXECUTIONS_DATA_PRUNE=${EXECUTIONS_DATA_PRUNE}
+  #    - EXECUTIONS_DATA_MAX_AGE=${EXECUTIONS_DATA_MAX_AGE}
+  #    - NODE_ENV=${NODE_ENV}
+  #    - NODE_FUNCTION_ALLOW_BUILTIN=fs,child_process,path,https,http,url
+  #    - N8N_DIAGNOSTICS_ENABLED=false
+  #    - GEMINI_API_KEY=${GEMINI_API_KEY}
+  #  volumes:
+  #    - n8n_data:/home/node/.n8n
+  #    - /home/onnix/scripts:/home/onnix/scripts:ro
+  #    - /home/onnix/data:/home/onnix/data:ro
+  #    - /home/onnix/logs:/home/onnix/logs
+  #  ports:
+  #    - "127.0.0.1:5678:5678"
+  #  depends_on:
+  #    postgres:
+  #      condition: service_healthy
+  #  logging:
+  #    driver: json-file
+  #    options:
+  #      max-size: "10m"
+  #      max-file: "3"
+
+  panel:
+    build:
+      context: ./panel
+      dockerfile: Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
+    # Tag por SHA para poder volver atrás sin buildear:
+    #   ONNIX_IMAGE_TAG=<sha12> docker compose -p onnix up -d --no-deps panel
+    image: onnix-panel:${ONNIX_IMAGE_TAG:-latest}
+    container_name: onnix-panel
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=onnix-postgres
+      - TZ=America/Asuncion
+      - GEO_DATA_PATH=/app/data/geografia
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER}
+      # Producción: activa fail-closed de verificación de firma de webhooks (E3).
+      # Staging usa ENVIRONMENT=development en docker-compose.dev.yml.
+      # NOTA: TRUST_PROXY_HEADERS (C1, IP real tras Cloudflare) NO se setea aquí a
+      # propósito — debe activarse en .env JUNTO con el deploy de nginx realip
+      # (docs/ops/NGINX_LOGIN_HARDENING.md), si no la IP de CF-Connecting-IP es
+      # spoofeable hasta que nginx restrinja la confianza a rangos de Cloudflare.
+      - ENVIRONMENT=production
+    volumes:
+      - ./data/geografia:/app/data/geografia:ro
+      - /home/onnix/logs/prod:/app/logs
+      - /home/onnix/images:/app/images:ro
+      # Los MP4 de los tutoriales: estado del servidor, no codigo.
+      # Se sirven en /videos (panel/app/main.py) y los lista /tutoriales.
+      - /home/onnix/tutoriales:/app/tutoriales:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: "3.0"
+        reservations:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:
+  n8n_data:

@@ -1,0 +1,4 @@
+{# Cascara: el markup vive en `bot_toggle.html`. Este archivo existe porque
+   lo renderiza `conversations.py:266` y lo incluye el hilo. #}
+{% from "partials/bot_toggle.html" import bot_switch %}
+{{ bot_switch('conversacion', is_bot_active, conv_id) }}

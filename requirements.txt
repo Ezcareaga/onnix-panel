@@ -1,0 +1,45 @@
+# Onnix SA — Python Dependencies
+# Install: pip install -r requirements.txt
+
+# Database
+psycopg[binary,pool]>=3.3.0,<4.0
+
+# HTTP client
+httpx>=0.28.0,<1.0
+
+# Phone normalization
+phonenumbers>=9.0.0,<10.0
+
+# Data validation
+pydantic>=2.12.0,<3.0
+
+# Fuzzy string matching (dedup)
+rapidfuzz>=3.14.0,<4.0
+
+# Environment variable loading
+python-dotenv>=1.0.0,<2.0
+
+# HTML parsing (scrapers)
+beautifulsoup4>=4.12.0,<5.0
+lxml>=5.0.0,<6.0
+
+# Descarga de fotos (scripts/download_images.py): baja en paralelo y convierte a
+# WebP 800px. Faltaban acá — el script fallaba con ImportError sobre una install
+# limpia. Detectado 2026-08-17 al reconstruir el VPS.
+aiohttp>=3.14.0,<4.0
+Pillow>=12.0.0,<13.0
+
+# Testing
+pytest>=9.0.0,<10.0
+pytest-cov>=6.0.0,<7.0
+pytest-xdist>=3.6.0,<4.0   # -n N: una base por worker (ver tests/conftest.py)
+# scripts/run_suite.sh corre SIEMPRE con --timeout=120 y panel/pytest.ini
+# declara timeout=60. Sin este paquete el comando canonico de la suite muere
+# con «unrecognized arguments: --timeout», que se lee como entorno roto y no
+# como dependencia faltante — la regla 2 del CLAUDE.md.
+pytest-timeout>=2.4.0,<3.0
+
+# Pisos de seguridad para dependencias transitivas (auditoría 2026-07-20).
+# Fuerzan la versión mínima SIN vulnerabilidades conocidas (osv.dev).
+idna>=3.15          # GHSA idna <3.15 (CVSS 6.9) — transitivo vía httpx
+pygments>=2.20.0    # Pygments <2.20 (CVSS 6.8) — transitivo vía pytest

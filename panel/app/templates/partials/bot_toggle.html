@@ -1,0 +1,54 @@
+{#
+  El switch del bot — UNA definición para los dos alcances.
+
+  Estaban en dos plantillas casi idénticas, `wa_mode_toggle.html` (global) y
+  `conversation_bot_toggle.html` (una conversación), y ya habían divergido en
+  lo único que importaba: **el de una conversación pedía confirmación y el
+  global no**. O sea que el reversible y acotado confirmaba, y el que apaga el
+  bot para TODOS los clientes de WhatsApp se disparaba de un click.
+
+  La confirmación ahora es del macro, no de quien lo llama: no se puede agregar
+  un alcance nuevo y olvidarla.
+
+  Uso:
+    {% from "partials/bot_toggle.html" import bot_switch %}
+    {{ bot_switch('global', is_auto) }}
+    {{ bot_switch('conversacion', is_bot_active, conv_id) }}
+#}
+{% macro bot_switch(alcance, activo, conv_id=None) -%}
+{%- if alcance == 'global' -%}
+    {% set id = 'wa-mode-toggle' %}
+    {% set url = '/conversations/wa-mode-toggle' %}
+    {% set estado = 'Auto' if activo else 'Manual' %}
+    {# El aviso nombra el alcance real. "¿Estás seguro?" no dice nada; lo que
+       el asesor necesita saber es a cuánta gente le cambia el comportamiento. #}
+    {% set confirmar = 'Vas a pasar el bot a MANUAL para TODAS las conversaciones de WhatsApp: deja de responder solo y contestan ustedes. ¿Seguimos?'
+                       if activo else
+                       'Vas a pasar el bot a AUTO para TODAS las conversaciones de WhatsApp: vuelve a responder solo. ¿Seguimos?' %}
+    {% set etiqueta = 'Pasar el bot a manual en todas las conversaciones' if activo else 'Pasar el bot a auto en todas las conversaciones' %}
+{%- else -%}
+    {% set id = 'conv-bot-toggle-' ~ conv_id %}
+    {% set url = '/conversations/' ~ conv_id ~ '/bot-toggle' %}
+    {% set estado = 'On' if activo else 'Off' %}
+    {% set confirmar = '¿Desactivar el bot para esta conversación? Deja de responder automáticamente.'
+                       if activo else
+                       '¿Reactivar el bot en esta conversación? Vuelve a responder al instante y se limpia el cooldown.' %}
+    {% set etiqueta = 'Pausar el bot en esta conversación' if activo else 'Activar el bot en esta conversación' %}
+{%- endif -%}
+<div id="{{ id }}" aria-live="polite" class="flex items-center gap-2">
+    {# El estado se dice en palabras, siempre. El color no lo dice: lo dicen la
+       palabra y la posición de la perilla. #}
+    <span class="bot-switch__label">Bot: {{ estado }}</span>
+    <button hx-post="{{ url }}"
+            hx-target="#{{ id }}"
+            hx-swap="outerHTML"
+            hx-confirm="{{ confirmar }}"
+            type="button"
+            aria-label="{{ etiqueta }}"
+            role="switch"
+            aria-checked="{{ 'true' if activo else 'false' }}"
+            class="tap-44 bot-switch {{ 'bot-switch--on' if activo else 'bot-switch--off' }}">
+        <span class="bot-switch__knob"></span>
+    </button>
+</div>
+{%- endmacro %}

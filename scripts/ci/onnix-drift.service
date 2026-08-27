@@ -1,0 +1,8 @@
+[Unit]
+Description=Chequea que producción corra el commit de master
+
+[Service]
+Type=oneshot
+User=onnix
+Group=onnix
+ExecStart=/usr/local/bin/onnix-drift

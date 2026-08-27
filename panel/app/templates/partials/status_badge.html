@@ -1,0 +1,7 @@
+{# Uso: {% with badge_status='interested' %}{% include 'partials/status_badge.html' %}{% endwith %}
+
+   El mapa vive UNA sola vez, en app/constants.py, y llega al contexto como
+   `badge_map`. Antes este archivo tenia su propia copia en Jinja y el
+   comentario pedia sincronizarlas a mano; se desincronizaron igual. #}
+{% set _b = badge_map.get(badge_status, ('quiet', badge_status)) %}
+<span class="badge badge--{{ _b[0] }}">{{ _b[1] }}</span>

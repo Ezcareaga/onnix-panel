@@ -1,0 +1,28 @@
+{# LEADS-04 / carril G — una sola lista de leads. Hasta acá había dos:
+   la tabla (≥768px) y un bloque de cards (<768px) con su propia plantilla,
+   que no podía cambiar el estado, ni asignar asesor, ni abrir la
+   conversación. Ahora se renderiza una vez y la tabla se reacomoda como
+   card abajo de 768px (.leads-table en custom.css).
+
+   Sigue siendo la unidad de swap del refresh SSE: GET /leads con
+   HX-Request lo devuelve completo y refreshTable() lo swapea (innerHTML)
+   dentro de #leads-table-container. #}
+
+<div id="leads-list" class="bg-white rounded-lg shadow overflow-x-auto">
+    <table class="leads-table w-full text-sm md:min-w-[700px]">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+                <th class="px-4 py-3 text-left">Nombre</th>
+                <th class="px-4 py-3 text-left">Teléfono</th>
+                <th class="px-4 py-3 text-left">Fuente</th>
+                <th class="px-4 py-3 text-left">Estado</th>
+                <th class="px-4 py-3 text-left">Interés</th>
+                <th class="px-4 py-3 text-left">Último contacto</th>
+                <th class="px-4 py-3 text-left">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="leads-table-body" class="divide-y divide-gray-100">
+            {% include "partials/leads_table.html" %}
+        </tbody>
+    </table>
+</div>

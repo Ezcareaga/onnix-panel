@@ -1,0 +1,166 @@
+{
+  "metadata": {
+    "fuente": "luque.gov.py, civis.com.py, Wikipedia ES",
+    "fecha_extraccion": "2026-03-15",
+    "tipo": "barrios_luque",
+    "ciudad": "Luque",
+    "notas": "28 barrios oficiales + 3 adicionales. Adyacencias inferidas por zona geográfica. Solo 2.7% de propiedades tienen datos de barrio en BD."
+  },
+  "barrios": {
+    "primer barrio": {
+      "display": "Primer Barrio",
+      "vecinos": ["segundo barrio", "cuarto barrio", "campo grande", "yka'a"],
+      "fuente": "inferida_geografica"
+    },
+    "segundo barrio": {
+      "display": "Segundo Barrio",
+      "vecinos": ["primer barrio", "tercer barrio", "yka'a", "maka'i", "cuarto barrio"],
+      "fuente": "inferida_geografica"
+    },
+    "tercer barrio": {
+      "display": "Tercer Barrio",
+      "vecinos": ["segundo barrio", "cuarto barrio", "hugua de seda", "ycua dure"],
+      "fuente": "inferida_geografica"
+    },
+    "cuarto barrio": {
+      "display": "Cuarto Barrio",
+      "vecinos": ["primer barrio", "tercer barrio", "segundo barrio"],
+      "fuente": "inferida_geografica"
+    },
+    "campo grande": {
+      "display": "Campo Grande",
+      "vecinos": ["primer barrio", "loma merlo", "zarate isla", "nu guasu", "ykua karanda'y", "nueva asuncion"],
+      "fuente": "inferida_geografica"
+    },
+    "laurelty": {
+      "display": "Laurelty",
+      "vecinos": ["hugua de seda", "isla bogado", "canada san rafael", "marin ka'aguy"],
+      "fuente": "inferida_geografica"
+    },
+    "hugua de seda": {
+      "display": "Hugua de Seda",
+      "vecinos": ["tercer barrio", "laurelty", "palma loma"],
+      "fuente": "inferida_geografica"
+    },
+    "isla bogado": {
+      "display": "Isla Bogado",
+      "vecinos": ["laurelty", "canada san rafael"],
+      "fuente": "inferida_geografica"
+    },
+    "canada san rafael": {
+      "display": "Cañada San Rafael",
+      "vecinos": ["laurelty", "isla bogado", "costa sosa"],
+      "fuente": "inferida_geografica"
+    },
+    "costa sosa": {
+      "display": "Costa Sosa",
+      "vecinos": ["canada san rafael"],
+      "fuente": "sin_datos"
+    },
+    "ycua dure": {
+      "display": "Ycuá Duré",
+      "vecinos": ["tercer barrio", "marambure"],
+      "fuente": "inferida_geografica"
+    },
+    "maka'i": {
+      "display": "Maka'i",
+      "vecinos": ["segundo barrio", "marambure"],
+      "fuente": "inferida_geografica"
+    },
+    "yaguarete cora": {
+      "display": "Yaguareté Corá",
+      "vecinos": ["tarumandy", "canada garay"],
+      "fuente": "inferida_geografica"
+    },
+    "marambure": {
+      "display": "Marambure",
+      "vecinos": ["maka'i", "ycua dure", "mora kue", "ykua karanda'y"],
+      "fuente": "inferida_geografica"
+    },
+    "loma merlo": {
+      "display": "Loma Merlo",
+      "vecinos": ["campo grande", "zarate isla", "nu guasu"],
+      "fuente": "inferida_geografica"
+    },
+    "zarate isla": {
+      "display": "Zárate Isla",
+      "vecinos": ["campo grande", "loma merlo", "nu guasu"],
+      "fuente": "inferida_geografica"
+    },
+    "ykua karanda'y": {
+      "display": "Ykuá Karanda'y",
+      "vecinos": ["campo grande", "marambure", "mora kue"],
+      "fuente": "inferida_geografica"
+    },
+    "yka'a": {
+      "display": "Yká'a",
+      "vecinos": ["primer barrio", "segundo barrio"],
+      "fuente": "inferida_geografica"
+    },
+    "mora kue": {
+      "display": "Mora Kue",
+      "vecinos": ["marambure", "ykua karanda'y"],
+      "fuente": "inferida_geografica"
+    },
+    "canada garay": {
+      "display": "Cañada Garay",
+      "vecinos": ["yaguarete cora", "tarumandy", "yukyry"],
+      "fuente": "inferida_geografica"
+    },
+    "yukyry": {
+      "display": "Yukyry",
+      "vecinos": ["canada garay", "ita angu'a"],
+      "fuente": "inferida_geografica"
+    },
+    "ita angu'a": {
+      "display": "Itá Angu'a",
+      "vecinos": ["yukyry", "tarumandy"],
+      "fuente": "inferida_geografica"
+    },
+    "marin ka'aguy": {
+      "display": "Marín Ka'aguy",
+      "vecinos": ["laurelty"],
+      "fuente": "sin_datos"
+    },
+    "tarumandy": {
+      "display": "Tarumandy",
+      "vecinos": ["canada garay", "yaguarete cora", "ita angu'a", "itapuami i", "tarumandy del rio salado"],
+      "fuente": "inferida_geografica"
+    },
+    "itapuami i": {
+      "display": "Itapuamí I",
+      "vecinos": ["tarumandy", "itapuami ii"],
+      "fuente": "inferida_geografica"
+    },
+    "itapuami ii": {
+      "display": "Itapuamí II",
+      "vecinos": ["itapuami i"],
+      "fuente": "inferida_geografica"
+    },
+    "tarumandy del rio salado": {
+      "display": "Tarumandy del Río Salado",
+      "vecinos": ["tarumandy"],
+      "fuente": "sin_datos"
+    },
+    "nueva asuncion": {
+      "display": "Nueva Asunción",
+      "vecinos": ["campo grande"],
+      "fuente": "sin_datos"
+    },
+    "nu guasu": {
+      "display": "Nu Guasú",
+      "vecinos": ["campo grande", "loma merlo", "zarate isla"],
+      "fuente": "inferida_geografica"
+    },
+    "bella vista": {
+      "display": "Bella Vista",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "palma loma": {
+      "display": "Palma Loma",
+      "vecinos": ["hugua de seda"],
+      "fuente": "inferida_geografica"
+    }
+  }
+}

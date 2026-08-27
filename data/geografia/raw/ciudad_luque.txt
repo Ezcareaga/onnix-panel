@@ -1,0 +1,13 @@
+Fuente: https://es.wikipedia.org/wiki/Luque_(Paraguay)
+
+Párrafo relevante:
+"Limita al norte con Limpio, al sur con San Lorenzo y Capiatá, al este con Areguá y el Lago Ypacaraí, al oeste con Asunción, al sureste con Areguá, al suroeste con Fernando de la Mora y al noroeste con Mariano Roque Alonso."
+
+Vecinas extraídas (solo Dep. Central):
+- Limpio
+- San Lorenzo
+- Capiatá
+- Areguá
+- Asunción
+- Fernando de la Mora
+- Mariano Roque Alonso

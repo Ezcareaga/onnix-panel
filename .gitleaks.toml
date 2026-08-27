@@ -1,0 +1,34 @@
+# Allowlist de gitleaks para ESTE repo.
+#
+# Va acá y no en ~/.config/gitleaks/gitleaks.toml a propósito: son falsos
+# positivos de este proyecto, y meterlos en el config global apagaría la misma
+# regla en todos los demás repos. El hook de pre-commit de este repo (ver
+# .git/hooks/pre-commit) usa este archivo cuando existe y cae al global cuando no.
+#
+# Cada entrada de acá abajo se revisó a mano. Si agregás una, dejá el porqué:
+# un allowlist sin explicación es un secreto real esperando pasar.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Falsos positivos verificados al forkear el panel (2026-08-27)"
+
+regexes = [
+  # Claves de `bot_settings`, no secretos. Son los nombres con los que el panel
+  # guarda el ContentSid de cada plantilla de WhatsApp; el SID real vive en la
+  # base. La regla generic-api-key las agarra por la forma (palabra larga con
+  # guiones bajos y un sufijo de versión).
+  '''wa_tpl_[a-z0-9_]+''',
+  '''onnix_(followup|ic|send|post)_[a-z0-9_]+''',
+  '''followup_\d+h_enabled''',
+
+  # SID de Twilio inventado en tests/bot/test_send_reenviado_welcome.py. Un SID
+  # de verdad tiene 32 hex después del prefijo; éste dice "sid123".
+  '''HX[a-z_]+sid\d+''',
+
+  # Contraseñas de fixture de la suite. No abren nada: la base de test se crea
+  # y se destruye por corrida (scripts/make_test_db.sh).
+  '''hardening(_new)?\d+''',
+  '''pytest-sensitive-jwt-marker-[a-z0-9]+''',
+]

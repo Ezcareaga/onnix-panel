@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Leads — Onnix{% endblock %}
+{% block page_title %}{% if user.role == 'admin' %}Leads{% else %}Mis asignados{% endif %}{% endblock %}
+
+{% block page_actions %}
+{# LEADS-03 — el export lleva el tab activo + filtros (q/source/agent_id). #}
+<a href="/leads/export?tab={{ tab }}{{ filter_qs|safe }}"
+   title="Exportar los leads a Excel"
+   class="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
+          text-gray-700 bg-white border border-gray-200 rounded-lg
+          hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+          transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+    </svg>
+    Exportar
+</a>
+<span id="leads-sse-indicator"
+      title="Tiempo real desconectado"
+      class="inline-flex items-center gap-1 text-xs text-onnix-ink-400">
+    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+    <span>offline</span>
+</span>
+<span class="text-sm text-gray-500">{{ total }} total</span>
+{% endblock %}
+
+{% block content %}
+{# M6.1 Plan 111-03 — tabs (admin). Orden leads-workqueue:
+   Interesados → Nuevos (tab=leads, renombrado solo visualmente) →
+   Sin respuesta → Asignados. El param ?tab=leads NO cambia (URLs/export). #}
+{% if user.role == 'admin' %}
+<div class="flex overflow-x-auto border-b border-gray-200 mb-4">
+    <a href="/leads?tab=interesados{{ filter_qs|safe }}"
+       class="shrink-0 whitespace-nowrap px-4 min-h-11 text-sm font-medium -mb-px cursor-pointer flex items-center gap-2
+              {% if tab == 'interesados' %}border-b-2 border-gray-500 text-gray-700{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+        Interesados
+        {% if tab_counts.interesados is defined and tab_counts.interesados > 0 %}
+        <span id="badge-tab-interesados" class="bg-gray-500 text-white text-xs rounded-full px-2 py-0.5">{{ tab_counts.interesados }}</span>
+        {% else %}
+        <span id="badge-tab-interesados" class="hidden">0</span>
+        {% endif %}
+    </a>
+    <a href="/leads?tab=leads{{ filter_qs|safe }}"
+       class="shrink-0 whitespace-nowrap px-4 min-h-11 text-sm font-medium -mb-px cursor-pointer flex items-center gap-2
+              {% if tab == 'leads' %}border-b-2 border-onnix-accent text-onnix-accent-dark{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+        Nuevos
+        {% if tab_counts.leads is defined and tab_counts.leads > 0 %}
+        <span id="badge-tab-leads" class="bg-onnix-accent text-white text-xs rounded-full px-2 py-0.5">{{ tab_counts.leads }}</span>
+        {% else %}
+        <span id="badge-tab-leads" class="hidden">0</span>
+        {% endif %}
+    </a>
+    <a href="/leads?tab=sin_respuesta{{ filter_qs|safe }}"
+       class="shrink-0 whitespace-nowrap px-4 min-h-11 text-sm font-medium -mb-px cursor-pointer flex items-center gap-2
+              {% if tab == 'sin_respuesta' %}border-b-2 border-gray-500 text-gray-700{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+        Sin respuesta
+        {% if tab_counts.sin_respuesta is defined and tab_counts.sin_respuesta > 0 %}
+        <span id="badge-tab-sin-respuesta" class="bg-gray-500 text-white text-xs rounded-full px-2 py-0.5">{{ tab_counts.sin_respuesta }}</span>
+        {% else %}
+        <span id="badge-tab-sin-respuesta" class="hidden">0</span>
+        {% endif %}
+    </a>
+    <a href="/leads?tab=asignados{{ filter_qs|safe }}"
+       class="shrink-0 whitespace-nowrap px-4 min-h-11 text-sm font-medium -mb-px cursor-pointer flex items-center gap-2
+              {% if tab == 'asignados' %}border-b-2 border-gray-500 text-gray-700{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+        Asignados
+        {% if tab_counts.asignados is defined and tab_counts.asignados > 0 %}
+        <span id="badge-tab-asignados" class="bg-gray-500 text-white text-xs rounded-full px-2 py-0.5">{{ tab_counts.asignados }}</span>
+        {% else %}
+        <span id="badge-tab-asignados" class="hidden">0</span>
+        {% endif %}
+    </a>
+</div>
+{% endif %}
+
+<!-- LEADS-03 — barra de búsqueda + filtros (form GET clásico, preserva el tab) -->
+<form method="get" action="/leads"
+      class="flex flex-wrap items-center gap-2 mb-4 bg-white border border-gray-200 rounded-lg p-3">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <div class="relative flex-1 min-w-[200px] max-w-sm">
+        <svg class="w-4 h-4 text-onnix-ink-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/>
+        </svg>
+        <input type="text" name="q" value="{{ q or '' }}" maxlength="80"
+               placeholder="Nombre o teléfono…" aria-label="Buscar por nombre o teléfono"
+               class="tap-44-nativo w-full h-9 border border-gray-200 rounded-lg pl-9 pr-3 text-sm
+                      focus:ring-onnix-accent focus:border-onnix-accent">
+    </div>
+    <select name="source" aria-label="Filtrar por fuente"
+            class="tap-44-nativo h-9 border border-gray-200 rounded-lg px-2 text-sm bg-white
+                   focus:ring-onnix-accent focus:border-onnix-accent">
+        <option value="">Todas las fuentes</option>
+        <option value="whatsapp" {% if source == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+        <option value="telegram" {% if source == 'telegram' %}selected{% endif %}>Telegram</option>
+        <option value="infocasas" {% if source == 'infocasas' %}selected{% endif %}>InfoCasas</option>
+        <option value="vista_publica" {% if source == 'vista_publica' %}selected{% endif %}>Web</option>
+        <option value="manual" {% if source == 'manual' %}selected{% endif %}>Manual</option>
+        {# Sin opción Import: los import:excel están excluidos del universo de
+           Leads por diseño (_EXCLUDE_EXCEL) — filtrarlos daría siempre vacío. #}
+    </select>
+    {% if user.role == 'admin' %}
+    <select name="agent_id" aria-label="Filtrar por asesor"
+            class="tap-44-nativo h-9 border border-gray-200 rounded-lg px-2 text-sm bg-white
+                   focus:ring-onnix-accent focus:border-onnix-accent">
+        <option value="">Todos los asesores</option>
+        {% for u in assignable_users %}
+        <option value="{{ u.id }}" {% if agent_id == u.id %}selected{% endif %}>
+            {{ u.display_name or u.name or u.email }}
+        </option>
+        {% endfor %}
+    </select>
+    {% endif %}
+    <button type="submit"
+            class="tap-44 h-9 px-4 text-sm font-medium text-white bg-onnix-accent hover:bg-onnix-accent-dark
+                   rounded-lg transition-colors">
+        Filtrar
+    </button>
+    {% if q or source or agent_id %}
+    <a href="/leads?tab={{ tab }}"
+       class="tap-44 h-9 inline-flex items-center px-3 text-sm text-gray-500 hover:text-gray-700">
+        Limpiar
+    </a>
+    {% endif %}
+</form>
+
+<!-- LEADS-04 — tabla (desktop) + cards (mobile) en partials/leads_views.html.
+     data-* attrs store current filter state for SSE-driven re-fetches. -->
+<div id="leads-table-container"
+     data-tab="{{ tab }}"
+     data-page="{{ page }}"
+     data-q="{{ q or '' }}"
+     data-source="{{ source or '' }}"
+     data-agent-id="{{ agent_id if agent_id is not none else '' }}">
+    {% include "partials/leads_views.html" %}
+</div>
+
+<!-- Paginación -->
+{% if total_pages > 1 %}
+<div class="flex justify-center items-center gap-2 mt-4">
+    {% if page > 1 %}
+    <a href="?tab={{ tab }}&page={{ page - 1 }}{{ filter_qs|safe }}"
+        class="tap-44 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">← Anterior</a>
+    {% endif %}
+    <span class="text-sm text-gray-500">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="?tab={{ tab }}&page={{ page + 1 }}{{ filter_qs|safe }}"
+        class="tap-44 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">Siguiente →</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    'use strict';
+
+    var LEAD_EVENTS = ['lead.created', 'lead.status_changed', 'lead.agent_assigned'];
+    var debounceTimer = null;
+    var evtSource = null;
+
+    function setIndicatorOnline() {
+        var el = document.getElementById('leads-sse-indicator');
+        if (!el) return;
+        el.title = 'Tiempo real conectado';
+        el.className = 'inline-flex items-center gap-1 text-xs text-green-500';
+        el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span><span>online</span>';
+    }
+
+    function setIndicatorOffline() {
+        var el = document.getElementById('leads-sse-indicator');
+        if (!el) return;
+        el.title = 'Tiempo real desconectado';
+        el.className = 'inline-flex items-center gap-1 text-xs text-onnix-ink-400';
+        el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span><span>offline</span>';
+    }
+
+    // Tercer sistema de toast del panel, armado a mano con createElementNS.
+    // Ahora entra por la misma puerta que todo lo demas.
+    function showLeadToast(name) {
+        window.dispatchEvent(new CustomEvent('showToast', {
+            detail: { type: 'success', message: 'Lead nuevo: ' + name },
+        }));
+    }
+
+    function updateBadges() {
+        fetch('/leads/badges')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                updateBadge('badge-tab-leads',         data.leads,         'bg-onnix-accent');
+                updateBadge('badge-tab-interesados',   data.interesados,   'bg-gray-500');
+                updateBadge('badge-tab-sin-respuesta', data.sin_respuesta, 'bg-gray-500');
+                updateBadge('badge-tab-asignados',     data.asignados,     'bg-gray-500');
+            })
+            .catch(function () { /* silent — badges are non-critical */ });
+    }
+
+    function updateBadge(id, count, colorClass) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (count > 0) {
+            el.textContent = String(count);
+            el.className = colorClass + ' text-white text-xs rounded-full px-2 py-0.5';
+        } else {
+            el.textContent = '0';
+            el.className = 'hidden';
+        }
+    }
+
+    function refreshTable() {
+        var container = document.getElementById('leads-table-container');
+        if (!container) return;
+
+        var tab  = container.dataset.tab  || 'leads';
+        var page = container.dataset.page || '1';
+
+        var url = '/leads?tab=' + encodeURIComponent(tab) +
+                  '&page=' + encodeURIComponent(page);
+
+        // LEADS-03 — la re-carga SSE respeta los filtros activos.
+        if (container.dataset.q) {
+            url += '&q=' + encodeURIComponent(container.dataset.q);
+        }
+        if (container.dataset.source) {
+            url += '&source=' + encodeURIComponent(container.dataset.source);
+        }
+        if (container.dataset.agentId) {
+            url += '&agent_id=' + encodeURIComponent(container.dataset.agentId);
+        }
+
+        // LEADS-04 — el partial trae tabla + cards: swapear el contenedor
+        // completo mantiene ambas vistas (desktop/mobile) sincronizadas.
+        htmx.ajax('GET', url, {
+            target: '#leads-table-container',
+            swap: 'innerHTML',
+        });
+    }
+
+    function onLeadEvent(eventName, rawData) {
+        if (eventName === 'lead.created') {
+            var name = '';
+            try {
+                var data = JSON.parse(rawData);
+                name = data.name || data.contact_name || '';
+            } catch (_) {}
+            showLeadToast(name);
+        }
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () {
+            refreshTable();
+            updateBadges();
+        }, 500);
+    }
+
+    function connectSSE() {
+        if (evtSource) {
+            evtSource.close();
+        }
+        evtSource = new EventSource('/events');
+
+        evtSource.onopen = function () { setIndicatorOnline(); };
+        evtSource.onerror = function () { setIndicatorOffline(); };
+
+        LEAD_EVENTS.forEach(function (eventName) {
+            evtSource.addEventListener(eventName, function (e) {
+                onLeadEvent(eventName, e.data);
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', connectSSE);
+
+    window.addEventListener('beforeunload', function () {
+        if (evtSource) { evtSource.close(); evtSource = null; }
+        clearTimeout(debounceTimer);
+    });
+}());
+</script>
+{% endblock %}

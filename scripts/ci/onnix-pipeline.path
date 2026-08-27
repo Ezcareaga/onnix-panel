@@ -1,0 +1,13 @@
+[Unit]
+Description=Dispara el pipeline de Onnix cuando hay un job en la cola
+Documentation=file:///srv/onnix/work/.planning/CICD_PLAN.md
+
+[Path]
+# DirectoryNotEmpty y no PathChanged: el pipeline drena la cola borrando los
+# .job, así que si aparece uno nuevo durante la corrida, systemd vuelve a
+# disparar apenas termina. Coalescing gratis.
+DirectoryNotEmpty=/var/lib/onnixci/queue
+Unit=onnix-pipeline.service
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,332 @@
+{# ── Bot Health Stats partial ───────────────────────────────────────────────
+   Rendered both on full-page load (included by bot_health.html) and as an
+   HTMX partial (returned directly when HX-Request header is present).
+   Must NOT extend base.html.
+#}
+
+{# ── Snapshot timestamp header ──────────────────────────────────────────── #}
+<div class="flex items-center justify-between mb-5">
+    <div class="flex items-center gap-2 text-xs text-onnix-ink-400">
+        {# Refresh / clock icon #}
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-onnix-rule-strong" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Actualizado {{ snapshot.generated_at | pyt }}</span>
+    </div>
+    <button
+        hx-get="/stats/health?days={{ days }}"
+        hx-target="#health-root"
+        hx-swap="innerHTML"
+        class="flex items-center gap-1 px-3 py-1 text-xs text-gray-500 bg-white border border-gray-200 rounded hover:border-onnix-accent hover:text-onnix-accent-ink transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refrescar
+    </button>
+</div>
+
+{# ── Card grid (2 rows × 4 cols on desktop) ─────────────────────────────── #}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+{# ── Card 1: Conversaciones trabadas ────────────────────────────────────── #}
+{% set stuck = snapshot.stuck_conversations.count %}
+{% if stuck == 0 %}
+  {% set stuck_color = "text-green-600" %}
+{% elif stuck <= 3 %}
+  {% set stuck_color = "text-yellow-600" %}
+{% else %}
+  {% set stuck_color = "text-red-500" %}
+{% endif %}
+
+{# Era el unico KPI verdaderamente operativo de la pantalla y no se podia
+   tocar: te decia que habia cuatro clientes esperando y no te dejaba ir a
+   ninguno. Ahora lleva a la lista filtrada por el MISMO predicado que cuenta
+   este numero (ConversationRepository.stuck_clause), asi que lo que se abre
+   son exactamente estas conversaciones.
+
+   Con cero no es link: mandar a una lista vacia no es ir a ningun lado. #}
+{% set _stuck_card = "bg-white rounded-lg shadow p-5" %}
+{% if stuck > 0 %}
+<a href="/conversations?stuck=1"
+   class="{{ _stuck_card }} block hover:bg-gray-50 transition-colors cursor-pointer group">
+{% else %}
+<div class="{{ _stuck_card }}">
+{% endif %}
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Conversaciones trabadas</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+        </svg>
+    </div>
+    <p class="text-3xl font-bold tabular-nums {{ stuck_color }}">{{ stuck }}</p>
+    <p class="text-xs text-onnix-ink-400 mt-1">Sin respuesta &gt; 10 min</p>
+{% if stuck > 0 %}
+    <p class="text-xs text-onnix-ink-400 mt-2 group-hover:text-gray-600 transition-colors">Ver las {{ stuck }} &rarr;</p>
+</a>
+{% else %}
+</div>
+{% endif %}
+
+{# ── Card 2: Mensajes 24h ────────────────────────────────────────────────── #}
+<div class="bg-white rounded-lg shadow p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Mensajes 24h</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+    </div>
+    <p class="text-3xl font-bold tabular-nums text-gray-800">{{ snapshot.message_volume.total }}</p>
+    <p class="text-xs text-onnix-ink-400 mt-1 tabular-nums">
+        in: {{ snapshot.message_volume.inbound }}
+        &nbsp;&middot;&nbsp;bot: {{ snapshot.message_volume.bot_out }}
+        &nbsp;&middot;&nbsp;agente: {{ snapshot.message_volume.agent_out }}
+    </p>
+</div>
+
+{# ── Card 3: Velocidad de respuesta (p95) ────────────────────────────────── #}
+{% set p95 = snapshot.latency.p95_ms %}
+{% set lat_n = snapshot.latency.n %}
+{% if lat_n == 0 %}
+  {% set lat_color = "text-onnix-ink-400" %}
+{% elif p95 > 5000 %}
+  {% set lat_color = "text-red-500" %}
+{% elif p95 > 2000 %}
+  {% set lat_color = "text-yellow-600" %}
+{% else %}
+  {% set lat_color = "text-green-600" %}
+{% endif %}
+
+<div class="bg-white rounded-lg shadow p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Velocidad de respuesta</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+    </div>
+    {% if lat_n == 0 %}
+    <p class="text-3xl font-bold tabular-nums text-onnix-ink-400">&mdash;</p>
+    <p class="text-xs text-onnix-ink-400 mt-1">Sin datos</p>
+    {% else %}
+    <p class="text-3xl font-bold tabular-nums {{ lat_color }}">{{ p95 }}<span class="text-base font-normal">ms</span></p>
+    <p class="text-xs text-onnix-ink-400 mt-1 tabular-nums">
+        avg {{ snapshot.latency.avg_ms }}ms
+        &nbsp;&middot;&nbsp;peor {{ snapshot.latency.worst_ms }}ms
+        &nbsp;&middot;&nbsp;n={{ lat_n }}
+    </p>
+    {% endif %}
+</div>
+
+{# ── Card 4: Uso de IA ───────────────────────────────────────────────────── #}
+{# `pct_fallback` vale 0 cuando NO hubo ninguna llamada, y 100-0 daba
+   «Claude 100%»: la pantalla afirmaba que el 100% de las respuestas salió por
+   Claude en un día en que el bot no habló con nadie. Con los dos contadores en
+   cero no hay porcentaje que calcular y se dice en palabras. #}
+{% set pct_fallback = snapshot.provider_mix.pct_fallback %}
+{% set claude_pct = 100.0 - pct_fallback %}
+{% set llamadas_ia = snapshot.provider_mix.claude + snapshot.provider_mix.gemini %}
+
+<div class="bg-white rounded-lg shadow p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Uso de IA</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+    </div>
+    {% if llamadas_ia == 0 %}
+    <p class="text-3xl font-bold text-onnix-ink-400">&mdash;</p>
+    <p class="text-xs text-onnix-ink-400 mt-1">Sin llamadas en 24 h</p>
+    {% else %}
+    <p class="text-3xl font-bold tabular-nums text-gray-800">{{ "%.0f"|format(claude_pct) }}<span class="text-base font-normal">%</span></p>
+    <p class="text-xs text-onnix-ink-400 mt-1 tabular-nums">
+        Claude {{ "%.0f"|format(claude_pct) }}%
+        &nbsp;&middot;&nbsp;Gemini {{ "%.1f"|format(pct_fallback) }}%
+        &nbsp;&middot;&nbsp;n={{ llamadas_ia }}
+    </p>
+    {% endif %}
+</div>
+
+{# ── Card 5: Costo IA ────────────────────────────────────────────────────── #}
+<div class="bg-white rounded-lg shadow p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Costo IA</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </div>
+    <p class="text-3xl font-bold tabular-nums text-gray-800">${{ "%.2f"|format(snapshot.costs.ai_today.total_usd) }}</p>
+    <p class="text-xs text-onnix-ink-400 mt-1">IA hoy</p>
+    <p class="text-xs text-onnix-ink-400 mt-1 tabular-nums">
+        {# Dos decimales, como el total de arriba y como el del mes. Convivían
+           %.2f, %.4f y %.6f en la misma pantalla y no había forma de sumar de
+           un vistazo lo que decían dos líneas seguidas. #}
+        Claude ${{ "%.2f"|format(snapshot.costs.ai_today.claude_usd) }}
+        &nbsp;&middot;&nbsp;Gemini ${{ "%.2f"|format(snapshot.costs.ai_today.gemini_usd) }}
+    </p>
+    <p class="text-xs text-onnix-ink-400 mt-2 tabular-nums">
+        Este mes: ${{ "%.2f"|format(snapshot.costs.ai_month.total_usd) }}
+    </p>
+    <p class="text-xs text-onnix-ink-400 mt-1">Incluye bot + classifier + profilers.</p>
+    <p class="text-xs text-onnix-ink-400 mt-1">
+        Día y mes paraguayos (UTC&minus;3). Puede diferir de la factura de
+        Anthropic, que corta en UTC.
+    </p>
+</div>
+
+{# ── Card 6: Costo Twilio ────────────────────────────────────────────────── #}
+<div class="bg-white rounded-lg shadow p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Costo Twilio</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+    </div>
+    <p class="text-3xl font-bold tabular-nums text-gray-800">${{ "%.2f"|format(snapshot.costs.twilio_today.total_usd) }}</p>
+    <p class="text-xs text-onnix-ink-400 mt-1">Twilio hoy</p>
+    <p class="text-xs text-onnix-ink-400 mt-1 tabular-nums">
+        WhatsApp ${{ "%.2f"|format(snapshot.costs.twilio_today.whatsapp_usd) }}
+        &nbsp;&middot;&nbsp;Otros ${{ "%.2f"|format(snapshot.costs.twilio_today.other_usd) }}
+    </p>
+    <p class="text-xs text-onnix-ink-400 mt-2 tabular-nums">
+        Este mes: ${{ "%.2f"|format(snapshot.costs.twilio_month.total_usd) }}
+    </p>
+    <p class="text-xs text-onnix-ink-400 mt-1">Usage API se actualiza cada ~1h.</p>
+</div>
+
+{# ── Card 7: Heartbeat status ────────────────────────────────────────────── #}
+{% set hb = snapshot.heartbeat %}
+{% set hb_ok = hb.last_failure_ago_seconds is none or hb.last_failure_ago_seconds > 3600 %}
+
+<div class="bg-white rounded-lg shadow p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Heartbeat</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </div>
+    {% if hb_ok %}
+    <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <p class="text-lg font-semibold text-green-600">OK</p>
+    </div>
+    <p class="text-xs text-onnix-ink-400 mt-1">
+        {% if hb.last_failure_at %}
+            Ultimo fallo {{ hb.last_failure_at | pyt }}
+        {% else %}
+            Sin fallos registrados
+        {% endif %}
+    </p>
+    {% else %}
+    <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        {% set ago_secs = hb.last_failure_ago_seconds %}
+        {% if ago_secs >= 3600 %}
+          {% set ago_str = "hace " ~ (ago_secs // 3600) ~ "h " ~ ((ago_secs % 3600) // 60) ~ "min" %}
+        {% else %}
+          {% set ago_str = "hace " ~ (ago_secs // 60) ~ " min" %}
+        {% endif %}
+        <p class="text-lg font-semibold text-red-500">Fallo {{ ago_str }}</p>
+    </div>
+    <p class="text-xs text-onnix-ink-400 mt-1">{{ hb.last_failure_at | pyt }}</p>
+    {% endif %}
+    <p class="text-xs text-onnix-ink-400 mt-2">
+        Proximo en ~{{ hb.next_expected_in_seconds // 60 }} min
+    </p>
+</div>
+
+{# ── Card 8: Errores 24h ─────────────────────────────────────────────────── #}
+{% set err_total = snapshot.errors.total %}
+{% if err_total == 0 %}
+  {% set err_color = "text-green-600" %}
+{% elif err_total <= 10 %}
+  {% set err_color = "text-yellow-600" %}
+{% else %}
+  {% set err_color = "text-red-500" %}
+{% endif %}
+
+<div class="bg-white rounded-lg shadow p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Errores 24h</p>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-onnix-rule-strong shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+    </div>
+    <p class="text-3xl font-bold tabular-nums {{ err_color }}">{{ err_total }}</p>
+    <div class="flex flex-wrap gap-1 mt-2">
+        {% for wf, cnt in snapshot.errors.by_workflow.items() %}
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 tabular-nums">
+            {{ wf }}: {{ cnt }}
+        </span>
+        {% else %}
+        <span class="text-xs text-onnix-ink-400">Sin errores</span>
+        {% endfor %}
+    </div>
+</div>
+
+</div>{# /grid #}
+
+{# ── Sparkline: Costo IA — últimos 7 días ───────────────────────────────── #}
+{% set days = snapshot.costs.timeseries.ai_by_day_7d %}
+{% if days %}
+<div class="bg-white rounded-lg shadow p-5 mt-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Costo IA — últimos 7 días</h3>
+        <span class="text-xs text-gray-500" title="Días calendario de Paraguay (UTC−3); la factura de Anthropic corta en UTC">PYT</span>
+    </div>
+    {# Compute max_usd via loop — Jinja2 has no map|max built-in filter #}
+    {% set max_usd = namespace(val=0.001) %}
+    {% for d in days %}
+        {% if d.total_usd > max_usd.val %}
+            {% set max_usd.val = d.total_usd %}
+        {% endif %}
+    {% endfor %}
+    {% if max_usd.val == 0 %}{% set max_usd.val = 0.001 %}{% endif %}
+    {# Era un SVG de 7 barras con un lienzo de 700 unidades de ancho. En un
+       celular de 303px el factor de escala es 0,433, asi que sus etiquetas de
+       10px salian a 4,3px reales: dibujaba numeros que nadie podia leer.
+       Mismas 7 filas en el patron label + barra + numero que ya usa /stats:
+       el monto se lee siempre, y de paso se van tres hex de la plantilla. #}
+    <div class="space-y-2">
+        {% for d in days %}
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500 w-14 text-right shrink-0">{{ d.date.strftime("%d/%m") }}</span>
+            <div class="flex-1 bg-gray-100 rounded overflow-hidden">
+                <div class="stat-bar bg-onnix-accent" style="width: {{ (d.total_usd / max_usd.val * 100) | round(1) }}%;"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-800 num-format w-16 text-right">${{ "%.2f"|format(d.total_usd) }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="grid grid-cols-2 gap-4 mt-3 text-sm border-t pt-3">
+        <div>
+            <span class="text-gray-500">Total 7 días:</span>
+            <span class="font-medium text-gray-800">
+                {%- set total_7d = namespace(val=0.0) %}
+                {%- for d in days %}{% set total_7d.val = total_7d.val + d.total_usd %}{% endfor -%}
+                ${{ "%.2f"|format(total_7d.val) }}
+            </span>
+        </div>
+        <div>
+            <span class="text-gray-500">Llamadas 7 días:</span>
+            <span class="font-medium text-gray-800">
+                {%- set calls_7d = namespace(val=0) %}
+                {%- for d in days %}{% set calls_7d.val = calls_7d.val + d.calls %}{% endfor -%}
+                {{ calls_7d.val }}
+            </span>
+        </div>
+    </div>
+</div>
+{% endif %}

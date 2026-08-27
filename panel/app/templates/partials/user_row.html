@@ -1,0 +1,36 @@
+<tr id="user-row-{{ target.id }}" class="border-b border-gray-100 hover:bg-gray-50">
+    <td data-label="Nombre" class="px-4 py-3 font-medium text-gray-800">{{ target.display_name or target.name }}</td>
+    <td data-label="Email" class="px-4 py-3 text-gray-600">{{ target.email }}</td>
+    <td data-label="Rol" class="px-4 py-3">
+        <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+            {% if target.role == 'admin' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-700{% endif %}">
+            {{ target.role }}
+        </span>
+    </td>
+    <td data-label="Estado" class="px-4 py-3">
+        <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+            {% if target.is_active %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-600{% endif %}">
+            {% if target.is_active %}Activo{% else %}Inactivo{% endif %}
+        </span>
+    </td>
+    <td class="px-4 py-3">
+        <div class="flex gap-3">
+            <button hx-get="/users/{{ target.id }}/edit"
+                    hx-target="#user-row-{{ target.id }}"
+                    hx-swap="outerHTML"
+                    class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                Editar
+            </button>
+            {% if target.id != user.id %}
+            <button hx-post="/users/{{ target.id }}/toggle"
+                    hx-target="#user-row-{{ target.id }}"
+                    hx-swap="outerHTML"
+                    hx-confirm="{% if target.is_active %}¿Desactivar este usuario?{% else %}¿Activar este usuario?{% endif %}"
+                    class="text-xs font-medium
+                        {% if target.is_active %}text-red-500 hover:text-red-700{% else %}text-green-600 hover:text-green-800{% endif %}">
+                {% if target.is_active %}Desactivar{% else %}Activar{% endif %}
+            </button>
+            {% endif %}
+        </div>
+    </td>
+</tr>

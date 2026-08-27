@@ -1,0 +1,105 @@
+{# Used by visits_block.html. Expects `v` (Visit) and `users_map`. #}
+<tr class="border-b last:border-0">
+    <td class="py-2">
+        <div class="text-sm">{{ v.scheduled_at | pyt('%a %d %b') }}</div>
+        <div class="text-xs text-gray-500">{{ v.scheduled_at | pyt('%H:%M') }}</div>
+    </td>
+    <td>
+        {% if v.property %}
+            {% set p_type = (v.property.property_type or 'Propiedad') | capitalize %}
+            {% set p_city = v.property.city or '' %}
+            <a href="/properties/{{ v.property.id }}" class="text-onnix-accent-ink hover:underline">
+                {{ p_type }}{% if p_city %} — {{ p_city }}{% endif %}
+            </a>
+        {% elif v.property_id %}
+            <a href="/properties/{{ v.property_id }}" class="text-onnix-accent-ink hover:underline">
+                Propiedad #{{ v.property_id }}
+            </a>
+        {% else %}
+            <span class="text-onnix-ink-400">Sin propiedad</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if v.status == 'scheduled' %}
+            <span class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">Agendada</span>
+        {% elif v.status == 'done' %}
+            <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Realizada</span>
+        {% elif v.status == 'cancelled' %}
+            <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500">Cancelada</span>
+        {% elif v.status == 'no_show' %}
+            <span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700">No-show</span>
+        {% endif %}
+    </td>
+    <td class="text-sm text-gray-600">
+        {{ users_map.get(v.agent_user_id, '—') if v.agent_user_id else '—' }}
+    </td>
+    <td class="text-sm text-gray-600" title="{{ v.notes or '' }}">
+        {{ (v.notes or '')[:40] }}{% if v.notes and v.notes|length > 40 %}…{% endif %}
+    </td>
+    {# Acciones column — siempre presente para que las dos tablas
+       (Próximas + Histórico) mantengan la misma estructura. En filas
+       terminales (done / cancelled / no_show) los botones se renderizan
+       en gris + cursor-not-allowed + disabled. #}
+    <td class="text-right">
+        {% set is_terminal = v.status != 'scheduled' %}
+        <div class="inline-flex items-center gap-1"
+             {% if not is_terminal %}x-data="{ rescheduleOpen: false }"{% endif %}>
+            {# Cancelar #}
+            <button type="button" title="{{ 'Cancelar' if not is_terminal else 'No aplicable (visita ya cerrada)' }}"
+                    {% if is_terminal %}disabled{% else %}
+                    @click="if (confirm('¿Cancelar esta visita?')) {
+                                htmx.ajax('POST', '/visits/{{ v.id }}/cancel',
+                                          { target: '#visits-content', swap: 'innerHTML' });
+                            }"
+                    {% endif %}
+                    class="p-1 rounded
+                           {% if is_terminal %}text-onnix-rule-strong cursor-not-allowed{% else %}text-red-500 hover:bg-red-50{% endif %}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            {# Realizada #}
+            <button type="button" title="{{ 'Marcar realizada' if not is_terminal else 'No aplicable (visita ya cerrada)' }}"
+                    {% if is_terminal %}disabled{% else %}
+                    hx-post="/visits/{{ v.id }}/complete?result=done"
+                    hx-target="#visits-content" hx-swap="innerHTML"
+                    {% endif %}
+                    class="p-1 rounded
+                           {% if is_terminal %}text-onnix-rule-strong cursor-not-allowed{% else %}text-green-600 hover:bg-green-50{% endif %}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M5 13l4 4L19 7"/>
+                </svg>
+            </button>
+            {# No-show #}
+            <button type="button" title="{{ 'Marcar como no-show' if not is_terminal else 'No aplicable (visita ya cerrada)' }}"
+                    {% if is_terminal %}disabled{% else %}
+                    hx-post="/visits/{{ v.id }}/complete?result=no_show"
+                    hx-target="#visits-content" hx-swap="innerHTML"
+                    {% endif %}
+                    class="p-1 rounded
+                           {% if is_terminal %}text-onnix-rule-strong cursor-not-allowed{% else %}text-orange-600 hover:bg-orange-50{% endif %}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4
+                             c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/>
+                </svg>
+            </button>
+            {# Reagendar #}
+            <button type="button" title="{{ 'Reagendar' if not is_terminal else 'No aplicable (visita ya cerrada)' }}"
+                    {% if is_terminal %}disabled{% else %}@click="rescheduleOpen = true"{% endif %}
+                    class="p-1 rounded
+                           {% if is_terminal %}text-onnix-rule-strong cursor-not-allowed{% else %}text-blue-600 hover:bg-blue-50{% endif %}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581
+                             m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </button>
+            {% if not is_terminal %}
+            {% include "partials/visit_reschedule_modal.html" %}
+            {% endif %}
+        </div>
+    </td>
+</tr>

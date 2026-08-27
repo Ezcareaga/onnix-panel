@@ -1,0 +1,11 @@
+Fuente: https://es.wikipedia.org/wiki/Fernando_de_la_Mora_(Paraguay)
+
+Párrafo relevante:
+"Fernando de la Mora es un distrito del Departamento Central en Paraguay. Limita con los distritos de Luque y San Lorenzo al norte, con el distrito de Villa Elisa al sur, al este con las ciudades de San Lorenzo y Ñemby, y al oeste con la capital del país, Asunción."
+
+Vecinas extraídas (solo Dep. Central):
+- Luque
+- San Lorenzo
+- Villa Elisa
+- Ñemby
+- Asunción

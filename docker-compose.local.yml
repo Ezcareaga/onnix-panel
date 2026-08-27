@@ -1,0 +1,76 @@
+# Onnix SA — compose para correr el panel en la laptop.
+#
+# NO es un override de docker-compose.yml: es un archivo aparte. Compose MERGEA
+# las listas de `volumes`, no las reemplaza, asi que un override no puede sacar
+# los tres mounts del VPS (`/home/onnix/logs/prod`, `/home/onnix/images`,
+# `/home/onnix/tutoriales`) que en una laptop no existen.
+#
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d --build
+#
+# Todo lo que sale a una API externa esta apagado. La regla del CLAUDE.md vale
+# igual aca: una variable nueva que toque un servicio externo entra con su
+# `=false` en el mismo commit.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: onnix-postgres
+    restart: unless-stopped
+    env_file: .env.local
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_local:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    # 5432 y 8000 ya los tienen otros proyectos tuyos (oikoha-mockup y
+    # nativa-integracion). Adentro de la red de compose los puertos son los de
+    # siempre; lo que cambia es solo el mapeo al host.
+    ports:
+      - "127.0.0.1:5436:5432"
+    # Sin el tuning de 8 GB del compose de produccion: 2 GB de shared_buffers en
+    # una laptop es pedirle al kernel memoria que despues le falta a Docker.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  panel:
+    build:
+      context: ./panel
+      dockerfile: Dockerfile
+    # El tailwindcss vendoreado (`panel/vendor/tailwindcss`) es un ELF x86-64 y
+    # el Dockerfile lo EJECUTA en el build. En una Mac ARM hay que emular, o el
+    # build muere con "exec format error".
+    platform: linux/amd64
+    image: onnix-panel:local
+    container_name: onnix-panel
+    restart: unless-stopped
+    env_file: .env.local
+    environment:
+      - POSTGRES_HOST=onnix-postgres
+      - TZ=America/Asuncion
+      - GEO_DATA_PATH=/app/data/geografia
+      # development apaga el fail-closed de firma de webhooks: sin esto el panel
+      # no arranca sin TWILIO_AUTH_TOKEN ni TELEGRAM_WEBHOOK_SECRET reales.
+      - ENVIRONMENT=development
+      # Los guardas de salida. Con estos en false nada de lo que corre local
+      # puede escribirle a una persona real.
+      - WA_SEND_ENABLED=false
+      - BOT_ENABLED=false
+      - FOLLOWUP_SENDER_ENABLED=false
+      - TELEGRAM_NOTIFICATIONS_ENABLED=false
+      - INFOCASAS_POLL_ENABLED=false
+      - TELEGRAM_EZ_CHAT_ID=
+    volumes:
+      - ./data/geografia:/app/data/geografia:ro
+      - ./logs:/app/logs
+    ports:
+      - "127.0.0.1:8010:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_local:

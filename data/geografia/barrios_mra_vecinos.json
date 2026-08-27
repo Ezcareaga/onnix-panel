@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "fuente": "paraguay-streets.openalfa.com, Wikipedia ES",
+    "fecha_extraccion": "2026-03-15",
+    "tipo": "barrios_mra",
+    "ciudad": "Mariano Roque Alonso",
+    "notas": "19 barrios. Adyacencias parcialmente inferidas. Solo 1.5% de propiedades tienen datos de barrio en BD."
+  },
+  "barrios": {
+    "arecaya": {
+      "display": "Arecayá",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "banado": {
+      "display": "Bañado",
+      "vecinos": ["remanso"],
+      "fuente": "inferida_geografica"
+    },
+    "barrio privado": {
+      "display": "Barrio Privado",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "caacupemi": {
+      "display": "Caacupemí",
+      "vecinos": ["central", "defensores del chaco"],
+      "fuente": "inferida_geografica"
+    },
+    "central": {
+      "display": "Central",
+      "vecinos": ["caacupemi", "la asuncion", "defensores del chaco", "san jorge"],
+      "fuente": "inferida_geografica"
+    },
+    "defensores del chaco": {
+      "display": "Defensores del Chaco",
+      "vecinos": ["caacupemi", "central"],
+      "fuente": "inferida_geografica"
+    },
+    "ka'aguy kupe": {
+      "display": "Ka'aguy Kupe",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "la asuncion": {
+      "display": "La Asunción",
+      "vecinos": ["central", "san blas"],
+      "fuente": "inferida_geografica"
+    },
+    "maria auxiliadora": {
+      "display": "María Auxiliadora",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "monsenor bogarin": {
+      "display": "Monseñor Bogarín",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "remanso": {
+      "display": "Remanso",
+      "vecinos": ["banado", "rosa mistica"],
+      "fuente": "inferida_geografica"
+    },
+    "rosa mistica": {
+      "display": "Rosa Mística",
+      "vecinos": ["remanso"],
+      "fuente": "inferida_geografica"
+    },
+    "san blas": {
+      "display": "San Blas",
+      "vecinos": ["la asuncion"],
+      "fuente": "inferida_geografica"
+    },
+    "san jorge": {
+      "display": "San Jorge",
+      "vecinos": ["central"],
+      "fuente": "inferida_geografica"
+    },
+    "san luis": {
+      "display": "San Luis",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "san ramon": {
+      "display": "San Ramón",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    },
+    "surubi'i": {
+      "display": "Surubí'i",
+      "vecinos": ["universo"],
+      "fuente": "inferida_geografica"
+    },
+    "universo": {
+      "display": "Universo",
+      "vecinos": ["surubi'i"],
+      "fuente": "inferida_geografica"
+    },
+    "villa margarita": {
+      "display": "Villa Margarita",
+      "vecinos": [],
+      "fuente": "sin_datos"
+    }
+  }
+}

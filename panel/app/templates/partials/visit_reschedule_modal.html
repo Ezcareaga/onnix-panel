@@ -1,0 +1,76 @@
+{# Modal por fila: `v` es la visita que se reagenda, y por eso el id del
+   titulo lleva `v.id` — hay uno por fila y un id repetido rompe el
+   aria-labelledby de todos.
+
+   <dialog> nativo, mismo patron que el modal de agendar: focus trap, Escape,
+   ::backdrop e inertizacion los pone el navegador; `@close` devuelve
+   rescheduleOpen a false porque el Escape no pasa por Alpine. El teleport se
+   queda y el x-effect vuelve a correr htmx.process en cada apertura, para que
+   hx-post siga enganchado despues de los swaps lazy del parcial. #}
+<template x-teleport="body">
+<dialog x-effect="if (rescheduleOpen) { if (!$el.open) $el.showModal(); $nextTick(() => window.htmx && window.htmx.process($el)); } else if ($el.open) { $el.close(); }"
+        @close="rescheduleOpen = false"
+        @click.self="rescheduleOpen = false"
+        aria-labelledby="visit-reschedule-title-{{ v.id }}"
+        class="modal">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
+        <h3 id="visit-reschedule-title-{{ v.id }}" class="text-lg font-semibold text-gray-800 mb-4">Reagendar visita</h3>
+
+        <form hx-post="/visits/{{ v.id }}/reschedule"
+              hx-target="#visits-content"
+              hx-swap="innerHTML"
+              @htmx:after-request="if ($event.detail.successful) rescheduleOpen = false">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Fecha y hora *</label>
+                    <input type="datetime-local" name="scheduled_at" aria-label="Nueva fecha y hora de la visita"
+                           required
+                           min="{{ now_iso_local }}"
+                           value="{{ v.scheduled_at | pyt('%Y-%m-%dT%H:%M') }}"
+                           class="w-full border rounded px-3 py-2 text-sm
+                                  focus:ring-onnix-accent focus:border-onnix-accent">
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Propiedad</label>
+                    {% if v.property %}
+                        {% set p_type = (v.property.property_type or 'Propiedad') | capitalize %}
+                        {% set p_city = v.property.city or '' %}
+                        {% set p_label = p_type + (' — ' + p_city if p_city else '') %}
+                    {% elif v.property_id %}
+                        {% set p_label = 'Propiedad #' ~ v.property_id %}
+                    {% else %}
+                        {% set p_label = 'Sin propiedad' %}
+                    {% endif %}
+                    {# Lo pinta `input[type="text"]:disabled` en custom.css, con los tokens. #}
+                    <input type="text" disabled value="{{ p_label }}" aria-label="Propiedad de la visita, no editable"
+                           class="w-full border rounded px-3 py-2 text-sm">
+                    <p class="text-xs text-onnix-ink-400 mt-1">
+                        Para cambiar propiedad, cancelá y agendá una nueva.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Notas</label>
+                    <textarea name="notes" rows="3" aria-label="Notas de la visita"
+                              class="w-full border rounded px-3 py-2 text-sm
+                                     focus:ring-onnix-accent focus:border-onnix-accent">{{ v.notes or '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6">
+                <button type="button" @click="rescheduleOpen = false"
+                        class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-sm bg-onnix-accent text-white rounded
+                               hover:bg-onnix-accent-dark">
+                    Reagendar
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
+</template>

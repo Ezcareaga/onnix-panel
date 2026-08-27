@@ -1,0 +1,38 @@
+{#
+  Un solo patron de mensaje inline para todo el panel.
+
+  Antes esto era una linea a 3,76:1, sin role, sin accion, y lo usaba solo
+  conversations.py. El resto inventaba markup en nueve formatos distintos.
+
+  Uso:
+    {"message": "...", "level": "error"|"warning"|"info", "retry_url": "...",
+     "retry_target": "#donde", "retry_label": "Reintentar"}
+
+  `level` default 'error'. `retry_url` es opcional: sin el, no hay boton.
+
+  IMPORTANTE: renderizar esto en un contenedor de feedback dedicado, nunca en
+  el contenedor del contenido. Un 400 sobre #followup-list borra el encabezado,
+  el contador, los dos formularios y todo el carril de seguimiento.
+#}
+{% set _nivel = level | default('error') %}
+{% set _estilos = {
+    'error':   {'clase': 'error-msg--error',   'rol': 'alert',  'icono': 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z'},
+    'warning': {'clase': 'error-msg--warning', 'rol': 'alert',  'icono': 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z'},
+    'info':    {'clase': 'error-msg--info',    'rol': 'status', 'icono': 'M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z'}
+} %}
+{% set _e = _estilos.get(_nivel, _estilos['error']) %}
+<div class="error-msg {{ _e.clase }}" role="{{ _e.rol }}">
+    <svg class="error-msg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="{{ _e.icono }}"/>
+    </svg>
+    <span class="error-msg-text">{{ message }}</span>
+    {% if retry_url %}
+    <button type="button"
+            class="error-msg-retry"
+            hx-get="{{ retry_url }}"
+            {% if retry_target %}hx-target="{{ retry_target }}"{% endif %}
+            hx-swap="innerHTML">
+        {{ retry_label | default('Reintentar') }}
+    </button>
+    {% endif %}
+</div>

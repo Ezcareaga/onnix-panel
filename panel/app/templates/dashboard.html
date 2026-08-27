@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Onnix{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+{# Sin hx-get acá: el refresh viene del SSE de abajo vía htmx.ajax (target/swap
+   explícitos). Un hx-get sin hx-trigger disparaba un GET redundante en cada
+   click dentro del contenedor. #}
+<div id="stats-cards">
+    {% include "partials/dashboard_stats.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var DASHBOARD_EVENTS = ['lead.created', 'lead.status_changed', 'conversation_update'];
+    var debounceTimer = null;
+    var evtSource = new EventSource('/events');
+
+    function refreshDashboard() {
+        htmx.ajax('GET', '/dashboard', {
+            target: '#stats-cards',
+            swap: 'innerHTML',
+        });
+    }
+
+    DASHBOARD_EVENTS.forEach(function (eventName) {
+        evtSource.addEventListener(eventName, function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(refreshDashboard, 2000);
+        });
+    });
+
+    window.addEventListener('beforeunload', function () {
+        if (evtSource) { evtSource.close(); }
+        clearTimeout(debounceTimer);
+    });
+}());
+</script>
+{% endblock %}

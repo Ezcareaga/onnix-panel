@@ -1,0 +1,208 @@
+{#
+  Unified contact form partial.
+
+  Parameters (via {% with %}):
+    form_mode      — "create" or "edit"
+    contact        — Contact ORM object (edit mode only; None in create)
+    phone_info     — result of parse_phone() (edit mode only; None in create)
+    phone_prefixes — list of (code, region, name) tuples (always required from route context)
+
+  Optional:
+    property_title — display title for the associated property chip (edit mode).
+                     Falls back to property_id number if not provided.
+#}
+
+{% set is_edit = form_mode == 'edit' %}
+
+{# ── 1. Nombre ── #}
+<div>
+    <label for="cf-name" class="block text-xs text-gray-500 mb-1">
+        Nombre{% if not is_edit %} <span class="text-red-400">*</span>{% endif %}
+    </label>
+    <input type="text" name="name" id="cf-name"
+        {% if is_edit %}x-model="name"{% endif %}
+        value="{{ contact.name if contact else '' }}"
+        {% if not is_edit %}required placeholder="Ej: María García"{% endif %}
+        class="w-full border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+</div>
+
+{# ── 2. Teléfono con prefijo ── #}
+<div x-data='{
+    freeMode: {% if is_edit %}{{ 'true' if not phone_info or not phone_info.known_prefix else 'false' }}{% else %}false{% endif %},
+    phonePrefix: {% if is_edit and phone_info and phone_info.known_prefix %}{{ (phone_info.country_code ~ '_' ~ phone_info.country) | tojson }}{% else %}"+595_PY"{% endif %},
+    phoneNumber: {% if is_edit and phone_info %}{{ phone_info.national_number | tojson }}{% else %}""{% endif %},
+    phoneFull: {% if is_edit and contact %}{{ (contact.phone or "") | tojson }}{% else %}""{% endif %},
+    get cleanNumber() { return this.phoneNumber.replace(/^0+/, "").replace(/\D/g, ""); },
+    get fullPhone() {
+        if (this.freeMode) return this.phoneFull.trim();
+        const code = this.phonePrefix.split("_")[0];
+        return this.cleanNumber ? code + this.cleanNumber : "";
+    }
+}'>
+    <div class="flex items-center justify-between mb-{{ '0.5' if is_edit else '1' }}">
+        <label class="block text-xs text-gray-500">
+            Teléfono{% if not is_edit %} <span class="text-red-400">*</span>{% endif %}
+        </label>
+        <button type="button"
+            @click="freeMode = !freeMode; if(freeMode) phoneFull = fullPhone; else { phoneNumber = ''; }"
+            class="text-xs text-onnix-accent-ink hover:text-onnix-accent-dark"
+            x-text="freeMode ? 'Con prefijo' : '{{ 'Libre' if is_edit else 'Número completo' }}'"></button>
+    </div>
+    <div x-show="!freeMode" class="flex gap-{{ '1.5' if is_edit else '2' }}">
+        <select x-model="phonePrefix" aria-label="Prefijo de país"
+            class="border rounded px-{{ '1.5' if is_edit else '2' }} py-{{ '1.5' if is_edit else '2' }} text-sm bg-white focus:ring-onnix-accent focus:border-onnix-accent w-28 shrink-0">
+            {% for code, region, name in phone_prefixes %}
+            <option value="{{ code }}_{{ region }}">{{ region }} {{ code }}</option>
+            {% endfor %}
+        </select>
+        <input type="text"
+            x-model="phoneNumber" aria-label="Número de teléfono"
+            {% if not is_edit %}:required="!freeMode"{% endif %}
+            placeholder="{{ '981234567' if is_edit else '0981234567' }}"
+            class="flex-1 border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+    </div>
+    <div x-show="freeMode" x-cloak>
+        <input type="tel"
+            x-model="phoneFull" aria-label="Teléfono completo, con prefijo"
+            {% if not is_edit %}:required="freeMode"{% endif %}
+            placeholder="+595981234567"
+            class="w-full border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+    </div>
+    <input type="hidden" name="phone" :value="fullPhone">
+    <p class="text-xs mt-{{ '0.5' if is_edit else '1' }}"
+       :class="fullPhone && /^\+\d{7,15}$/.test(fullPhone) ? 'text-onnix-accent-ink{{ '' if is_edit else ' font-medium' }}' : 'text-onnix-ink-400'"
+       x-text="fullPhone && /^\+\d{7,15}$/.test(fullPhone) ? fullPhone : 'Ej: +595981234567'"></p>
+</div>
+
+{# ── 3. Email ── #}
+<div>
+    <label for="cf-email" class="block text-xs text-gray-500 mb-{{ '0.5' if is_edit else '1' }}">Email</label>
+    <input type="email" name="email" id="cf-email"
+        {% if is_edit %}x-model="email"{% endif %}
+        value="{{ contact.email or '' if contact else '' }}"
+        placeholder="correo@ejemplo.com"
+        class="w-full border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+</div>
+
+{# ── 4. Estado (create mode only — edit mode uses the inline badge dropdown) ── #}
+{% if not is_edit %}
+<div>
+    <label for="cf-status" class="block text-xs text-gray-500 mb-1">Estado</label>
+    <select name="status" id="cf-status" class="w-full border rounded px-2 py-2 text-sm bg-white">
+        <option value="new">Nuevo</option>
+        <option value="bot_replied">Bot respondió</option>
+        <option value="agent_replied">Agente escribió</option>
+        <option value="interested">Interesado</option>
+        <option value="closed">Cerrado</option>
+    </select>
+</div>
+{% endif %}
+
+{# ── 5. Operación ── #}
+<div>
+    <label for="cf-operacion" class="block text-xs text-gray-500 mb-{{ '0.5' if is_edit else '1' }}">Operación</label>
+    <select name="operacion" id="cf-operacion"
+        {% if is_edit %}x-model="operacion"{% endif %}
+        class="w-full border rounded px-2 py-{{ '1.5' if is_edit else '2' }} text-sm bg-white focus:ring-onnix-accent focus:border-onnix-accent">
+        <option value="">— Sin especificar —</option>
+        <option value="compra">Compra</option>
+        <option value="alquiler">Alquiler</option>
+        <option value="ambos">Ambos</option>
+    </select>
+</div>
+
+{# ── 6. Zona de interés ── #}
+<div>
+    <label for="cf-zona" class="block text-xs text-gray-500 mb-{{ '0.5' if is_edit else '1' }}">Zona de interés</label>
+    <input type="text" name="zona" id="cf-zona"
+        {% if is_edit %}x-model="zona"{% endif %}
+        value="{{ contact.preferences.get('zona', '') if contact and contact.preferences else '' }}"
+        placeholder="Ej: Asunción, Villa Morra"
+        class="w-full border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+</div>
+
+{# ── 7. Presupuesto (USD) ── #}
+<div>
+    <label for="cf-presupuesto" class="block text-xs text-gray-500 mb-{{ '0.5' if is_edit else '1' }}">Presupuesto (USD)</label>
+    <input type="number" name="presupuesto" id="cf-presupuesto"
+        {% if is_edit %}x-model="presupuesto"{% endif %}
+        value="{{ contact.preferences.get('presupuesto', '') if contact and contact.preferences else '' }}"
+        placeholder="Ej: 80000" min="0" step="any" max="99999999"
+        class="w-full border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+</div>
+
+{# ── 8. Dormitorios ── #}
+<div>
+    <label for="cf-dormitorios" class="block text-xs text-gray-500 mb-{{ '0.5' if is_edit else '1' }}">Dormitorios</label>
+    <input type="number" name="dormitorios" id="cf-dormitorios"
+        {% if is_edit %}x-model="dormitorios"{% endif %}
+        value="{{ contact.preferences.get('dormitorios', '') if contact and contact.preferences else '' }}"
+        placeholder="Ej: 2" min="0" max="10"
+        class="w-full border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+</div>
+
+{# ── 9. Propiedad asociada — typeahead autocomplete ── #}
+<div x-data='{
+    propSearch: "",
+    propResults: [],
+    propLoading: false,
+    selectedPropId: {{ contact.property_id if contact and contact.property_id else "null" }},
+    selectedPropTitle: {{ property_title | tojson if property_title is defined and property_title else (contact.property_id | string | tojson if contact and contact.property_id else "null") }},
+    async fetchProps() {
+        if (this.propSearch.length < 2) { this.propResults = []; return; }
+        this.propLoading = true;
+        try {
+            const r = await fetch("/api/properties/search?q=" + encodeURIComponent(this.propSearch));
+            this.propResults = await r.json();
+        } catch(e) {
+            this.propResults = [];
+        } finally {
+            this.propLoading = false;
+        }
+    },
+    selectProp(id, title) {
+        this.selectedPropId = id;
+        this.selectedPropTitle = title;
+        this.propSearch = "";
+        this.propResults = [];
+    },
+    clearProp() { this.selectedPropId = null; this.selectedPropTitle = null; }
+}'>
+    <label for="cf-prop-search" class="block text-xs text-gray-500 mb-{{ '0.5' if is_edit else '1' }}">Propiedad asociada</label>
+
+    <template x-if="!selectedPropId">
+        <div class="relative">
+            <input type="text" x-model="propSearch" id="cf-prop-search"
+                @input.debounce.400ms="fetchProps()"
+                placeholder="Buscar por ID o título..."
+                class="w-full border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} text-sm focus:ring-onnix-accent focus:border-onnix-accent">
+            <template x-if="propResults.length > 0">
+                <ul class="absolute z-30 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    <template x-for="p in propResults" :key="p.id">
+                        <li @click="selectProp(p.id, (p.external_id ? p.external_id + ' \u2014 ' : '') + p.title)"
+                            class="cursor-pointer hover:bg-onnix-accent-wash px-3 py-2 text-sm border-b border-gray-50 last:border-0">
+                            <span class="font-medium text-gray-700" x-text="p.external_id ? p.external_id + ' \u2014 ' + p.title : p.title"></span>
+                            <span x-show="p.price_usd"
+                                  x-text="' USD ' + Number(p.price_usd).toLocaleString()"
+                                  class="text-onnix-ink-400 text-xs ml-1"></span>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+            <template x-if="propSearch.length >= 2 && propResults.length === 0 && !propLoading">
+                <p class="text-onnix-ink-400 text-xs mt-1">No se encontró propiedad</p>
+            </template>
+        </div>
+    </template>
+
+    <template x-if="selectedPropId">
+        <div class="flex items-center gap-2 border rounded px-{{ '2' if is_edit else '3' }} py-{{ '1.5' if is_edit else '2' }} bg-onnix-accent-wash border-onnix-accent">
+            <span x-text="selectedPropTitle || ('#' + selectedPropId)" class="text-sm text-gray-700 truncate flex-1 min-w-0"></span>
+            <button type="button" @click="clearProp()"
+                class="text-onnix-ink-400 hover:text-red-500 flex-shrink-0 text-lg leading-none"
+                title="Quitar propiedad">&times;</button>
+        </div>
+    </template>
+
+    <input type="hidden" name="property_id" :value="selectedPropId || ''">
+</div>

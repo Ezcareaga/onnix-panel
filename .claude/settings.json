@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__codegraph__*"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "codegraph prompt-hook"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf 'Rama: %s @ %s%s\\n' \"$(git branch --show-current)\" \"$(git log --format=%h -1)\" \"$(git status --porcelain | grep -q . && echo ' (working tree sucio)')\"; sed -n '/^## Dónde está desplegado/,/^## Carriles cerrados/p' docs/audit/ESTADO_UI.md 2>/dev/null | sed '$d'"
+          }
+        ]
+      },
+      {
+        "matcher": "clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf 'Rama: %s @ %s%s\\n' \"$(git branch --show-current)\" \"$(git log --format=%h -1)\" \"$(git status --porcelain | grep -q . && echo ' (working tree sucio)')\"; sed -n '/^## Dónde está desplegado/,/^## Carriles cerrados/p' docs/audit/ESTADO_UI.md 2>/dev/null | sed '$d'"
+          }
+        ]
+      }
+    ]
+  }
+}

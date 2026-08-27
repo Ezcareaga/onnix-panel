@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onnix SA — Inmobiliaria en Paraguay</title>
+    <meta name="description" content="Onnix SA Paraguay. Compra, venta y alquiler de propiedades. Casas, departamentos y terrenos en Asunción y alrededores.">
+    <link rel="icon" href="/landing-assets/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/landing-assets/favicon-180.png">
+    <!-- Outfit self-hosteada, una sola familia y un solo archivo: es variable,
+         así que 400 y 600 salen del mismo woff2 de 32 KB. Antes eran 8 archivos
+         de dos familias desde fonts.googleapis.com, con dos preconnect y una
+         hoja de estilo bloqueante en el camino crítico. -->
+    <link rel="preload" as="font" type="font/woff2"
+          href="/landing-assets/fonts/outfit-latin-var.woff2" crossorigin>
+    <link rel="canonical" href="https://onnix.com.py/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://onnix.com.py/">
+    <meta property="og:site_name" content="Onnix SA">
+    <meta property="og:locale" content="es_PY">
+    <meta property="og:title" content="Onnix SA — Inmobiliaria en Paraguay">
+    <meta property="og:description" content="Casas, departamentos y terrenos en Asunción y el área metropolitana. Más de 6.500 propiedades de la red Onnix Paraguay.">
+    <!-- Una propiedad real de la cartera, no el logo sobre blanco: lo que se ve
+         en la preview de WhatsApp es lo que decide si abren el link. -->
+    <meta property="og:image" content="https://onnix.com.py/landing-assets/hero-luque.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="799">
+    <meta property="og:image:alt" content="Residencia moderna con pileta en un condominio cerrado de Luque">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="/landing-assets/css/styles.css?v=6">
+    <link rel="preload" as="image" href="/landing-assets/hero-luque.webp" fetchpriority="high">
+</head>
+<body>
+
+    <!-- Nav
+         El menú de móvil es <details>/<summary>: sin JavaScript, con estado
+         propio y con el rol de expansión que el navegador ya sabe anunciar.
+         Antes de esto, bajo 768px `nav .nav-links` era `display: none` y no
+         había reemplazo: la navegación entera desaparecía del celular, que es
+         desde donde se lee esta página. -->
+    <nav id="nav">
+        <a href="/" class="logo">
+            <img src="/landing-assets/logo.svg" alt="Onnix SA" width="181" height="44">
+        </a>
+        <details class="nav-menu">
+            <summary class="nav-burger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" aria-hidden="true" focusable="false">
+                    <line x1="3" y1="7" x2="21" y2="7"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="17" x2="21" y2="17"/>
+                </svg>
+                <span class="nav-burger-texto">Menú</span>
+            </summary>
+            <div class="nav-links">
+                <a href="/propiedades">Propiedades</a>
+                <a href="#vender">Vender</a>
+                <a href="#barrios">Barrios</a>
+                <a href="#nosotros">Nosotros</a>
+                <a href="#contacto">Contacto</a>
+                <a href="/login" class="nav-cta">Panel</a>
+            </div>
+        </details>
+    </nav>
+
+    <main>
+    <!-- Hero -->
+    <section class="hero">
+        <img class="hero-photo"
+             src="/landing-assets/hero-luque.webp"
+             alt=""
+             width="1200" height="799"
+             fetchpriority="high" decoding="async">
+        <div class="hero-line"></div>
+        <div class="hero-content">
+            <h1 class="reveal reveal-d1">Tu próximo<br><em>hogar</em> te espera</h1>
+            <p class="hero-sub reveal reveal-d2">
+                Casas, departamentos y terrenos en Asunción, Central y el interior.
+                Más de 6.500 propiedades, y alguien del otro lado que te atiende.
+            </p>
+
+            <!-- ── Buscador (C3) ──
+                 Un solo <form method="get"> contra /propiedades, la ruta pública
+                 server-side que ya existe. Sin JS: la landing es un archivo
+                 estático y el portal filtra en el servidor, así que el navegador
+                 arma la query solo. Los names tienen que ser exactamente los que
+                 acepta _parse_portal_params() en panel/app/routes/public.py; lo
+                 verifica test_landing_hero_search_form_matches_portal_params. -->
+            <form class="hero-search" method="get" action="/propiedades"
+                  role="search" aria-label="Buscar propiedades">
+                <div class="search-ops">
+                    <input type="radio" id="op-venta" name="operacion" value="venta" checked>
+                    <label for="op-venta">Comprar</label>
+                    <input type="radio" id="op-alquiler" name="operacion" value="alquiler">
+                    <label for="op-alquiler">Alquilar</label>
+                </div>
+                <div class="search-row">
+                    <label class="search-label" for="hero-ciudad">¿Dónde buscás?</label>
+                    <input class="search-input" type="search" id="hero-ciudad" name="ciudad"
+                           list="hero-ciudades" maxlength="80"
+                           placeholder="Asunción, Luque, San Bernardino…"
+                           autocomplete="address-level2" enterkeyhint="search">
+                    <datalist id="hero-ciudades">
+                        <option value="Asunción"></option>
+                        <option value="Luque"></option>
+                        <option value="San Bernardino"></option>
+                        <option value="Villa Hayes"></option>
+                        <option value="Mariano Roque Alonso"></option>
+                        <option value="Encarnación"></option>
+                        <option value="Altos"></option>
+                        <option value="Lambaré"></option>
+                        <option value="Fernando de la Mora"></option>
+                        <option value="Areguá"></option>
+                        <option value="San Lorenzo"></option>
+                        <option value="Capiatá"></option>
+                    </datalist>
+                    <button class="btn-primary search-submit" type="submit">Buscar</button>
+                </div>
+            </form>
+
+            <!-- Las cinco ciudades con más propiedades activas de onnixpy,
+                 contadas contra la base el 18/08. Son links, no filtros: cada
+                 chip es una búsqueda ya hecha.
+                 <ul> y no <nav>: el selector de elemento `nav` de styles.css:107
+                 es global y pone position:fixed, así que un segundo <nav> en la
+                 página se pega arriba de todo. -->
+            <ul class="hero-chips" aria-label="Búsquedas frecuentes">
+                <li><a href="/propiedades?ciudad=Asunci%C3%B3n">Asunción</a></li>
+                <li><a href="/propiedades?ciudad=Luque">Luque</a></li>
+                <li><a href="/propiedades?ciudad=San%20Bernardino">San Bernardino</a></li>
+                <li><a href="/propiedades?ciudad=Villa%20Hayes">Villa Hayes</a></li>
+                <li><a href="/propiedades?ciudad=Mariano%20Roque%20Alonso">Mariano Roque Alonso</a></li>
+            </ul>
+
+            <!-- Rescatado del FAQ que se borró: era la respuesta "¿Cuál es el
+                 rango de precios?" y estaba a tres toques adentro de un widget.
+                 El "8 de cada 10" está medido contra la base el 18/08: 78,7% de
+                 las 1.438 casas y departamentos en venta caen entre esos dos
+                 números. Y es un link, no un dato suelto: el portal ya acepta
+                 precio_min y precio_max por GET. -->
+            <p class="hero-precios">
+                8 de cada 10 casas y departamentos en venta están entre
+                <a href="/propiedades?operacion=venta&amp;precio_min=50000&amp;precio_max=300000">USD 50.000 y USD 300.000</a>.
+            </p>
+
+            <p class="hero-alt">
+                ¿Querés vender o alquilar tu propiedad?
+                <a href="https://wa.me/595900000000?text=Hola%2C%20quiero%20tasar%20mi%20propiedad" target="_blank" rel="noopener">Pedí una tasación por WhatsApp</a>
+            </p>
+        </div>
+    </section>
+
+    <!-- Destacadas
+         El contenido entre los dos marcadores lo escribe
+         scripts/build_destacadas.py en el deploy (decisión 1 de Ez, opción (b)
+         del bloque 3 del audit). Lo que está commiteado es el estado vacío con
+         acción que se ve si el script nunca corrió o si la base no tenía nada
+         publicable: la landing es estática a propósito y tiene que servir igual
+         con el panel caído. No borrar los marcadores. -->
+    <section class="destacadas" id="destacadas" aria-labelledby="destacadas-h">
+        <div class="seccion-inner">
+            <h2 class="section-title" id="destacadas-h">Algunas de las que tenemos publicadas</h2>
+            <!-- destacadas:inicio — generado por scripts/build_destacadas.py -->
+            <p class="destacadas-vacio">
+                Las fichas con foto se arman en cada deploy. Mientras tanto, el
+                listado completo está siempre disponible.
+            </p>
+            <!-- destacadas:fin -->
+            <a class="link-seccion" href="/propiedades">Ver todas las propiedades</a>
+        </div>
+    </section>
+
+    <!-- Doble carril: quien busca y quien vende.
+         La única simetría de la página, a propósito: son dos audiencias del
+         mismo tamaño y ninguna manda sobre la otra. -->
+    <section class="carriles" id="vender">
+        <div class="carril">
+            <h2 class="section-title">Estás buscando</h2>
+            <p class="section-desc">
+                Filtrá por ciudad, tipo y precio sobre lo que la red Onnix
+                Paraguay tiene publicado hoy. Sin registrarte y sin dejar tus
+                datos para mirar.
+            </p>
+            <a class="link-seccion" href="/propiedades?operacion=venta">Ver propiedades en venta</a>
+        </div>
+        <div class="carril">
+            <h2 class="section-title">Estás vendiendo</h2>
+            <p class="section-desc">
+                La tasación la hace una persona que conoce la zona, no un
+                formulario que devuelve un número. la administradora mira tu propiedad,
+                la compara con lo que se vendió cerca y te dice qué esperar.
+            </p>
+            <!-- Rescatado del FAQ: "¿Es gratis usar el servicio?" era la
+                 respuesta que más bajaba la fricción de todo el widget y estaba
+                 enterrada. Va acá, pegada al pedido de tasación, que es donde
+                 la duda aparece. -->
+            <p class="carril-nota">
+                La consulta y la tasación no se cobran. La comisión aparece
+                recién si la operación se cierra.
+            </p>
+            <a class="btn-primary" target="_blank" rel="noopener"
+               href="https://wa.me/595900000000?text=Hola%2C%20quiero%20tasar%20mi%20propiedad.%20Es%20un%20%5Bcasa%2C%20departamento%20o%20terreno%5D%20en%20%5Bbarrio%20o%20ciudad%5D.">
+                Pedir la tasación por WhatsApp
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Franja de WhatsApp.
+         Ancho completo y una sola frase: es el canal que ninguna de las 24
+         inmobiliarias del relevamiento tiene, así que acá la página se sale del
+         patrón a propósito.
+         La promesa de tiempo es concreta y es la que el sistema cumple: del
+         otro lado hay un bot con LLM que contesta solo, a cualquier hora. El
+         horario humano se dice aparte para no prometer a la administradora a las 3 AM.
+         Rescatado del FAQ: "¿Cuál es el horario de atención?". -->
+    <section class="franja-wa">
+        <div class="franja-wa-inner">
+            <h2 class="franja-wa-frase">
+                Escribinos por WhatsApp y te contestamos en el momento,
+                a cualquier hora de cualquier día.
+            </h2>
+            <p class="franja-wa-nota">
+                Contesta nuestro asistente, que busca sobre las propiedades
+                publicadas y te pasa fotos y precios. Si querés hablar con una
+                persona, la administradora atiende de lunes a viernes de 8:00 a 18:00.
+            </p>
+            <a class="btn-primary" target="_blank" rel="noopener"
+               href="https://wa.me/595900000000?text=Hola%2C%20quiero%20buscar%20una%20propiedad">
+                Escribir al +595 983 098 703
+            </a>
+        </div>
+    </section>
+
+    <!-- la administradora.
+         FALTA SU RETRATO. La foto no existe todavía y no se pone una genérica:
+         ui.md prohíbe imagen inventada, y en una sección cuyo punto entero es
+         "hay una persona real acá" una foto de banco es exactamente la mentira
+         que la sección viene a desmentir.
+         Cuando la administradora mande el retrato: dejarlo en
+         landing/assets/retrato.webp (cuadrado, ~800px de lado) y descomentar
+         el <img> de abajo. El CSS de .nosotros-inner ya está escrito para las
+         dos columnas y cae solo a una cuando no hay imagen. -->
+    <section class="nosotros" id="nosotros">
+        <div class="nosotros-inner">
+            <!-- <img class="nosotros-foto" src="/landing-assets/retrato.webp"
+                 alt="la administradora, titular de Onnix SA"
+                 width="800" height="800" loading="lazy" decoding="async"> -->
+            <div class="nosotros-texto">
+                <h2 class="section-title">la administradora</h2>
+                <p class="nosotros-rol">Titular de Onnix SA</p>
+                <p class="section-desc">
+                    La oficina es de ella y atiende ella. No hay un call center en
+                    el medio: cuando pedís una visita o una tasación, coordina
+                    la administradora.
+                </p>
+                <!-- Rescatado del FAQ: su número estaba a cuatro toques adentro
+                     del widget, en "¿Cómo contacto a un asesor?". Ahora está acá
+                     y en el footer. -->
+                <p class="nosotros-contacto">
+                    <a href="tel:+595986255242">+595 986 255 242</a>
+                </p>
+                <p class="nosotros-legal">
+                    COVIERTE E.A.S. UNIPERSONAL · RUC 80159461-8 ·
+                    Dr. Eusebio Lillo, Casa 1813, Asunción
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Barrios.
+         Formato @properties: una frase escrita para cada barrio, no una fila de
+         links de categoría. Los conteos salen de la base el 18/08, sobre
+         onnixpy activas.
+         PENDIENTE, y es de producto: el portal no filtra por barrio, así que
+         estos nombres todavía no pueden ser links propios. `PropertyFilters` ya
+         tiene el campo `neighborhood` y el repo ya arma el ILIKE con unaccent:
+         falta que /propiedades acepte `barrio` y se lo pase a
+         get_portal_listing. Tres líneas en panel/, que no es territorio de esta
+         rama. -->
+    <section class="barrios" id="barrios">
+        <div class="seccion-inner">
+            <h2 class="section-title">Asunción, barrio por barrio</h2>
+            <p class="section-desc">
+                Dónde está publicado lo que tenemos, y qué vas a encontrar en cada zona.
+            </p>
+            <dl class="barrios-lista">
+                <div class="barrio">
+                    <dt>Recoleta <span class="barrio-cuenta">255 propiedades</span></dt>
+                    <dd>Sobre Mariscal López y Choferes del Chaco. Es el barrio con más publicaciones nuestras, y el que más torres nuevas suma cada año.</dd>
+                </div>
+                <div class="barrio">
+                    <dt>Villa Morra <span class="barrio-cuenta">193 propiedades</span></dt>
+                    <dd>El centro comercial de Asunción. Shopping, bancos y oficinas a distancia de caminata, y departamentos que se alquilan rápido.</dd>
+                </div>
+                <div class="barrio">
+                    <dt>Ycuá Satí <span class="barrio-cuenta">183 propiedades</span></dt>
+                    <dd>Residencial del noreste, entre Santa Teresa y Aviadores del Chaco. Departamentos nuevos con menos ruido que Villa Morra.</dd>
+                </div>
+                <div class="barrio">
+                    <dt>Las Lomas <span class="barrio-cuenta">181 propiedades</span></dt>
+                    <dd>Lo que todo el mundo llama Carmelitas. Gastronomía y colegios sobre las avenidas, calles internas tranquilas atrás.</dd>
+                </div>
+                <div class="barrio">
+                    <dt>Las Mercedes <span class="barrio-cuenta">139 propiedades</span></dt>
+                    <dd>Casas de familia y edificios bajos, con Mariscal López cerca. Es de los barrios donde todavía se consiguen lotes grandes.</dd>
+                </div>
+                <div class="barrio">
+                    <dt>Herrera <span class="barrio-cuenta">85 propiedades</span></dt>
+                    <dd>Casi el centro, con avenidas anchas y mezcla de vivienda y comercio. Precios por debajo de la zona de Villa Morra.</dd>
+                </div>
+                <div class="barrio">
+                    <dt>Mburucuyá <span class="barrio-cuenta">79 propiedades</span></dt>
+                    <dd>Al norte, cerca de Madame Lynch y de la salida a Mariano Roque Alonso. Mucho proyecto nuevo y buena salida de la ciudad.</dd>
+                </div>
+                <div class="barrio">
+                    <dt>Barrio Jara <span class="barrio-cuenta">50 propiedades</span></dt>
+                    <dd>Uno de los barrios de siempre, con España y Mariscal López a mano. Casas antiguas conviviendo con edificios nuevos.</dd>
+                </div>
+            </dl>
+            <a class="link-seccion" href="/propiedades?ciudad=Asunci%C3%B3n">Ver todo lo publicado en Asunción</a>
+        </div>
+    </section>
+
+    <!-- Contacto -->
+    <section class="contact" id="contacto">
+        <div class="contact-inner">
+            <h2 class="section-title">Hablemos de tu próxima propiedad</h2>
+            <p class="section-desc" style="margin: 0 auto 2.5rem;">
+                Elegí cómo preferís comunicarte con nosotros.
+            </p>
+            <div class="contact-options">
+                <a href="https://wa.me/595900000000?text=Hola%2C%20quiero%20buscar%20una%20propiedad" class="contact-option" target="_blank" rel="noopener">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    <span class="contact-option-title">WhatsApp</span>
+                    <span class="contact-option-desc">Respuesta en el momento, todos los días</span>
+                </a>
+                <a href="tel:+595986255242" class="contact-option">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                    <span class="contact-option-title">Llamar a la administradora</span>
+                    <span class="contact-option-desc">Lunes a viernes, 8:00 a 18:00</span>
+                </a>
+                <a href="mailto:onnixnova.tech@gmail.com" class="contact-option">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+                    <span class="contact-option-title">Email</span>
+                    <span class="contact-option-desc">Consultas formales</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    </main>
+
+    <!-- Footer.
+         Acá terminaron «Unite al equipo» y las cuatro estadísticas
+         corporativas. No estaban mal en sí: estaban en el cuerpo, donde una
+         oferta de empleo y las cifras de la franquicia se comían el lugar de
+         las casas. Es información de pie de página y ahora se ve como tal. -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <img src="/landing-assets/logo.svg" alt="Onnix SA" width="181" height="44">
+                <p>COVIERTE E.A.S. UNIPERSONAL<br>RUC: 80159461-8<br>Dr. Eusebio Lillo, Casa 1813, Asunción, Paraguay</p>
+                <p class="footer-red">Onnix opera en 84 países con más de 14.000 oficinas. Cada una es de propiedad y operación independiente.</p>
+            </div>
+            <div class="footer-links">
+                <h3>Propiedades</h3>
+                <a href="/propiedades?operacion=venta">En venta</a>
+                <a href="/propiedades?operacion=alquiler">En alquiler</a>
+                <a href="#vender">Tasar mi propiedad</a>
+            </div>
+            <div class="footer-links">
+                <h3>Empresa</h3>
+                <a href="#nosotros">Quiénes somos</a>
+                <a href="https://wa.me/595900000000?text=Hola%2C%20me%20interesa%20unirme%20al%20equipo%20Onnix%20SA" target="_blank" rel="noopener">Unite al equipo</a>
+                <a href="/login">Panel admin</a>
+            </div>
+            <div class="footer-links">
+                <h3>Contacto</h3>
+                <a href="tel:+595986255242">la administradora: +595 986 255 242</a>
+                <a href="https://wa.me/595900000000" target="_blank" rel="noopener">WhatsApp: +595 983 098 703</a>
+                <a href="mailto:onnixnova.tech@gmail.com">onnixnova.tech@gmail.com</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 Onnix SA, COVIERTE E.A.S. UNIPERSONAL. Todos los derechos reservados.</span>
+        </div>
+    </footer>
+
+    <!-- Botón flotante: WhatsApp, y nada más.
+         Acá vivía el widget de FAQ (decisión 3 de Ez). Era un matcher de
+         keywords por indexOf con 8 entradas, se llamaba «Onnix» y tenía la misma
+         identidad que el bot LLM real del WhatsApp: el visitante lo probaba,
+         concluía que el bot de Onnix era tonto, y no abría WhatsApp. Le hacía
+         demo negativa a lo único que este proyecto tiene y la competencia no.
+         Ahora el botón lleva al bot de verdad. Es un <a>: cero JavaScript, cero
+         estado, y funciona con el JS apagado. -->
+    <a class="wa-flotante" target="_blank" rel="noopener"
+       href="https://wa.me/595900000000?text=Hola%2C%20quiero%20buscar%20una%20propiedad">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <span class="wa-flotante-texto">WhatsApp</span>
+    </a>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "name": "Onnix SA",
+      "legalName": "COVIERTE E.A.S. UNIPERSONAL",
+      "taxID": "80159461-8",
+      "url": "https://onnix.com.py/",
+      "logo": "https://onnix.com.py/landing-assets/logo.svg",
+      "image": "https://onnix.com.py/landing-assets/hero-luque.webp",
+      "telephone": "+595986255242",
+      "email": "onnixnova.tech@gmail.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Dr. Eusebio Lillo, Casa 1813",
+        "addressLocality": "Asunción",
+        "addressCountry": "PY"
+      },
+      "areaServed": [
+        "Asunción", "Lambaré", "San Lorenzo", "Luque",
+        "Fernando de la Mora", "Capiatá", "Mariano Roque Alonso"
+      ],
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "08:00",
+        "closes": "18:00"
+      },
+      "parentOrganization": {
+        "@type": "Organization",
+        "name": "Onnix Real Estate LLC"
+      }
+    }
+    </script>
+
+    <script src="/landing-assets/js/main.js?v=5" defer></script>
+</body>
+</html>

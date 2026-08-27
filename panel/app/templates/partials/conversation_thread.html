@@ -1,0 +1,209 @@
+{% from "partials/_message_macro.html" import render_message %}
+{% from "partials/reply_composer.html" import composer %}
+
+{# ====================================================================== #}
+{# MAIN TEMPLATE                                                          #}
+{# ====================================================================== #}
+{% if thread %}
+
+{# El avatar tenia una paleta propia de 10 hex crudos, elegida por la inicial
+   del nombre. Dos problemas, y el segundo no es de estilo: eran 10 matices
+   saturados mas —contra el techo de dos de ui.md— y **6 de los 10 no pasaban
+   AA** con el texto blanco de 14px bold que llevan encima: #059669 3,77 ·
+   #D97706 3,19 · #0891B2 3,68 · #65A30D 3,09 · #0D9488 3,74 · #EA580C 3,56.
+   El #D97706 es literalmente el color que base.html documenta como reprobado.
+   Queda un solo avatar, con los tokens del sistema: 15,88:1. #}
+{% set _name = thread.contact_name or '?' %}
+{% set _initial = _name[0] | upper %}
+<div x-data="{ activityOpen: false }" class="flex-shrink-0 bg-white border-b border-gray-200 -mx-4 px-4 py-3">
+<div class="flex items-center gap-3">
+    {# Mobile back button #}
+    <button @click="mobileShowThread = false"
+            aria-label="Volver a lista de conversaciones"
+            class="tap-44 md:hidden text-onnix-ink-400 hover:text-gray-600 p-1 -ml-1 flex-shrink-0">
+        <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </button>
+
+    <div class="conv-avatar flex-shrink-0" aria-hidden="true">{{ _initial }}</div>
+
+    {# Name + phone #}
+    <div class="flex-1 min-w-0">
+        <h3 class="font-semibold text-gray-900 text-sm leading-tight truncate">{{ thread.contact_name }}</h3>
+        {% if thread.contact_phone %}
+        <p class="text-xs text-gray-500 leading-tight">{{ thread.contact_phone }}</p>
+        {% endif %}
+    </div>
+
+    {# Actividad button (history icon) — collapses/expands activity panel #}
+    {% if thread.conversation %}
+    <button @click="activityOpen = !activityOpen"
+            :class="activityOpen ? 'text-gray-700 bg-gray-100' : 'text-onnix-ink-400 hover:text-gray-600'"
+            aria-label="Ver actividad de la conversación"
+            title="Actividad"
+            class="tap-44 flex-shrink-0 p-1.5 rounded transition-colors"
+            hx-get="/conversations/{{ thread.conversation.id }}/activity"
+            hx-target="#conv-activity-panel"
+            hx-swap="innerHTML"
+            hx-trigger="click[!activityOpen] once">
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+    </button>
+    {% endif %}
+
+    {# Link to contact profile #}
+    {% if thread.contact %}
+    <a href="/contacts/{{ thread.contact.id }}" title="Ver perfil del contacto" target="_blank"
+       class="tap-44 flex-shrink-0 text-onnix-ink-400 hover:text-gray-600 p-1 rounded transition-colors">
+        <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+    </a>
+    {% endif %}
+
+    {# Per-chat bot toggle #}
+    {% if thread.conversation %}
+    {% with conv_id=thread.conversation.id, is_bot_active=thread.conversation.is_bot_active %}
+    {% include "partials/conversation_bot_toggle.html" %}
+    {% endwith %}
+    {% endif %}
+</div>
+
+{# Collapsible activity panel — loaded on demand via HTMX #}
+{% if thread.conversation %}
+<div id="conv-activity-panel" class="flex-shrink-0"
+     x-show="activityOpen"
+     x-cloak
+     x-transition:enter="transition ease-out duration-150"
+     x-transition:enter-start="opacity-0 -translate-y-1"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     class="mt-2 max-h-64 overflow-y-auto border border-gray-100 rounded-lg bg-gray-50 px-3 py-2">
+    <p class="text-xs text-onnix-ink-400 italic">Cargando actividad…</p>
+</div>
+{% endif %}
+</div>
+
+<div id="message-list" aria-live="polite" class="flex-1 min-h-0 overflow-y-auto chat-scroll space-y-2 py-4"
+     {% if thread.conversation %}
+     hx-get="/conversations/{{ thread.conversation.id }}/messages"
+     hx-trigger="sse:message_update_{{ thread.conversation.id }}"
+     hx-swap="morph:innerHTML"
+     {% endif %}>
+
+    {% set ns = namespace(last_date=none) %}
+    {% for msg in thread.messages %}
+
+        {# Date separator #}
+        {% set msg_date = msg.created_at.date() if msg.created_at else none %}
+        {% if msg_date and msg_date != ns.last_date %}
+        <div id="date-{{ msg_date }}" class="flex items-center gap-3 py-2">
+            <div class="flex-1 h-px bg-gray-200"></div>
+            <span class="text-[11px] text-onnix-ink-400 font-medium px-2 whitespace-nowrap">
+                {{ msg.created_at|pyt('%d/%m/%Y') }}
+            </span>
+            <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+        {% set ns.last_date = msg_date %}
+        {% endif %}
+
+        {{ render_message(msg, thread.properties_map) }}
+
+    {% endfor %}
+
+    {% if not thread.messages %}
+    <div class="text-center text-onnix-ink-400 text-sm py-8">
+        No hay mensajes en esta conversación
+    </div>
+    {% endif %}
+</div>
+
+{% if thread.conversation %}
+{% if thread.window_expired %}
+{# ------------------------------------------------------------------ #}
+{# C1: Ventana 24h warning. Ocupa el lugar del composer, abajo del todo.
+   Era `sticky top-[57px]` para colgar de la cabecera cuando esta era sticky;
+   ahora la cabecera es la primera fila de la columna y esto es la ultima. #}
+{# ------------------------------------------------------------------ #}
+<div class="flex-shrink-0 -mx-4 px-4 py-3 bg-amber-50 border-t border-amber-200"
+     x-data="{ showFollowupPreview: false }">
+    <div x-show="!showFollowupPreview">
+        <div class="flex items-start gap-3">
+            <span class="mt-0.5 text-amber-500 inline-flex items-center flex-shrink-0">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.008v.008H12v-.008Z"/>
+                </svg>
+            </span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-amber-900">
+                    Ventana de 24 horas expirada
+                </p>
+                <p class="text-xs text-amber-700 mt-0.5">
+                    {{ thread.contact_name }} no escribe hace más de 24 horas. No se pueden enviar mensajes libres.
+                </p>
+            </div>
+            <button type="button"
+                    @click="showFollowupPreview = true"
+                    class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-onnix-accent hover:bg-onnix-accent-dark active:scale-95 active:brightness-75 text-white text-xs font-semibold rounded-lg transition-[background-color,transform] duration-100 whitespace-nowrap">
+                <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Enviar plantilla
+            </button>
+        </div>
+    </div>
+
+    <div x-show="showFollowupPreview" x-cloak
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1"
+         x-transition:enter-end="opacity-100 translate-y-0">
+        <p class="text-xs font-semibold text-amber-800 mb-2">Preview del mensaje a enviar:</p>
+        <div class="bg-white border border-amber-200 rounded-lg p-3 mb-3">
+            <p class="text-xs text-gray-700">
+                🏠 ¡Hola <strong>{{ thread.contact_name }}</strong>! Soy Onnix, el asistente virtual de Onnix&nbsp;SA.
+            </p>
+            <p class="text-xs text-gray-700 mt-1.5">
+                Estamos para ayudarte a encontrar tu propiedad ideal en Paraguay. ¿Estás buscando para comprar o alquilar?
+            </p>
+            <p class="text-xs text-onnix-ink-400 mt-1.5">Botones: [Comprar] [Alquilar]</p>
+        </div>
+        <div class="flex gap-2">
+            <form method="POST" action="/conversations/send_template" class="flex-1">
+                {# CSRF double-submit cookie — hidden field for plain (non-HTMX) form (D1) #}
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                {% if thread.contact %}
+                <input type="hidden" name="contact_id" value="{{ thread.contact.id }}">
+                {% endif %}
+                {# El form no manda property_id ni pref_*, así que solo sirve una
+                   plantilla de una sola variable ({{1}} = nombre). wa_tpl_followup_v3
+                   pide 4. Ver tests/test_template_keys_in_templates.py. #}
+                <input type="hidden" name="template_key" value="wa_tpl_send_generic_v3">
+                <button type="submit"
+                        class="w-full bg-onnix-accent hover:bg-onnix-accent-dark active:scale-95 active:brightness-75 text-white text-sm font-medium px-3 py-2 rounded-lg transition-[background-color,transform] duration-100">
+                    Confirmar envío
+                </button>
+            </form>
+            <button type="button"
+                    @click="showFollowupPreview = false"
+                    class="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="flex-shrink-0 border-t bg-white p-3"
+     x-data="{ submitting: false }"
+     @htmx:afterRequest.window="if ($event.detail.elt && $event.detail.elt.id === 'reply-form') { submitting = false; }">
+    {{ composer(thread.conversation.id) }}
+    <div id="reply-status" aria-live="polite" class="mt-1.5 min-h-[20px] text-sm"></div>
+</div>
+{% endif %}
+{% endif %}
+
+{% else %}
+<div class="flex items-center justify-center h-full text-onnix-ink-400">
+    Conversación no encontrada
+</div>
+{% endif %}

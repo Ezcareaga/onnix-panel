@@ -1,0 +1,1333 @@
+{% from "partials/property_photo.html" import foto %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0A0A0A">
+
+    <title>{{ prop.title }} | Onnix SA</title>
+    <meta name="description" content="{% if prop.description %}{{ (prop.description | clean_description)[:160] }}{% else %}{{ prop.property_type | replace('_',' ') | title if prop.property_type else 'Propiedad' }}{% if prop.city %} en {{ prop.city }}{% endif %}{% if prop.price_display %} — {{ prop.price_display }}{% endif %}{% endif %}">
+    <link rel="canonical" href="{{ base_url }}{{ prop.canonical_path }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ prop.title }}">
+    <meta property="og:description" content="{% if prop.description %}{{ (prop.description | clean_description)[:200] }}{% else %}{{ prop.property_type | replace('_',' ') | title if prop.property_type else 'Propiedad' }}{% if prop.city %} en {{ prop.city }}{% endif %}{% if prop.price_display %} — {{ prop.price_display }}{% endif %}{% endif %}">
+    <meta property="og:url" content="{{ base_url }}{{ prop.canonical_path }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Onnix SA">
+    {% if prop.photo_urls %}
+    <meta property="og:image" content="{{ base_url }}{{ prop.photo_urls[0] }}">
+    {% endif %}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ prop.title }}">
+    <meta name="twitter:description" content="{% if prop.description %}{{ (prop.description | clean_description)[:200] }}{% else %}{{ prop.title }}{% endif %}">
+    {% if prop.photo_urls %}
+    <meta name="twitter:image" content="{{ base_url }}{{ prop.photo_urls[0] }}">
+    {% endif %}
+
+    <!-- Google Fonts -->
+
+    {% include "public/_estilos_comunes.html" %}
+    <style>
+        /* Lo que solo usa la ficha. El resto —las dos caras de Outfit, el
+           reset, los once tokens compartidos, la base de html/body y el
+           header— vive en el partial de arriba. */
+        :root {
+            --wa-green:    #25D366;
+            --wa-green-hv: #1ebe5d;
+            /* El borde de los controles del lightbox. Sale del token, no de un
+               literal: los dos que había eran el acento escrito a mano, y mover
+               --accent los habría dejado en el acento viejo sin que nadie se entere.
+               El 55% es el mínimo que pasa 1.4.11 sobre el fondo real del
+               overlay (negro al 95% sobre --bg, o sea rgb(0,5 0,5 0,5)):
+               calculado da 3,27:1, contra 2,86:1 del 50%. */
+            --border-lb:   color-mix(in srgb, var(--accent) 55%, transparent);
+            --max-w:       960px;
+        }
+
+        body {
+            /* El hueco de la barra fija va acá y no en `.main`: el footer viene
+               después del main, así que la barra lo tapaba igual. En rem, para
+               que el hueco crezca con el zoom de texto lo mismo que la barra.
+               9 y no 7: medida en el navegador a 390px con el texto al 200%, la
+               barra con el precio en su propia línea mide 254,5px, y ahí 1rem
+               son 32px — o sea 7,95rem. */
+            padding-bottom: 9rem;
+        }
+
+
+        .logo-img {
+            height: 32px;
+            width: auto;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Hero                                                                */
+        /* ------------------------------------------------------------------ */
+
+        /* ------------------------------------------------------------------ */
+        /* Hero — ambient blur (desktop only)                                  */
+        /* Backdrop: same src as hero-img → single download, already cached.  */
+        /* scale(1.12) hides the transparent halo that CSS blur creates at    */
+        /* the edges without needing clip-path or extra wrapper.              */
+        /* ------------------------------------------------------------------ */
+
+        @media (min-width: 900px) {
+
+            /* On desktop: nítida centrada con contain — nunca se upscalea */
+        }
+
+        /* Mobile/tablet: classic full-bleed cover (unchanged) */
+
+        /* Since hero-content is in absolute-positioned hero, we need full-width */
+
+        /* La operación y el tipo se dicen en `.hero-location`, no en una
+           píldora arriba del h1: `ui.md` prohíbe los eyebrow chips en el hero
+           por nombre, y la cabecera sin foto ya los decía en línea
+           (`Venta · Casa · Zona Aeropuerto · Luque`). Eran dos tratamientos
+           para el mismo dato, uno por cada rama de la condición de fotos. */
+
+        /* ------------------------------------------------------------------ */
+        /* Cabecera plana — la ficha sin foto                                  */
+        /*                                                                     */
+        /* El hero existe para sostener una foto. Sin foto sostenía un         */
+        /* gradiente sobre un plano y un monograma de 64px, y ese monograma    */
+        /* solapaba el h1: 82,9px a 390 y los 102,4px enteros adentro de la    */
+        /* caja del h1 a 1280, en el 48,8% de esas fichas. Acá no hay caja de  */
+        /* 548px ni superposición posible: la página abre en el dato.          */
+        /* ------------------------------------------------------------------ */
+
+        /* ------------------------------------------------------------------ */
+        /* Ausencia — un solo patrón para los dos vacíos de la ficha           */
+        /* (sin fotos, y sin ningún dato de la ficha técnica).                 */
+        /* ------------------------------------------------------------------ */
+        .falta {
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: var(--text-sec);
+            line-height: 1.6;
+        }
+
+        .falta-link {
+            /* inline-flex + min-height es lo mismo que cerró A7 en .wordmark:
+               un <a> en línea hereda el alto de la línea (~22px) y queda a la
+               mitad del target de 44x44 que pide ui.md. */
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            color: var(--accent);
+            font-weight: 500;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            transition: color 0.15s ease-out;
+        }
+
+        .falta-link:hover,
+        .falta-link:focus-visible {
+            color: var(--accent-hover);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Gallery                                                             */
+        /* ------------------------------------------------------------------ */
+
+        @media (min-width: 640px) {
+        }
+
+        /* En desktop la tira NO se abre en grilla. Medido a 1280x800: la grilla
+           metía 1.113px entre el hero y el primer dato, o sea que para saber
+           cuántos dormitorios tiene la propiedad había que scrollear una
+           pantalla y media de fotos (el primer dato caía en y=1.705). Como tira
+           cae en ~830: adentro del fold. Las 17 fotos siguen a un scroll
+           horizontal o a un click en el lightbox, que ya da la vista completa. */
+
+        /* ------------------------------------------------------------------ */
+        /* Main content area                                                   */
+        /* ------------------------------------------------------------------ */
+
+        /* Section labels */
+        .section-label {
+            font-family: var(--sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1.25rem;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Ficha / Chips                                                       */
+        /* ------------------------------------------------------------------ */
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: var(--sans);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.35rem 0.75rem;
+            white-space: nowrap;
+        }
+
+        .chip.chip-state {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: transparent;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Descripcion                                                         */
+        /* ------------------------------------------------------------------ */
+        .description-text {
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: var(--text-sec);
+            line-height: 1.75;
+            white-space: pre-line;
+            max-width: 680px;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Inline CTA block                                                    */
+        /* ------------------------------------------------------------------ */
+        .cta-block {
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+            /* A2 — a 200% de texto en 390px la ficha desbordaba 58px y el
+               `.btn-wa` quedaba fuera de pantalla: un flex item no se encoge
+               por debajo de su min-content mientras `min-width` valga `auto`,
+               asi que el bloque metia 407px de contenido en una caja de 308.
+               Con min-width: 0 el hijo puede encogerse y el texto envuelve. */
+            min-width: 0;
+        }
+
+        .cta-block > * {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        /* El corte pregunta por el ancho del BLOQUE, no por el del viewport.
+
+           Era `@media (min-width: 560px)`, y funcionó mientras el bloque ocupaba
+           el ancho de la página. La recomposición del 23/08 pasó escritorio a
+           dos columnas y este bloque cayó en la lateral de 301px — pero la media
+           query mira el viewport, así que a 1152px seguía forzando `row` adentro
+           de una caja de 301. Medido en producción: el bloque tiene 301, menos
+           48 de padding y 16 de gap quedan 253, el `.btn-wa` se lleva 189 y no
+           encoge porque es `white-space: nowrap`, y al título le quedaban
+           **46px de ancho por 128 de alto** — una letra por renglón.
+
+           El 560 no cambia, cambia el eje. Y no es un número redondo: medido en
+           el navegador, el subtítulo en una línea pide 277px, el botón 189, y el
+           padding más el gap 64. Son 530. 35rem deja 30px de aire para una
+           referencia más larga que la de la propiedad que se midió. */
+        section.contacto {
+            container-type: inline-size;
+        }
+
+        @container (min-width: 35rem) {
+            .cta-block {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .cta-block-text {
+            flex: 1;
+        }
+
+        .cta-block-title {
+            font-family: var(--sans);
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .cta-block-sub {
+            font-family: var(--sans);
+            font-size: 0.78rem;
+            color: var(--text-sec);
+        }
+
+        .btn-wa {
+            display: inline-flex;
+            align-items: center;
+            /* Parte de A2: sin wrap, el icono y la etiqueta forman una linea
+               indivisible que a 200% no entra en 390px. */
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 100%;
+            gap: 0.5rem;
+            background: var(--wa-green);
+            /* A1 — #fff sobre --wa-green medía 1,98:1 y el hover 2,45:1, con
+               texto de 14,4px/600: es texto normal, el piso es 4,5:1. El verde
+               se queda (ui.md lo declara); lo que cambia es la tinta encima.
+               --bg da 9,98:1 en reposo y 8,09:1 sobre --wa-green-hv. */
+            color: var(--bg);
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.7rem 1.4rem;
+            /* Medía 43px: el único CTA de la página, a un pixel del piso táctil. */
+            min-height: 44px;
+            border-radius: var(--radius);
+            text-decoration: none;
+            /* Sin esto el navegador retiene el tap 300ms por si viene un doble
+               tap de zoom. Es el único CTA táctil de la vista. */
+            touch-action: manipulation;
+            white-space: nowrap;
+            transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-wa:hover { background: var(--wa-green-hv); }
+
+        .btn-wa-icon {
+            width: 18px;
+            height: 18px;
+            /* currentColor y no un literal: A1 cambio el `color` del boton a
+               --bg y el icono se quedo en #fff, o sea etiqueta negra e icono
+               blanco sobre el mismo verde. Heredando el color no puede volver a
+               divergir del texto que acompaña. Y ui.md no admite hex en CSS. */
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Mapa                                                                */
+        /* ------------------------------------------------------------------ */
+        .map-wrap {
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            overflow: hidden;
+            opacity: 0.85;
+        }
+
+        .map-wrap iframe {
+            width: 100%;
+            height: 280px;
+            display: block;
+            border: 0;
+        }
+
+        @media (min-width: 640px) {
+            .map-wrap iframe { height: 340px; }
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Ref code                                                            */
+        /* ------------------------------------------------------------------ */
+        .ref-code {
+            font-family: var(--sans);
+            font-size: 0.72rem;
+            color: var(--text-sec);
+            letter-spacing: 0.06em;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Footer                                                              */
+        /* ------------------------------------------------------------------ */
+        .site-footer {
+            border-top: 1px solid var(--border);
+            padding: 2rem 1.25rem;
+            text-align: center;
+        }
+
+        .site-footer p {
+            font-family: var(--sans);
+            font-size: 0.75rem;
+            color: var(--text-sec);
+            line-height: 1.9;
+        }
+
+        .site-footer .footer-brand {
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            color: var(--accent);
+            letter-spacing: 0.06em;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Sticky bottom bar (mobile WhatsApp CTA)                            */
+        /* ------------------------------------------------------------------ */
+        /* ================================================================== */
+        /* GALERÍA — un solo bloque, con degradación por cantidad de fotos      */
+        /* ================================================================== */
+        /* El alto va en píxeles y no en `vh`: 10 de 13 referencias lo acotan
+           así. El rango observado es 400-550 px en escritorio y 280-350 en
+           celular; el hero viejo medía 548 en celular, doscientos arriba de
+           cualquiera de las trece. */
+        .galeria {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            padding: 0.75rem 1.25rem 0;
+            position: relative;
+        }
+
+        .galeria-grid {
+            display: grid;
+            gap: 4px;
+            height: 300px;
+            /* Por defecto —tres fotos o más— la grande a la izquierda y dos
+               apiladas a la derecha. Es el mosaico 1+2 de Onnix global. */
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            grid-template-areas:
+                "principal secundaria-1"
+                "principal secundaria-2";
+        }
+
+        /* La degradación va en CSS y no duplicando el template: cinco de las
+           trece lo resuelven así, y Onnix —la marca del cliente— con
+           `:has()` puro. Acá importa más que a nadie: el 18,1 % de nuestras
+           fichas no tiene ninguna foto, y muchas de las que tienen, tienen una. */
+        .galeria-grid:has(> :last-child:nth-child(1)) {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+            grid-template-areas: "principal";
+        }
+        .galeria-grid:has(> :last-child:nth-child(2)) {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+            grid-template-areas: "principal secundaria-1";
+        }
+
+        .galeria-foto {
+            display: block;
+            overflow: hidden;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            transition: border-color 0.2s;
+        }
+        .galeria-foto:hover { border-color: var(--accent); }
+        .galeria-foto:nth-child(1) { grid-area: principal; }
+        .galeria-foto:nth-child(2) { grid-area: secundaria-1; }
+        .galeria-foto:nth-child(3) { grid-area: secundaria-2; }
+
+        .galeria-foto .galeria-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* El camino degradado tiene su propio estilo, no uno impuesto por el
+           handler: `onerror` sólo pone display:'' y vuelve a este `flex`. */
+        .galeria-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            background: var(--surface-2);
+        }
+
+        /* En celular, una foto y un botón — sin carrusel. Onnix y
+           Christie's hacen esto; los otros cinco mosaicos montan un carrusel.
+           Lo desempata un bug que ya tuvimos: N1 dejó dos botones de lightbox
+           visibles y enfocables SIN EFECTO en toda ficha de una sola foto. Un
+           carrusel de un slide es el mismo error con otra ropa. */
+        @media (max-width: 599px) {
+            .galeria-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+                grid-template-areas: "principal";
+            }
+            .galeria-foto:not(:first-child) { display: none; }
+        }
+
+        @media (min-width: 900px) {
+            .galeria-grid { height: 440px; }
+        }
+
+        /* El botón se queda aunque haya una sola foto. Es el affordance de que
+           existe una galería: si desaparece con una foto, la ficha pobre pierde
+           también el camino a verla en grande. */
+        .galeria-btn {
+            position: absolute;
+            right: 1.75rem;
+            bottom: 0.75rem;
+            min-height: 44px;
+            padding: 0 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface-1);
+            color: var(--text-pri);
+            font-family: var(--sans);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .galeria-btn:hover { border-color: var(--accent); }
+
+        /* El monograma vuelve a tener casa: vivía anidado bajo `.hero-placeholder`
+           y se fue con él. Va con token y sin `opacity` —`ui.md` prohíbe decir
+           nada con opacidad— y en dos tamaños: grande cuando ocupa el bloque
+           entero, chico cuando cae en una celda secundaria del mosaico, que
+           mide un tercio del ancho. */
+        .galeria-placeholder .monogram,
+        .galeria-vacia .monogram {
+            font-family: var(--sans);
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            color: var(--text-sec);
+        }
+        .galeria-vacia .monogram { font-size: 4rem; }
+        .galeria-placeholder .monogram { font-size: 2rem; }
+
+        .galeria-placeholder .mono-label,
+        .galeria-vacia .mono-label {
+            font-family: var(--sans);
+            font-size: 0.7rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-sec);
+        }
+        /* En la celda chica la bajada no entra sin romperse. */
+        .galeria-foto:not(:first-child) .mono-label { display: none; }
+
+        .galeria-sin-fotos { padding-bottom: 0; }
+        .galeria-vacia {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface-2);
+        }
+        @media (min-width: 900px) {
+            .galeria-vacia { height: 440px; }
+        }
+
+        /* ================================================================== */
+        /* EL REPARTO — una sola copia de cada bloque                          */
+        /* ================================================================== */
+        .ficha-layout {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            padding: 1.5rem 1.25rem 3rem;
+            display: grid;
+            gap: 2rem;
+            grid-template-areas:
+                "datos"
+                "contacto"
+                "descripcion"
+                "mapa";
+        }
+
+        .datos { grid-area: datos; }
+        .contacto { grid-area: contacto; }
+        .descripcion { grid-area: descripcion; }
+        .mapa { grid-area: mapa; }
+
+        /* Dos columnas donde entran. El corte es 1100 y no 960 porque a 960 la
+           columna de contacto queda de 300 px y el bloque de WhatsApp no entra
+           en una línea. */
+        @media (min-width: 1100px) {
+            .ficha-layout {
+                grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+                column-gap: 3rem;
+                grid-template-areas:
+                    "datos       datos"
+                    "descripcion contacto"
+                    "mapa        contacto";
+                align-items: start;
+            }
+        }
+
+        /* ── Datos: precio, ubicación, título y datos duros ── */
+        .datos-precio {
+            font-family: var(--sans);
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            color: var(--text-pri);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .datos-ubicacion {
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-sec);
+            margin-top: 0.35rem;
+        }
+
+        .datos-titulo {
+            font-family: var(--sans);
+            font-size: 1.05rem;
+            font-weight: 400;
+            line-height: 1.4;
+            color: var(--text-pri);
+            margin-top: 0.75rem;
+        }
+
+        .datos-duros {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1.25rem;
+            list-style: none;
+            padding: 0;
+        }
+
+        /* ── Descripción recortada ── */
+        /* Ocho líneas. El número sale de medir el ancho real de la columna
+           (48,7 caracteres por línea en celular, 97 en escritorio) contra la
+           distribución de las 7.067 descripciones activas: con ocho, el 60,6 %
+           se lee entero en escritorio —que es el 61 % de nuestro tráfico,
+           medido en los logs— y el 22,7 % en celular. Con diez cubriría más,
+           pero 252 px vuelve a competir con el mapa y empuja el contacto. */
+        .description-text {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .description-text.desc-recortada { -webkit-line-clamp: 8; }
+
+        .desc-mas {
+            min-height: 44px;
+            margin-top: 0.5rem;
+            padding: 0 0.25rem;
+            border: 0;
+            background: none;
+            color: var(--accent-ink);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .sticky-cta {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            background: color-mix(in srgb, var(--bg) 96%, transparent);
+            border-top: 1px solid var(--border);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* Sin wrap el boton no se encoge (flex-shrink: 0) y a 200% de texto
+               se queda con 224,7px de los 310 disponibles: el precio entraba en
+               53. Con wrap el boton baja a su propia linea y el precio se
+               queda con el ancho entero. */
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sticky-cta-text {
+            /* Sin `min-width: 0`, a proposito: era el complemento del ellipsis
+               que se fue con N3. El piso de min-content es lo que hace que el
+               bloque pida su lugar y empuje al boton a la linea de abajo en vez
+               de dejarse aplastar. */
+            flex: 1;
+        }
+
+        .sticky-price {
+            font-family: var(--sans);
+            font-size: 1.05rem;
+            color: var(--accent);
+            font-weight: 600;
+            /* N3 — el precio envuelve, no se recorta. Medido a 390px con el
+               texto al 200%: 230px de precio adentro de una caja de 53, o sea
+               que el dato de decisión desaparecía entero detrás de un ellipsis.
+               La barra crece dos líneas; el precio se lee. */
+        }
+
+        .sticky-ref {
+            font-family: var(--sans);
+            font-size: 0.68rem;
+            color: var(--text-sec);
+        }
+
+        .sticky-cta .btn-wa {
+            flex-shrink: 0;
+            font-size: 0.85rem;
+            padding: 0.65rem 1.1rem;
+        }
+
+        /* D5 — la barra fija se va donde el CTA inline pasa a fila, que es el
+           mismo 560px de `.cta-block`. Medido en el navegador: de 560 a 959 se
+           veían dos `.btn-wa` idénticos, y `ui.md` prohíbe por nombre dos
+           botones que hagan lo mismo en una vista. Las tres referencias del
+           benchmark tratan la barra fija como exclusivamente móvil. */
+        /* F5 quedó a medias a propósito. Bajar este corte a 560px cierra D5
+           —dos CTA primarios en el DOM— pero abre algo peor: entre 560 y 959px
+           el único camino de contacto pasa a ser el CTA inline, que está a unos
+           2.600px de scroll. O sea que en todo ese rango la página deja de
+           tener un contacto visible sin scrollear, y el contacto es lo único
+           que esta página tiene que lograr.
+           El corte queda en 960 por decisión de Ez del 2026-08-23. Las
+           referencias: Zonaprop 768, Sotheby's 1024. */
+
+        /* Arriba de 960 la barra NO se apaga: cambia de forma.
+
+           Medido a 1280x800 sin tocar nada: `.cta-block` cae en y=1.375 sin
+           foto y en y=1.630 con foto, o sea que en escritorio la ficha no tenía
+           ningún camino de contacto visible sin scrollear — y el contacto es lo
+           único que esta página tiene que lograr. Las referencias resuelven eso
+           con una columna lateral pegajosa (Zonaprop, 400px) o con un botón
+           flotante (Sotheby's); Ez eligió el flotante, que no toca el layout.
+
+           Es el MISMO nodo, no uno nuevo: la barra pierde su fondo, su borde y
+           su texto, y se encoge a la píldora de abajo a la derecha. Un segundo
+           elemento habría sido una tercera copia del SVG de WhatsApp en este
+           archivo y dos href que se olvidan de cambiar juntos — que es
+           exactamente cómo el `wa_url` del asesor se pierde. */
+        @media (min-width: 960px) {
+            .sticky-cta {
+                left: auto;
+                right: 1.25rem;
+                bottom: 1.25rem;
+                width: auto;
+                padding: 0;
+                background: none;
+                border-top: none;
+                box-shadow: none;
+            }
+            /* El precio y la referencia ya están en la página a este ancho, y
+               en la píldora obligarían a un ancho que tapa contenido. */
+            .sticky-cta-text { display: none; }
+            .sticky-cta .btn-wa {
+                border-radius: 999px;
+                padding: 0.8rem 1.4rem;
+                box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+            }
+            /* El hueco de la barra ya no hace falta —la píldora no ocupa una
+               franja— pero el footer sí puede quedar debajo: 5rem es la altura
+               de la píldora (56px) más su separación del borde. */
+            body { padding-bottom: 5rem; }
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Lightbox                                                            */
+        /* ------------------------------------------------------------------ */
+
+        /* Hero clickable cursor: applied via JS to avoid cursor on placeholder */
+
+        .lb-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .lb-overlay.lb-open {
+            display: flex;
+        }
+
+        .lb-img-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            /* Reserve vertical space for top/bottom bars */
+            height: calc(100dvh - 100px);
+            max-height: calc(100dvh - 100px);
+        }
+
+        .lb-img {
+            max-width: min(960px, 100%);
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            /* Same drop-shadow treatment as hero ambient-blur */
+            filter: drop-shadow(0 4px 32px rgba(0, 0, 0, 0.7));
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* Top bar: close + counter */
+        .lb-bar-top {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1rem;
+            flex-shrink: 0;
+        }
+
+        /* Bottom bar: prev/next */
+        .lb-bar-bottom {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 0.6rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .lb-counter {
+            font-family: var(--sans);
+            font-size: 0.8rem;
+            font-weight: 300;
+            letter-spacing: 0.12em;
+            color: var(--text-sec);
+        }
+
+        /* Shared button base */
+        /* N1 — `btnPrev.hidden = true` no alcanzaba: el `display: inline-flex`
+           de la regla de abajo gana sobre el `[hidden] { display: none }` de la
+           hoja del user-agent, asi que con una sola foto los botones quedaban
+           visibles, enfocables por teclado y sin efecto — peor que el
+           :disabled que vinieron a reemplazar (A6). Un elemento con [hidden]
+           no se muestra, y punto. */
+        .lb-btn[hidden] {
+            display: none;
+        }
+
+        .lb-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+            background: transparent;
+            border: 1px solid var(--border-lb);
+            border-radius: var(--radius);
+            color: var(--accent);
+            font-family: var(--sans);
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: border-color 0.18s, color 0.18s, opacity 0.18s;
+            padding: 0 0.75rem;
+        }
+
+        .lb-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-hover);
+        }
+
+        .lb-btn:active {
+            color: var(--accent-press);
+        }
+
+        /* M9 — aca vivia `.lb-btn:disabled { opacity: .3 }`. Estaba muerta desde
+           N1: los botones de la galeria se ocultan con [hidden], nadie les pone
+           `disabled`. Y señalaba estado con opacidad, que ui.md prohibe. */
+
+        .lb-btn-close {
+            font-size: 1.3rem;
+        }
+
+        /* Nav prev/next labels */
+        .lb-btn-nav {
+            gap: 0.4rem;
+            padding: 0 1.1rem;
+            font-size: 0.82rem;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+        }
+
+        @media (min-width: 640px) {
+            .lb-bar-top { padding: 0.75rem 1.5rem; }
+            .lb-bar-bottom { padding: 0.75rem 1.5rem; gap: 1.5rem; }
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Movimiento reducido                                                 */
+        /*                                                                     */
+        /* D4 — la ficha tenía cero bloques y tres transiciones, más el         */
+        /* `scroll-behavior: smooth` del salto a un ancla, que es lo que más se */
+        /* mueve en toda la página. `ui.md` lo pide global y en un solo bloque, */
+        /* no componente por componente: el bloque global vive en              */
+        /* `static/css/custom.css`, pero esta vista no carga esa hoja y no debe */
+        /* cargarla —la ficha es autocontenida por decisión del 22/08—, así que */
+        /* su único bloque global va acá, último, para ganar por cascada.       */
+        /*                                                                     */
+        /* Va con `reduce`, no con `no-preference`: la versión de opt-in deja   */
+        /* sin cubrir todo lo que se agregue después afuera de ese bloque.      */
+        /* ------------------------------------------------------------------ */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== Header ====== -->
+    <header class="site-header" role="banner">
+        <div class="header-inner">
+            <a href="https://onnix.com.py" class="wordmark" aria-label="Onnix SA — Inicio">
+                Onnix <span>SA</span>
+            </a>
+            <span class="ref-code">Ref. {{ prop.public_code }}</span>
+        </div>
+    </header>
+
+    <!-- ====== Hero ====== -->
+    {# Sin foto no se emite el hero. No es un caso raro: 3.518 de las 19.972
+       fichas activas no tienen ni una foto (17,6%, medido el 2026-08-23), y
+       3.467 de esas son de remax, que no se lista en /propiedades — llegan por
+       el sitemap y por el link que copia el asesor, entradas frías.
+
+       El macro foto() no se toca: lo comparte el panel y ahí el placeholder
+       sigue siendo correcto. Lo que estaba mal no era el placeholder, era
+       estirarlo a 548px. #}
+    {# La línea de contexto se arma una sola vez para las dos cabeceras. Estaba
+       escrita dos veces —con píldora en una y en línea en la otra—, así que las
+       dos ramas ya decían lo mismo de dos formas distintas. #}
+    {% set op_label = {"venta": "Venta", "alquiler": "Alquiler"}.get(prop.operation, prop.operation | capitalize if prop.operation else "") %}
+    {% set type_label = prop.property_type | replace("_", " ") | title if prop.property_type else "" %}
+    {% set ubicacion = [] %}
+    {% if op_label %}{% set _ = ubicacion.append(op_label) %}{% endif %}
+    {% if type_label %}{% set _ = ubicacion.append(type_label) %}{% endif %}
+    {% if prop.neighborhood %}{% set _ = ubicacion.append(prop.neighborhood) %}{% endif %}
+    {% if prop.city %}{% set _ = ubicacion.append(prop.city) %}{% endif %}
+    {# ── GALERÍA ────────────────────────────────────────────────────────────
+       Un solo bloque con las fotos 1..N. Antes eran dos —`hero` con la foto 1 y
+       `gallery-section` con el resto—, una composición que no tiene precedente
+       en las trece referencias medidas (FICHA_REFERENCIAS_20260823.md §Concl. 3):
+       o el mosaico mete la grande y las chicas en la misma grilla, o es un
+       carrusel donde la 1 es la primera slide. Partirlas tenía un costo real:
+       con UNA sola foto la tira no se renderizaba y el hero quedaba solo, sin
+       ningún indicio de cuántas fotos hay.
+
+       El alto está acotado en píxeles y no en `vh` (10 de 13). La tira de
+       escritorio no se abre en grilla, y eso sigue valiendo por el motivo
+       medido en su día: la grilla empujaba el primer dato a y=1.705. El mosaico
+       de altura fija lo deja arriba del pliegue. #}
+    {% if prop.photo_urls %}
+    <section class="galeria" aria-label="Fotos de la propiedad">
+        <div class="galeria-grid">
+            {#- Se pintan hasta tres: la grande y dos chicas. El resto vive en el
+                lightbox, que ya da la vista completa. -#}
+            {% for url in prop.photo_urls[:3] %}
+            {#- Va por el macro y no por un <img> a mano: `photo_urls` sale de
+                `local_image_count` y no de mirar el disco, y esos dos ya
+                divergieron cuando se perdieron las 9,7 GB de fotos. El macro
+                emite el placeholder oculto y su `onerror` lo destapa — sin él,
+                una foto declarada que no está deja un marco vacío. -#}
+            <a class="galeria-foto" href="{{ url }}" target="_blank" rel="noopener"
+               data-lb-index="{{ loop.index0 }}"
+               aria-label="Ver la foto {{ loop.index }} de {{ prop.photo_urls | length }} en la galería">
+                {% call foto(url,
+                             alt=prop.title ~ ('' if loop.first else ' — foto ' ~ loop.index),
+                             img_class="galeria-img",
+                             img_attrs=(' loading="eager" fetchpriority="high"' if loop.first else ' loading="lazy"'),
+                             ph_class="galeria-placeholder") %}
+                    <span class="monogram">Onnix</span>
+                    <span class="mono-label">Onnix SA</span>
+                {% endcall %}
+            </a>
+            {% endfor %}
+        </div>
+        {#- El botón se queda aunque haya una sola foto, en singular. Es lo que
+            hace Onnix global, y el affordance no desaparece. -#}
+        <button class="galeria-btn lb-abrir" type="button" data-lb-index="0">
+            Ver {{ prop.photo_urls | length }} foto{{ 's' if prop.photo_urls | length != 1 else '' }}
+        </button>
+        {#- El mosaico pinta tres y el lightbox muestra las N. Antes la lista
+            salía del DOM de la tira, así que recortar el mosaico habría
+            recortado también la galería. Va como JSON y no como atributo por
+            foto: un `data-` con 79 URLs adentro es el mismo dato dos veces.
+            ponytail: una URL rota entra igual a la lista —la tira vieja la
+            sacaba con su `onerror`—; se arregla el día que moleste. -#}
+        <script type="application/json" id="lb-fotos">{{ prop.photo_urls | tojson }}</script>
+    </section>
+    {% else %}
+    <section class="galeria galeria-sin-fotos" aria-label="Fotos de la propiedad">
+        <div class="galeria-vacia">
+            <span class="monogram">Onnix</span>
+            <span class="mono-label">Onnix SA</span>
+        </div>
+        <p class="falta">
+            Todavía no cargamos las fotos de esta propiedad.
+            <a class="falta-link" href="{{ asesor_wa_url_fotos or prop.wa_url_fotos }}" rel="noopener noreferrer" target="_blank">Preguntá por las fotos</a>
+        </p>
+    </section>
+    {% endif %}
+
+    {# ── El reparto ─────────────────────────────────────────────────────────
+       Una sola copia de cada bloque, reacomodada por `grid-template-areas`.
+       NO hay una versión de celular y otra de escritorio: el informe marca que
+       «dos superficies excluyentes por breakpoint» es el patrón dominante en
+       las referencias Y exactamente la trampa que en este panel ya produjo
+       cuatro duplicados divergidos.
+
+       celular      : datos · contacto · descripción · mapa
+       ≥1100 px     : datos a todo el ancho; descripción y mapa a la izquierda,
+                      contacto a la derecha. SIN `position:sticky` — cero de las
+                      nueve inmobiliarias lo usa en esa columna. #}
+    <main class="ficha-layout">
+
+        {# ── DATOS ──────────────────────────────────────────────────────────
+           El precio sale de encima de la foto: 13 de 13 referencias lo ponen
+           afuera, cero lo superponen. No es gusto — superponer texto sobre una
+           foto arbitraria es lo que obligaba al `.hero-overlay`, y ese overlay
+           hacía que el contraste dependiera de la foto que bajó el scraper. #}
+        <header class="datos">
+            <p class="datos-precio">{{ prop.price_display }}</p>
+            {% if ubicacion %}
+            <p class="datos-ubicacion">{{ ubicacion | join(' · ') }}</p>
+            {% endif %}
+            <h1 class="datos-titulo">{{ prop.title }}</h1>
+
+            {# Cada chip ya estaba detrás de su propia condición; el contenedor no.
+               Cuando los cinco faltaban quedaba la etiqueta «Características» sobre
+               un div vacío: 104 fichas, y 66 de ellas sin foto — el vacío se
+               acumulaba justo donde la página ya se veía peor. #}
+            {% set hay_datos = prop.bedrooms or prop.bathrooms or prop.parking
+                               or prop.total_area_m2 or prop.construction_state %}
+            {% if hay_datos %}
+            <ul class="datos-duros" aria-label="Características de la propiedad">
+                {% if prop.bedrooms is not none and prop.bedrooms %}
+                <li class="chip">{{ prop.bedrooms }} dormitorio{{ 's' if prop.bedrooms != 1 else '' }}</li>
+                {% endif %}
+                {% if prop.bathrooms is not none and prop.bathrooms %}
+                <li class="chip">{{ prop.bathrooms }} baño{{ 's' if prop.bathrooms != 1 else '' }}</li>
+                {% endif %}
+                {% if prop.parking is not none and prop.parking %}
+                <li class="chip">{{ prop.parking }} cochera{{ 's' if prop.parking != 1 else '' }}</li>
+                {% endif %}
+                {% if prop.total_area_m2 is not none and prop.total_area_m2 %}
+                <li class="chip">{{ prop.total_area_m2 | int }} m²</li>
+                {% endif %}
+                {% if prop.construction_state %}
+                {% set state_labels = {
+                    "en_construccion": "En construcción",
+                    "entrega_inmediata": "Entrega inmediata",
+                    "pozo": "En pozo",
+                    "usado": "Usado"
+                } %}
+                <li class="chip chip-state">{{ state_labels.get(prop.construction_state, prop.construction_state | replace('_', ' ') | title) }}</li>
+                {% endif %}
+            </ul>
+            {% else %}
+            <p class="falta falta-datos">
+                No tenemos cargados los datos de esta propiedad.
+                <a class="falta-link" href="{{ asesor_wa_url_datos or prop.wa_url_datos }}" rel="noopener noreferrer" target="_blank">Preguntá por los detalles</a>
+            </p>
+            {% endif %}
+        </header>
+
+        {# ── CONTACTO ───────────────────────────────────────────────────────
+           En escritorio ocupa la columna derecha, al costado de la descripción.
+           No se pega al scroll: la píldora flotante ya resuelve el contacto
+           permanente, y ninguna de las nueve inmobiliarias pega esta columna. #}
+        <section class="contacto" aria-label="Contacto con asesor">
+            <div class="cta-block">
+                <div class="cta-block-text">
+                    <p class="cta-block-title">Hablá con un asesor</p>
+                    <p class="cta-block-sub">Ref. {{ prop.public_code }} · Respuesta inmediata por WhatsApp</p>
+                </div>
+                <a class="btn-wa" href="{{ asesor_wa_url or prop.wa_url }}" rel="noopener noreferrer" target="_blank" aria-label="Hablar con asesor por WhatsApp sobre esta propiedad">
+                    <svg class="btn-wa-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    Hablar con asesor
+                </a>
+            </div>
+        </section>
+
+        {# ── DESCRIPCIÓN ────────────────────────────────────────────────────
+           Recortada a 8 líneas. Medido: la descripción se llevaba el 42,3 % del
+           alto de la ficha (1.473 px en celular) mientras los datos duros
+           ocupaban el 3,3 %. Con el ancho real de la columna —48,7 caracteres
+           por línea en celular, 97 en escritorio— ocho líneas dejan leer la
+           ficha entera sin desplegar en el 60,6 % de los casos en escritorio y
+           el 22,7 % en celular, contra la distribución real de las 7.067
+           descripciones activas.
+
+           El botón lo destapa el JS solo si el texto SE PASA de ocho líneas.
+           Sin JS no hay botón y se ve el texto entero, que es lo que se ve hoy:
+           el techo declarado es el estado actual, nunca peor. #}
+        {% if prop.description %}
+        <section class="descripcion" aria-labelledby="desc-label">
+            <h2 class="section-label" id="desc-label">Descripción</h2>
+            <p class="description-text" id="desc-texto">{{ prop.description | clean_description }}</p>
+            <button class="desc-mas" type="button" id="desc-mas" hidden
+                    aria-expanded="false" aria-controls="desc-texto">Ver más</button>
+        </section>
+        {% endif %}
+
+        {# ── MAPA ───────────────────────────────────────────────────────────
+           Al final y en tarjeta chica. El mapa es el bloque sin convención: de
+           400×200 px (Onnix) a 800 px de alto (Douglas Elliman), adentro
+           del visor de galería (Corcoran, Savills) o directamente inexistente
+           (Engel & Völkers no publica ni las coordenadas). Un factor de diez
+           entre el más chico y el más grande: acá no hay nada que copiar. #}
+        {% if prop.latitude and prop.longitude %}
+        <section class="mapa" aria-labelledby="map-label">
+            <h2 class="section-label" id="map-label">Ubicación</h2>
+            <div class="map-wrap">
+                <iframe
+                    src="https://www.google.com/maps?q={{ prop.latitude }},{{ prop.longitude }}&output=embed"
+                    allowfullscreen
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Ubicación de la propiedad en el mapa"
+                ></iframe>
+            </div>
+        </section>
+        {% endif %}
+
+    </main>
+
+    <!-- ====== Footer ====== -->
+    <footer class="site-footer" role="contentinfo">
+        <p class="footer-brand">Onnix SA</p>
+        <p>Asunción, Paraguay</p>
+        <p>COVIERTE E.A.S. Unipersonal</p>
+    </footer>
+
+    <!-- ====== Lightbox overlay ====== -->
+    {% if prop.photo_urls %}
+    <div
+        id="lb"
+        class="lb-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Galería de fotos"
+        aria-hidden="true"
+    >
+        <div class="lb-bar-top">
+            <span class="lb-counter" id="lb-counter" aria-live="polite" aria-atomic="true"></span>
+            <button class="lb-btn lb-btn-close" id="lb-close" aria-label="Cerrar galería">&#x2715;</button>
+        </div>
+        <div class="lb-img-wrap" id="lb-img-wrap">
+            {# Sin src: el JS lo pone al abrir la galeria. Con src="" varios
+           navegadores resuelven la cadena vacia contra la URL actual y
+           vuelven a pedir la pagina entera. #}
+            <img class="lb-img" id="lb-img" alt="" draggable="false">
+        </div>
+        <div class="lb-bar-bottom">
+            <button class="lb-btn lb-btn-nav" id="lb-prev" aria-label="Foto anterior">&#x2190; Anterior</button>
+            <button class="lb-btn lb-btn-nav" id="lb-next" aria-label="Foto siguiente">Siguiente &#x2192;</button>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+        // El recorte de la descripción lo decide el navegador, no el servidor.
+        // El servidor no sabe cuántas líneas ocupa un texto: depende del ancho
+        // de la columna y de la fuente. Se mide el elemento y sólo si se pasa
+        // aparece el botón — así no queda un «Ver más» sobre una descripción
+        // de dos líneas, que es peor que no tenerlo.
+        var texto = document.getElementById('desc-texto');
+        var boton = document.getElementById('desc-mas');
+        if (!texto || !boton) return;
+
+        function evaluar() {
+            texto.classList.add('desc-recortada');
+            var sobra = texto.scrollHeight > texto.clientHeight + 1;
+            if (!sobra) {
+                texto.classList.remove('desc-recortada');
+                boton.hidden = true;
+                return;
+            }
+            boton.hidden = false;
+        }
+
+        boton.addEventListener('click', function () {
+            var abierto = texto.classList.toggle('desc-recortada') === false;
+            boton.setAttribute('aria-expanded', String(abierto));
+            boton.textContent = abierto ? 'Ver menos' : 'Ver más';
+        });
+
+        evaluar();
+        // El ancho de la columna cambia con el viewport, y con él la cuenta de
+        // líneas: al pasar de una columna a dos, un texto que se pasaba deja de
+        // pasarse. Sin esto quedaba un botón que no recortaba nada.
+        var pendiente;
+        window.addEventListener('resize', function () {
+            if (boton.getAttribute('aria-expanded') === 'true') return;
+            clearTimeout(pendiente);
+            pendiente = setTimeout(evaluar, 150);
+        });
+    }());
+    </script>
+
+    <script>
+    (function () {
+        'use strict';
+
+        // --- Las fotos salen del JSON, no del DOM ---
+        // El mosaico pinta tres; la galería tiene N. Leer el DOM devolvía tres.
+        var urls = [];
+        var datos = document.getElementById('lb-fotos');
+        if (datos) {
+            try { urls = JSON.parse(datos.textContent) || []; } catch (e) { urls = []; }
+        }
+        if (!urls.length) {
+            // Sin JSON —o con JSON roto— se cae a lo que está pintado, que es
+            // menos pero no es nada.
+            document.querySelectorAll('.galeria-foto[data-lb-index]').forEach(function (a) {
+                urls[parseInt(a.getAttribute('data-lb-index'), 10)] = a.href;
+            });
+        }
+        urls = urls.filter(function (u) { return !!u; });
+
+        if (urls.length === 0) return; // no photos — nothing to do
+
+        var overlay  = document.getElementById('lb');
+        var img      = document.getElementById('lb-img');
+        var counter  = document.getElementById('lb-counter');
+        var btnClose = document.getElementById('lb-close');
+        var btnPrev  = document.getElementById('lb-prev');
+        var btnNext  = document.getElementById('lb-next');
+        var current  = 0;
+        var prevFocus = null; // element to return focus to on close
+
+        function show(idx) {
+            current = (idx + urls.length) % urls.length;
+            img.src = urls[current];
+            img.alt = 'Foto ' + (current + 1) + ' de ' + urls.length;
+            counter.textContent = (current + 1) + ' / ' + urls.length;
+            // A6 — antes quedaban :disabled con opacity .3, que medía 1,70:1
+            // sobre el negro del overlay. ui.md prohíbe señalar estado con
+            // opacidad, y un control que no lleva a ninguna parte es mejor que
+            // no esté: con una sola foto no hay anterior ni siguiente.
+            var solaUna = urls.length <= 1;
+            btnPrev.hidden = solaUna;
+            btnNext.hidden = solaUna;
+        }
+
+        // A3 — el overlay se declara aria-modal="true" pero dejaba 17 elementos
+        // tabulables detrás: con el teclado se salía de la galería sin cerrarla.
+        // `inert` los saca del foco y del árbol de accesibilidad de una. En un
+        // navegador que no lo soporte queda el comportamiento de antes, que es
+        // el de hoy — no empeora nada.
+        function fondoInerte(activar) {
+            Array.prototype.forEach.call(document.body.children, function (el) {
+                if (el === overlay) return;
+                if (activar) el.setAttribute('inert', '');
+                else         el.removeAttribute('inert');
+            });
+        }
+
+        function open(idx) {
+            prevFocus = document.activeElement;
+            show(idx);
+            overlay.classList.add('lb-open');
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            fondoInerte(true);
+            btnClose.focus();
+        }
+
+        function close() {
+            overlay.classList.remove('lb-open');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            img.src = '';
+            // Sacar el inert ANTES de devolver el foco: si prevFocus todavía
+            // está adentro de un subárbol inerte, focus() no hace nada.
+            fondoInerte(false);
+            if (prevFocus) prevFocus.focus();
+        }
+
+        // --- Las fotos del mosaico y el botón «Ver N fotos» ---
+        // Son <a> y <button> de verdad: sin JS el enlace abre la foto y el
+        // botón no hace nada, que es el techo declarado y no una caja rota.
+        document.querySelectorAll('.galeria-foto[data-lb-index], .galeria-btn[data-lb-index]')
+            .forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    open(parseInt(el.getAttribute('data-lb-index'), 10));
+                });
+            });
+
+        // --- Controls ---
+        btnClose.addEventListener('click', close);
+        btnPrev.addEventListener('click', function () { show(current - 1); });
+        btnNext.addEventListener('click', function () { show(current + 1); });
+
+        // Close on backdrop click (not on image or buttons)
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay || e.target === document.getElementById('lb-img-wrap')) close();
+        });
+
+        // --- Keyboard ---
+        document.addEventListener('keydown', function (e) {
+            if (!overlay.classList.contains('lb-open')) return;
+            if (e.key === 'Escape')      { e.preventDefault(); close(); }
+            else if (e.key === 'ArrowLeft')  { e.preventDefault(); show(current - 1); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); show(current + 1); }
+        });
+
+        // --- Touch swipe (mobile) ---
+        var touchStartX = 0;
+        overlay.addEventListener('touchstart', function (e) {
+            touchStartX = e.changedTouches[0].clientX;
+        }, { passive: true });
+        overlay.addEventListener('touchend', function (e) {
+            var delta = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(delta) > 40) {
+                if (delta < 0) show(current + 1); // swipe left → next
+                else           show(current - 1); // swipe right → prev
+            }
+        }, { passive: true });
+    }());
+    </script>
+    {% endif %}
+
+    <!-- ====== Contacto siempre visible ======
+         Un solo nodo para los dos anchos: barra abajo hasta 959px, píldora
+         flotante de 960 para arriba. El href sale de `asesor_wa_url` cuando la
+         ficha llegó por el link que copió un asesor — si acá se escribiera el
+         de la oficina, el camino más visible de la página sería justo el que
+         pierde la atribución. -->
+    <div class="sticky-cta" role="region" aria-label="Contacto rápido">
+        <div class="sticky-cta-text">
+            <p class="sticky-price">{{ prop.price_display }}</p>
+            <p class="sticky-ref">Ref. {{ prop.public_code }}</p>
+        </div>
+        <a class="btn-wa" href="{{ asesor_wa_url or prop.wa_url }}" rel="noopener noreferrer" target="_blank" aria-label="Hablar con asesor por WhatsApp">
+            <svg class="btn-wa-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Consultar
+        </a>
+    </div>
+
+</body>
+</html>

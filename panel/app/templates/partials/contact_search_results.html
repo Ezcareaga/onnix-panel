@@ -1,0 +1,14 @@
+{% if contacts %}
+<ul class="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+    {% for c in contacts %}
+    <li>
+        <button type="button"
+                class="w-full px-3 py-2 text-left text-sm hover:bg-onnix-accent-wash flex items-center justify-between"
+                @click="selectContact({{ c.id }}, '{{ (c.name or '') | replace("'", "\\'") }}', '{{ c.phone or '' }}', {{ c.property_id if c.property_id else 'null' }})">
+            <span class="font-medium text-gray-800">{{ c.name or 'Sin nombre' }}</span>
+            <span class="text-onnix-ink-400 text-xs">{{ c.phone or '' }}</span>
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}

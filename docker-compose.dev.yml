@@ -1,0 +1,64 @@
+# Onnix SA — Panel Staging (Development)
+# Uses onnix_dev database — NEVER touches production data
+
+services:
+  panel-dev:
+    build:
+      context: ./panel
+      dockerfile: Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
+    image: onnix-panel-dev:${ONNIX_IMAGE_TAG:-latest}
+    container_name: onnix-panel-dev
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=onnix-postgres
+      - POSTGRES_DB=onnix_dev
+      - TZ=America/Asuncion
+      - GEO_DATA_PATH=/app/data/geografia
+      - BOT_LOG_LEVEL=DEBUG
+      - LOG_FORMAT=json
+      # TwilioUsageService (read-only GET /Accounts/{SID}/Usage/Records)
+      # uses TWILIO_ACCOUNT_SID/AUTH_TOKEN from .env. Read-only by design —
+      # no messages are sent. No override needed per CLAUDE.md rule 12
+      # (which targets write paths). M1 Fase I decision.
+      # Staging is NOT production — must not fail-closed on missing secrets
+      - ENVIRONMENT=development
+      # Staging isolation: prevent real WA sends and TG notifications to Ez
+      - INFOCASAS_POLL_ENABLED=false
+      - FOLLOWUP_SENDER_ENABLED=false
+      - TELEGRAM_EZ_CHAT_ID=
+      # Guard en WhatsAppSender.send() — staging NUNCA envía WA real (incidente 2026-04-04 class)
+      - WA_SEND_ENABLED=false
+      - BOT_ENABLED=false
+      - TELEGRAM_NOTIFICATIONS_ENABLED=false
+      - TWILIO_STATUS_CALLBACK_URL=https://dev.onnix.com.py/webhook/whatsapp/status
+    volumes:
+      - ./data/geografia:/app/data/geografia:ro
+      - /home/onnix/logs/dev:/app/logs
+      - /home/onnix/images:/app/images:ro
+      # Los MP4 de los tutoriales: estado del servidor, no codigo.
+      # Se sirven en /videos (panel/app/main.py) y los lista /tutoriales.
+      - /home/onnix/tutoriales:/app/tutoriales:ro
+    ports:
+      - "127.0.0.1:8001:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+          cpus: "1.5"
+        reservations:
+          memory: 512M
+    networks:
+      - default
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  default:
+    name: onnix_default
+    external: true

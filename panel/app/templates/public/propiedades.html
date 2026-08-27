@@ -1,0 +1,710 @@
+{% from "partials/property_photo.html" import foto %}
+<!DOCTYPE html>
+<html lang="es">
+{#- M6.4b Task 4: portal listing con la identidad acento/negro de property.html.
+    Server-rendered puro: CERO JS, CERO HTMX, CERO Alpine. -#}
+
+{#- Querystring para links de paginación: filtros activos en orden fijo
+    (tipo, ciudad, operacion, precio_min, precio_max) + page SIEMPRE.
+    Macro (no {% set %} top-level) porque las macros solo ven el contexto
+    global del render, no variables seteadas en el body del template. -#}
+{%- macro page_url(p) -%}
+    {%- set ns = namespace(qs="") -%}
+    {%- if params.tipo %}{% set ns.qs = ns.qs ~ "&tipo=" ~ (params.tipo | urlencode) %}{% endif -%}
+    {%- if params.ciudad %}{% set ns.qs = ns.qs ~ "&ciudad=" ~ (params.ciudad | urlencode) %}{% endif -%}
+    {%- if params.operacion %}{% set ns.qs = ns.qs ~ "&operacion=" ~ params.operacion %}{% endif -%}
+    {%- if params.precio_min is not none %}{% set ns.qs = ns.qs ~ "&precio_min=" ~ params.precio_min %}{% endif -%}
+    {%- if params.precio_max is not none %}{% set ns.qs = ns.qs ~ "&precio_max=" ~ params.precio_max %}{% endif -%}
+    {%- set ns.qs = ns.qs ~ "&page=" ~ p -%}
+    /propiedades?{{ ns.qs[1:] }}
+{%- endmacro -%}
+
+{#- Canonical: base + params no-default en orden fijo, page solo si > 1. -#}
+{%- macro canonical_url() -%}
+    {%- set ns = namespace(qs="") -%}
+    {%- if params.tipo %}{% set ns.qs = ns.qs ~ "&tipo=" ~ (params.tipo | urlencode) %}{% endif -%}
+    {%- if params.ciudad %}{% set ns.qs = ns.qs ~ "&ciudad=" ~ (params.ciudad | urlencode) %}{% endif -%}
+    {%- if params.operacion %}{% set ns.qs = ns.qs ~ "&operacion=" ~ params.operacion %}{% endif -%}
+    {%- if params.precio_min is not none %}{% set ns.qs = ns.qs ~ "&precio_min=" ~ params.precio_min %}{% endif -%}
+    {%- if params.precio_max is not none %}{% set ns.qs = ns.qs ~ "&precio_max=" ~ params.precio_max %}{% endif -%}
+    {%- if listing.page > 1 %}{% set ns.qs = ns.qs ~ "&page=" ~ listing.page %}{% endif -%}
+    {{ base_url }}/propiedades{% if ns.qs %}?{{ ns.qs[1:] }}{% endif %}
+{%- endmacro -%}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0A0A0A">
+    <title>Propiedades en venta y alquiler en Paraguay - Onnix</title>
+    <meta name="description" content="{{ listing.total }} propiedades en venta y alquiler en Paraguay. Onnix SA.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ canonical_url() }}">
+    <meta property="og:title" content="Propiedades en venta y alquiler en Paraguay - Onnix">
+    <meta property="og:description" content="{{ listing.total }} propiedades en venta y alquiler en Paraguay. Onnix SA.">
+    <meta property="og:url" content="{{ canonical_url() }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Onnix SA">
+
+    <!-- Google Fonts -->
+
+    {% include "public/_estilos_comunes.html" %}
+    <style>
+        /* Lo que solo usa el listado. El resto —las dos caras de Outfit, el
+           reset, los once tokens compartidos, la base de html/body y el
+           header— vive en el partial de arriba. */
+        :root {
+            /* A5 — el borde de un control tiene que separarse de su fondo por
+               3:1 (WCAG 1.4.11) y --border da 1,28:1 contra el panel. Este
+               token NO es nuevo: es el mismo --border-control que la landing ya
+               tiene (assets/css/styles.css:16). Da 3,46:1 contra --surface-1 y
+               3,27:1 contra --surface-2. Copiarlo en vez de inventar otro es
+               deliberado: el portal y la landing definen los mismos nueve
+               colores con nombres distintos, y esta divergencia es la que dejo
+               el buscador del portal en 1,28:1 y el de la landing en 3,46:1. */
+            --border-control: #6B6B6B;
+            --max-w:       1180px;
+        }
+
+
+        .header-count {
+            font-family: var(--sans);
+            font-size: 0.72rem;
+            font-weight: 400;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-sec);
+            white-space: nowrap;
+        }
+
+        .header-count strong {
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.04em;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Page intro                                                          */
+        /* ------------------------------------------------------------------ */
+        .intro {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            padding: 2.25rem 1.25rem 0.5rem;
+        }
+
+        .intro-eyebrow {
+            font-family: var(--sans);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .intro-title {
+            font-family: var(--sans);
+            font-size: clamp(1.7rem, 4.5vw, 2.6rem);
+            font-weight: 400;
+            line-height: 1.15;
+            color: var(--text);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Filters                                                             */
+        /* ------------------------------------------------------------------ */
+        .filters {
+            max-width: var(--max-w);
+            margin: 1.5rem auto 0;
+            padding: 0 1.25rem;
+        }
+
+        .filters-form {
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.85rem;
+        }
+
+        @media (min-width: 560px) {
+            .filters-form { grid-template-columns: 1fr 1fr; }
+            .filters-actions { grid-column: span 2; }
+        }
+
+        @media (min-width: 1024px) {
+            .filters-form {
+                grid-template-columns: 1.1fr 1.1fr 0.9fr 0.85fr 0.85fr auto;
+                align-items: end;
+                gap: 0.75rem;
+            }
+            .filters-actions { grid-column: auto; }
+        }
+
+        .field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+
+        .field label {
+            font-family: var(--sans);
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-sec);
+        }
+
+        .field select,
+        .field input {
+            font-family: var(--sans);
+            font-size: 0.88rem;
+            font-weight: 300;
+            color: var(--text);
+            background: var(--surface-2);
+            border: 1px solid var(--border-control);
+            border-radius: var(--radius);
+            padding: 0.55rem 0.7rem;
+            /* 44px: el portal se usa desde el celular, y el buscador es lo
+               primero que se toca. La escala de botones del panel es 32/36/44. */
+            min-height: 44px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        /* Custom caret for selects (pure CSS, no images) */
+        .field select {
+            background-image:
+                linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+                linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+            background-position:
+                calc(100% - 16px) calc(50% - 2px),
+                calc(100% - 11px) calc(50% - 2px);
+            background-size: 5px 5px, 5px 5px;
+            background-repeat: no-repeat;
+            padding-right: 2rem;
+            cursor: pointer;
+        }
+
+        .field select:focus,
+        .field input:focus {
+            border-color: var(--accent);
+        }
+
+        /* A4 — el opacity componia --text-sec contra --surface-2 y daba #606060
+           = 2,77:1, con texto de 14,08px. Es la unica pista de que hace cada
+           campo del buscador. Sin el opacity, --text-sec da 6,19:1. */
+        .field input::placeholder { color: var(--text-sec); }
+
+        .field input[type="number"]::-webkit-outer-spin-button,
+        .field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .field input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+        .filters-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .btn-accent {
+            font-family: var(--sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--bg);
+            background: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 0.6rem 1.5rem;
+            min-height: 44px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-accent:active { background: var(--accent-press); border-color: var(--accent-press); }
+
+        /* M2 — medía 55x21 y era el unico control bajo 44x44 de las tres
+           superficies publicas, medido con `elementFromPoint` a 390 y a 1280.
+           `ui.md` pide 44x44 «porque el panel se usa desde el celular», y este
+           link vive en la barra de filtros, que es donde mas se toca.
+
+           El subrayado pasa de `border-bottom` a `text-decoration`, y no es un
+           detalle: con `border-bottom` la caja de 44px habria dejado la linea
+           pegada al piso de la caja, a 20px del texto. `text-decoration` la
+           mantiene pegada a las letras y deja crecer la caja.
+
+           Y la transicion baja de dos propiedades a una: el subrayado hereda
+           `currentColor`, asi que animar `color` lo mueve solo. */
+        .btn-clear {
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            font-family: var(--sans);
+            font-size: 0.74rem;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-sec);
+            text-decoration: underline;
+            text-decoration-color: var(--border);
+            text-underline-offset: 4px;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        .btn-clear:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+        /* ------------------------------------------------------------------ */
+        /* Main / grid                                                         */
+        /* ------------------------------------------------------------------ */
+        .main {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            padding: 1.75rem 1.25rem 3rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Card                                                                */
+        /* ------------------------------------------------------------------ */
+        .card {
+            display: flex;
+            flex-direction: column;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+        }
+
+        .card:hover,
+        .card:focus-visible {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+        }
+
+        .card:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+        .card-media {
+            position: relative;
+            aspect-ratio: 16 / 10;
+            background: var(--surface-2);
+            overflow: hidden;
+        }
+
+        /* La línea de unidades de un proyecto. Va debajo del «desde», con el
+           peso de un dato secundario: informa cuántas hay, no compite con el
+           precio. */
+        /* «Desde» acompaña al número sin competirle: mismo color, menor peso
+           y menor tamaño. Es un calificador, no un dato. */
+        .card-desde {
+            font-size: 0.6875em;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            opacity: 0.75;
+        }
+
+        .card-units {
+            font-size: 0.8125rem;
+            line-height: 1.3;
+            color: var(--accent);
+            margin-top: 0.125rem;
+        }
+
+        .card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover .card-media img { transform: scale(1.04); }
+
+        .photo-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .photo-placeholder .monogram {
+            font-family: var(--sans);
+            font-size: 2.6rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+            opacity: 0.55;
+        }
+
+        .photo-placeholder .mono-label {
+            font-family: var(--sans);
+            font-size: 0.6rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-sec);
+        }
+
+        .card-chip {
+            position: absolute;
+            top: 0.7rem;
+            left: 0.7rem;
+            font-family: var(--sans);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: color-mix(in srgb, var(--bg) 78%, transparent);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 0.22rem 0.6rem;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            padding: 1rem 1.1rem 1.2rem;
+            flex: 1;
+        }
+
+        .card-title {
+            font-family: var(--sans);
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.3;
+            color: var(--text);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            /* Ultimo en el DOM y ultimo en la jerarquia: el auto empuja el bloque
+               contra el piso de la card, que antes era el trabajo del precio. */
+            margin-top: auto;
+        }
+
+        .card-price {
+            font-family: var(--sans);
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            color: var(--accent);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .card-meta {
+            font-family: var(--sans);
+            font-size: 0.76rem;
+            font-weight: 300;
+            letter-spacing: 0.04em;
+            color: var(--text-sec);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Staggered entrance — CSS only, first rows */
+        @media (prefers-reduced-motion: no-preference) {
+            .card {
+                animation: card-in 0.5s ease both;
+            }
+            .card:nth-child(1) { animation-delay: 0.03s; }
+            .card:nth-child(2) { animation-delay: 0.09s; }
+            .card:nth-child(3) { animation-delay: 0.15s; }
+            .card:nth-child(4) { animation-delay: 0.21s; }
+            @keyframes card-in {
+                from { opacity: 0; transform: translateY(10px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Empty state                                                         */
+        /* ------------------------------------------------------------------ */
+        .empty {
+            text-align: center;
+            padding: 5rem 1.25rem;
+        }
+
+        .empty-mark {
+            font-family: var(--sans);
+            font-size: 2.4rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+            opacity: 0.45;
+            margin-bottom: 0.75rem;
+        }
+
+        .empty-title {
+            font-family: var(--sans);
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+
+        .empty-sub {
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 300;
+            color: var(--text-sec);
+            margin-bottom: 1.75rem;
+        }
+
+        .empty-link {
+            display: inline-block;
+            font-family: var(--sans);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 0.65rem 1.6rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .empty-link:hover { background: var(--accent); color: var(--bg); }
+
+        /* ------------------------------------------------------------------ */
+        /* Pagination                                                          */
+        /* ------------------------------------------------------------------ */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 2.75rem;
+            font-family: var(--sans);
+        }
+
+        .pagination a,
+        .pagination span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 44px;
+            padding: 0 0.75rem;
+            font-size: 0.82rem;
+            font-weight: 400;
+            color: var(--text-sec);
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .pagination a:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .pagination span[aria-current="page"] {
+            color: var(--bg);
+            background: var(--accent);
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Footer                                                              */
+        /* ------------------------------------------------------------------ */
+        .site-footer {
+            border-top: 1px solid var(--border);
+            padding: 2rem 1.25rem;
+            text-align: center;
+        }
+
+        .site-footer p {
+            font-family: var(--sans);
+            font-size: 0.75rem;
+            color: var(--text-sec);
+            line-height: 1.9;
+        }
+
+        .site-footer .footer-brand {
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            color: var(--accent);
+            letter-spacing: 0.06em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== Header ====== -->
+    <header class="site-header" role="banner">
+        <div class="header-inner">
+            <a href="https://onnix.com.py" class="wordmark" aria-label="Onnix SA — Inicio">
+                Onnix <span>SA</span>
+            </a>
+            <span class="header-count"><strong>{{ miles(listing.total) }}</strong> propiedades</span>
+        </div>
+    </header>
+
+    <!-- ====== Intro ====== -->
+    <section class="intro">
+        <p class="intro-eyebrow">Onnix SA · Paraguay</p>
+        <h1 class="intro-title">Propiedades en venta y alquiler</h1>
+    </section>
+
+    <!-- ====== Filters ====== -->
+    {%- set has_filters = params.tipo or params.ciudad or params.operacion or params.precio_min is not none or params.precio_max is not none %}
+    <section class="filters" aria-label="Filtros de búsqueda">
+        <form method="get" action="/propiedades" class="filters-form">
+            <div class="field">
+                <label for="f-tipo">Tipo</label>
+                <select id="f-tipo" name="tipo">
+                    <option value="">Todos los tipos</option>
+                    {% for value, label in tipo_options %}
+                    <option value="{{ value }}"{% if params.tipo == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="f-ciudad">Ciudad</label>
+                <input type="text" id="f-ciudad" name="ciudad" list="ciudades-pry" placeholder="Asunción, Luque…" maxlength="80" value="{{ params.ciudad or '' }}">
+                <datalist id="ciudades-pry">
+                    <option value="Asuncion"></option>
+                    <option value="Luque"></option>
+                    <option value="San Bernardino"></option>
+                    <option value="Villa Hayes"></option>
+                    <option value="Mariano Roque Alonso"></option>
+                    <option value="Altos"></option>
+                    <option value="Encarnación"></option>
+                    <option value="Aregua"></option>
+                    <option value="Lambare"></option>
+                    <option value="Fernando de la Mora"></option>
+                </datalist>
+            </div>
+            <div class="field">
+                <label for="f-operacion">Operación</label>
+                <select id="f-operacion" name="operacion">
+                    <option value="">Todas</option>
+                    <option value="venta"{% if params.operacion == "venta" %} selected{% endif %}>Venta</option>
+                    <option value="alquiler"{% if params.operacion == "alquiler" %} selected{% endif %}>Alquiler</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="f-precio-min">Precio mín. USD</label>
+                <input type="number" id="f-precio-min" name="precio_min" min="0" inputmode="numeric" placeholder="0" value="{{ params.precio_min if params.precio_min is not none else '' }}">
+            </div>
+            <div class="field">
+                <label for="f-precio-max">Precio máx. USD</label>
+                <input type="number" id="f-precio-max" name="precio_max" min="0" inputmode="numeric" placeholder="Sin tope" value="{{ params.precio_max if params.precio_max is not none else '' }}">
+            </div>
+            <div class="filters-actions">
+                <button type="submit" class="btn-accent">Buscar</button>
+                {% if has_filters %}
+                <a class="btn-clear" href="/propiedades">Limpiar</a>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+
+    <!-- ====== Listing ====== -->
+    <main class="main">
+        {% if listing.cards %}
+        <section class="grid" aria-label="Resultados">
+            {% for card in listing.cards %}
+            <a class="card" href="{{ card.public_path }}">
+                <div class="card-media">
+                    {% call foto(card.photo_url, alt=card.title, ph_class="photo-placeholder",
+                                 img_attrs=' loading="lazy"' if loop.index > 4 else '') %}
+                        <span class="monogram">Onnix</span>
+                        <span class="mono-label">Onnix SA</span>
+                    {% endcall %}
+                    {% set op_label = {"venta": "Venta", "alquiler": "Alquiler"}.get(card.operation) %}
+                    {% if op_label %}
+                    <span class="card-chip">{{ op_label }}</span>
+                    {% endif %}
+                </div>
+                {# Jerarquía: precio, después dónde queda, y el título del aviso ÚLTIMO.
+                   El título lo escribió el portal de origen y suele ser «Hermosa casa
+                   en venta zona Villa Morra»: no informa, y arriba le robaba el primer
+                   golpe de vista al único dato por el que se filtra una grilla. #}
+                <div class="card-body">
+                    {#- Una tarjeta que representa un proyecto entero dice cuántas
+                        unidades tiene y desde cuánto arranca. El precio suelto de la
+                        unidad elegida no significa nada cuando hay 85 con precios
+                        distintos: lo que el que mira necesita saber es «desde». -#}
+                    {#- `card.unidades or 1`: con StrictUndefined, una tarjeta
+                        sin la clave hace explotar el `>` y la pagina publica
+                        devuelve 500. Paso: diez tests de rutas se pusieron rojos
+                        con `jinja2.exceptions` porque sus stubs no la traian. Una
+                        plantilla publica degrada, no revienta. -#}
+                    {% if (card.unidades or 1) > 1 %}
+                    {#- El «Desde» no es decoración: sin él la tarjeta muestra un
+                        número con el mismo peso visual que el precio de una
+                        propiedad suelta, y quien mira lo lee como EL precio. Es
+                        el mínimo de un rango, y decirlo es la diferencia entre
+                        informar y engañar. Visto en el navegador: «USD 248» con
+                        «3 unidades disponibles» abajo no se lee como un rango. -#}
+                    <p class="card-price"><span class="card-desde">Desde</span> {{ card.precio_desde_display }}</p>
+                    <p class="card-units">{{ card.unidades }} unidades disponibles</p>
+                    {% else %}
+                    <p class="card-price">{{ card.price_display }}</p>
+                    {% endif %}
+                    <p class="card-meta">{{ card.tipo_label }}{% if card.city %} &middot; {{ card.city }}{% endif %}{% if card.neighborhood %} &middot; {{ card.neighborhood }}{% endif %}{% if card.bedrooms %} &middot; {{ card.bedrooms }} dorm.{% endif %}</p>
+                    <h2 class="card-title">{{ card.title }}</h2>
+                </div>
+            </a>
+            {% endfor %}
+        </section>
+        {% else %}
+        <section class="empty">
+            <p class="empty-mark" aria-hidden="true">Onnix</p>
+            <p class="empty-title">Sin resultados para tu búsqueda</p>
+            <p class="empty-sub">Probá ajustar los filtros o explorá el catálogo completo.</p>
+            <a class="empty-link" href="/propiedades">Ver todas las propiedades</a>
+        </section>
+        {% endif %}
+
+        {% if listing.total_pages > 1 %}
+        <nav class="pagination" aria-label="Paginación">
+            {% if listing.page > 1 %}
+            <a href="{{ page_url(listing.page - 1) }}" rel="prev">&laquo; Anterior</a>
+            {% endif %}
+            {% for p in range([1, listing.page - 2] | max, ([listing.total_pages, listing.page + 2] | min) + 1) %}
+                {% if p == listing.page %}
+                <span aria-current="page">{{ p }}</span>
+                {% else %}
+                <a href="{{ page_url(p) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if listing.page < listing.total_pages %}
+            <a href="{{ page_url(listing.page + 1) }}" rel="next">Siguiente &raquo;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </main>
+
+    <!-- ====== Footer ====== -->
+    <footer class="site-footer" role="contentinfo">
+        <p class="footer-brand">Onnix SA</p>
+        <p>Asunción, Paraguay</p>
+        <p>COVIERTE E.A.S. Unipersonal</p>
+    </footer>
+
+</body>
+</html>

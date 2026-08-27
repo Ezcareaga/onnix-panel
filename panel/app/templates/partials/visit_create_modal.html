@@ -1,0 +1,106 @@
+{# <dialog> nativo: focus trap, Escape, ::backdrop y el resto de la pagina
+   inertizada, todo del navegador. Alpine sigue mandando el estado via
+   x-effect para no tocar los disparadores que ya existen, y `@close` devuelve
+   showCreate a false — el Escape cierra el <dialog> sin avisarle a Alpine y
+   sin eso el modal no vuelve a abrir.
+
+   El teleport a <body> se queda: el top layer ya lo pone fuera de cualquier
+   ancestro con `transform`, pero mover el nodo no cuesta nada y el bug que lo
+   motivo (.card-hover, ya borrada) es invisible hasta que reaparece.
+
+   El x-effect tambien corre htmx.process CADA vez que el modal se abre, no
+   una sola vez al montar. x-init solo carreaba con el swap lazy de
+   visits_block: en el PRIMER click despues de cargar la pagina, hx-post
+   todavia no estaba indexado y el form se mandaba como GET plano a la URL
+   actual (bug de UAT de la fase 116: ?scheduled_at=...&notes=…). #}
+<template x-teleport="body">
+<dialog x-effect="if (showCreate) { if (!$el.open) $el.showModal(); $nextTick(() => window.htmx && window.htmx.process($el)); } else if ($el.open) { $el.close(); }"
+        @close="showCreate = false"
+        @click.self="showCreate = false"
+        aria-labelledby="visit-create-title"
+        class="modal">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
+        <h3 id="visit-create-title" class="text-lg font-semibold text-gray-800 mb-4">Agendar visita</h3>
+
+        <form hx-post="/contacts/{{ contact.id }}/visits"
+              hx-target="#visits-content"
+              hx-swap="innerHTML"
+              @htmx:after-request="if ($event.detail.successful) showCreate = false">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Fecha y hora *</label>
+                    <input type="datetime-local" name="scheduled_at" aria-label="Fecha y hora de la visita"
+                           required
+                           min="{{ now_iso_local }}"
+                           class="w-full border rounded px-3 py-2 text-sm
+                                  focus:ring-onnix-accent focus:border-onnix-accent">
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Asesor que va</label>
+                    <select name="agent_user_id" aria-label="Asesor que va a la visita"
+                            {% if user.role == 'agent' %}disabled{% endif %}
+                            {# Sin clases para el bloqueado: lo pinta `select:disabled`
+                               en custom.css, con los tokens. #}
+                            class="w-full border rounded px-3 py-2 text-sm
+                                   focus:ring-onnix-accent focus:border-onnix-accent">
+                        {% for opt in agent_options %}
+                        <option value="{{ opt.id }}"
+                                {% if opt.id == default_agent_id %}selected{% endif %}>
+                            {{ opt.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if user.role == 'agent' %}
+                    <p class="text-xs text-onnix-ink-400 mt-1">
+                        Los agentes registran visitas a su propio nombre.
+                    </p>
+                    {% elif contact.agent_user_id %}
+                    <p class="text-xs text-onnix-ink-400 mt-1">
+                        Default: asesor asignado al contacto.
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Propiedad</label>
+                    <select name="property_id" aria-label="Propiedad de la visita"
+                            class="w-full border rounded px-3 py-2 text-sm
+                                   focus:ring-onnix-accent focus:border-onnix-accent">
+                        <option value="">— Sin propiedad —</option>
+                        {% for opt in property_options %}
+                        <option value="{{ opt.id }}">
+                            {{ opt.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-onnix-ink-400 mt-1">
+                        Historial del contacto (visitada / linkeada / IC).
+                    </p>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Notas</label>
+                    <textarea name="notes" rows="3" aria-label="Notas de la visita"
+                              class="w-full border rounded px-3 py-2 text-sm
+                                     focus:ring-onnix-accent focus:border-onnix-accent"
+                              placeholder="Notas (opcional)"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6">
+                <button type="button" @click="showCreate = false"
+                        class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-sm bg-onnix-accent text-white rounded
+                               hover:bg-onnix-accent-dark">
+                    Agendar
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
+</template>

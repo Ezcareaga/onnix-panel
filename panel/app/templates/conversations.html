@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}Conversaciones — Onnix{% endblock %}
+{% block page_title %}Conversaciones{% endblock %}
+{% block body_class %}page-conversations{% endblock %}
+
+{% from "partials/bot_toggle.html" import bot_switch %}
+{% block content %}
+{# `conv-shell` es el eslabon que faltaba: este wrapper de Alpine esta entre
+   <main> y #panels-container, y sin el en la cadena crecia hasta el largo del
+   hilo y el composer volvia a quedar abajo del fold. Ver `.page-conversations`
+   en custom.css. #}
+<div class="conv-shell" x-data="{
+    mobileShowThread: {{ 'true' if thread else 'false' }},
+    selectedId: {{ selected_id or 'null' }},
+    drawerOpen: false,
+    drawerStep: 'select',
+    contactSearch: '',
+    selectedContactId: null,
+    selectedContactName: '',
+    selectedContactPhone: '',
+    propertyId: '',
+    prefZona: '',
+    prefOperacion: '',
+    prefTipo: '',
+    propTitle: '',
+    prefPresupuesto: '',
+    propSearch: '',
+    propResults: [],
+    propLoading: false,
+    selectContact(id, name, phone, propId) {
+        this.selectedContactId = id;
+        this.selectedContactName = name;
+        this.selectedContactPhone = phone;
+        this.contactSearch = name;
+        this.propSearch = '';
+        this.propResults = [];
+        if (propId) {
+            this.propertyId = String(propId);
+            this.propTitle = '#' + propId;
+            fetch('/api/properties/search?q=' + encodeURIComponent(String(propId)))
+                .then(r => r.json())
+                .then(data => {
+                    const p = data.find(x => x.id == propId);
+                    if (p) this.propTitle = (p.external_id ? p.external_id + ' \u2014 ' : '') + p.title;
+                })
+                .catch(() => {});
+        } else {
+            this.propertyId = '';
+            this.propTitle = '';
+        }
+    },
+    async fetchProps() {
+        if (this.propSearch.length < 2) { this.propResults = []; return; }
+        this.propLoading = true;
+        try {
+            const r = await fetch('/api/properties/search?q=' + encodeURIComponent(this.propSearch));
+            this.propResults = await r.json();
+        } catch(e) { this.propResults = []; }
+        finally { this.propLoading = false; }
+    },
+    selectProp(id, title) {
+        this.propertyId = String(id);
+        this.propTitle = title;
+        this.propSearch = '';
+        this.propResults = [];
+    },
+    clearProp() {
+        this.propertyId = '';
+        this.propTitle = '';
+    },
+    resetDrawer() {
+        this.contactSearch = '';
+        this.selectedContactId = null;
+        this.selectedContactName = '';
+        this.selectedContactPhone = '';
+        this.propertyId = '';
+        this.prefZona = '';
+        this.prefOperacion = '';
+        this.prefTipo = '';
+        this.propTitle = '';
+        this.prefPresupuesto = '';
+        this.propSearch = '';
+        this.propResults = [];
+        this.propLoading = false;
+    }
+}">
+
+{# El toggle de modo del bot se queda aca y no en page_actions: vive dentro
+   del x-data de la vista. El carril H lo saca de esta pantalla igual. #}
+<div class="flex items-center justify-end mb-4">
+    <div class="flex items-center gap-3">
+        {# Era la TERCERA copia del mismo switch, escrita inline. Las otras dos
+           estaban en wa_mode_toggle.html y conversation_bot_toggle.html, y ya
+           habian divergido: la de una conversacion pedia confirmacion y esta,
+           que apaga el bot para todos los clientes de WhatsApp, no. #}
+        {{ bot_switch('global', whatsapp_mode == 'auto') }}
+        <button @click="drawerOpen = true"
+                aria-label="Nuevo mensaje de WhatsApp"
+                class="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 bg-onnix-accent hover:bg-onnix-accent-dark active:scale-95 active:brightness-75 text-white text-sm font-medium rounded-lg transition-[background-color,transform] duration-100">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>Nuevo</span>
+        </button>
+    </div>
+</div>
+
+{# C4: Banner de reconexión SSE — aparece al perder conexión, oculto por defecto #}
+<div id="sse-reconnect-banner"
+     role="alert"
+     aria-live="assertive"
+     style="display:none"
+     {# El texto va en tinta, no en blanco: blanco sobre amber-500 da 2,15:1 y
+        onnix-black da 8,29:1. Es el mismo caso que el acento con texto blanco, que
+        test_accent_contrast.py ya prohibe. El spinner sigue a currentColor. #}
+     class="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 text-onnix-black text-sm font-medium shadow-lg">
+    <svg aria-hidden="true" class="w-4 h-4 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+        <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+    </svg>
+    <span>Conexión en tiempo real perdida — reconectando…</span>
+</div>
+
+{# La altura NO se calcula a mano. Antes decia `calc(100vh - 160px)` y el
+   cromo real mide ~148px en escritorio y ~188px en el celular, asi que el
+   contenedor sobraba en una y faltaba en la otra — y el composer quedaba
+   abajo del fold justo donde se escribe. Encima `100vh` en iOS Safari incluye
+   lo que tapa la barra de direcciones.
+   Ahora la pantalla no scrollea (`.page-conversations`, custom.css) y este
+   contenedor se estira con `flex-1`: la resta la hace el navegador. #}
+<div id="panels-container" class="flex bg-white rounded-lg shadow overflow-hidden"
+     hx-ext="morph,sse"
+     sse-connect="/conversations/sse">
+    <!-- Left panel: conversation list -->
+    <div class="w-full md:w-1/3 border-r border-gray-200 flex flex-col"
+         :class="mobileShowThread ? 'hidden md:flex' : 'flex'">
+        <div class="p-3 border-b bg-gray-50">
+            <div class="flex items-center justify-between px-0 pt-0 pb-1">
+                <span class="text-xs text-onnix-ink-400">Conversaciones</span>
+                <span id="sse-indicator"
+                      title="Tiempo real desconectado"
+                      class="inline-flex items-center gap-1 text-xs text-onnix-ink-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span>offline</span>
+                </span>
+            </div>
+            <div class="relative">
+                <input type="search"
+                       name="q"
+                       aria-label="Buscar conversación"
+                       placeholder="Buscar conversación..."
+                       hx-get="/conversations/list"
+                       hx-trigger="input changed delay:300ms, search"
+                       hx-target="#conv-list"
+                       hx-include="[name='selected_id'], [name='channel'], [name='stuck']"
+                       hx-swap="morph:innerHTML"
+                       hx-indicator="#search-spinner"
+                       autocomplete="off"
+                       class="w-full bg-white border border-gray-300 rounded px-3 py-2 pr-8 text-sm focus:border-onnix-accent focus:outline-none transition-colors">
+                <span id="search-spinner" class="htmx-indicator absolute right-2 top-1/2 -translate-y-1/2">
+                    <span class="htmx-spinner htmx-spinner-sm"></span>
+                </span>
+            </div>
+        </div>
+        <input type="hidden" name="selected_id" :value="selectedId || ''" />
+        <div id="conv-list"
+             aria-live="polite"
+             class="flex-1 overflow-y-auto chat-scroll"
+             hx-get="/conversations/list"
+             hx-trigger="sse:conversation_update"
+             hx-include="[name='q'], [name='selected_id'], [name='channel'], [name='stuck']"
+             hx-swap="morph:innerHTML"
+             hx-sync="this:replace">
+            {% include "partials/conversation_list.html" %}
+        </div>
+    </div>
+
+    <!-- Right panel: message thread -->
+    <div class="w-full md:w-2/3 flex flex-col"
+         :class="mobileShowThread ? 'flex' : 'hidden md:flex'">
+        {# `#conv-thread` deja de ser el scroller y pasa a ser la columna: asi
+           el composer queda fijo abajo y scrollea solo la lista de mensajes.
+           El `mt-auto` que tenia el composer era inerte porque esto no era
+           flex. #}
+        <div id="conv-thread" class="flex-1 min-h-0 flex flex-col px-4">
+            {% if thread %}
+                {% include "partials/conversation_thread.html" %}
+            {% else %}
+                <div class="flex items-center justify-center h-full text-onnix-ink-400">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-onnix-rule-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <p>Selecciona una conversación</p>
+                        <p class="text-sm mt-1">o espera a que lleguen nuevos mensajes</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% include "partials/send_template_drawer.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // C4: control del banner de reconexión SSE y del indicador de punto
+    (function() {
+        // Sólo mostrar el banner si la conexión se perdió DESPUÉS de haber
+        // estado conectada al menos una vez (evita flash en carga inicial).
+        var wasConnected = false;
+
+        document.body.addEventListener("htmx:sseOpen", function() {
+            wasConnected = true;
+            // Indicador de punto (pequeño, en sidebar)
+            var el = document.getElementById("sse-indicator");
+            if (el) {
+                el.title = "Tiempo real conectado";
+                el.className = "inline-flex items-center gap-1 text-xs text-green-500";
+                el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span><span>online</span>';
+            }
+            // Ocultar banner de reconexión
+            var banner = document.getElementById("sse-reconnect-banner");
+            if (banner) banner.style.display = "none";
+        });
+
+        document.body.addEventListener("htmx:sseClose", function() {
+            // Indicador de punto
+            var el = document.getElementById("sse-indicator");
+            if (el) {
+                el.title = "Tiempo real desconectado";
+                el.className = "inline-flex items-center gap-1 text-xs text-onnix-ink-400";
+                el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span><span>offline</span>';
+            }
+            // Mostrar banner sólo si ya habíamos conectado antes
+            if (wasConnected) {
+                var banner = document.getElementById("sse-reconnect-banner");
+                if (banner) banner.style.display = "flex";
+            }
+        });
+    }());
+
+    // Smooth fade+slide animation when switching conversations
+    document.body.addEventListener("htmx:afterSwap", function(e) {
+        if (e.detail.target && e.detail.target.id === "conv-thread") {
+            var el = e.detail.target;
+            el.style.opacity = "0";
+            el.style.transform = "translateY(6px)";
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    el.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+                    el.style.opacity = "1";
+                    el.style.transform = "translateY(0)";
+                    setTimeout(function() {
+                        el.style.transition = "";
+                        el.style.transform = "";
+                    }, 300);
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

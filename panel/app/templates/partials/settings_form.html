@@ -1,0 +1,173 @@
+<!-- Bot Toggle -->
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Estado del Bot</h3>
+            <p class="text-sm text-gray-500">Cuando está encendido, el bot responde automáticamente a los mensajes que recibe. Cuando está apagado, los clientes reciben un mensaje de ausencia con el link para contactar a un asesor humano.</p>
+        </div>
+        <div x-data="{ botOn: {{ 'true' if bot_enabled else 'false' }} }" class="flex items-center gap-3">
+            <span x-text="botOn ? 'Encendido' : 'Apagado'"
+                  :class="botOn ? 'text-green-600' : 'text-red-500'"
+                  class="text-sm font-medium"></span>
+            <button @click="botOn = !botOn"
+                    :class="botOn ? 'bg-green-600' : 'bg-gray-400'"
+                    hx-post="/settings/bot-toggle"
+                    hx-target="#settings-content"
+                    hx-swap="innerHTML"
+                    aria-label="Alternar bot encendido/apagado"
+                    class="tap-44 relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none">
+                <span :class="botOn ? 'translate-x-6' : 'translate-x-1'"
+                      class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bot Default Mode (Recepcionista / Búsqueda) -->
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Modo del bot</h3>
+            <p class="text-sm text-gray-500">Modo global por defecto para conversaciones de WhatsApp. <strong>Recepcionista</strong> califica al lead y agenda visitas; <strong>Búsqueda</strong> busca propiedades del catálogo. Los leads con origen detectado (InfoCasas, vista pública) siempre usan recepcionista, sin importar este ajuste.</p>
+        </div>
+        {# Sin `overflow-hidden`: recortaba el area tactil de los dos botones —
+           `.tap-44` no puede pintar su `::after` fuera de un ancestro que
+           recorta. El redondeo de las puntas pasa a los botones, y eso lo hace
+           `.bot-mode-seg` en custom.css porque Tailwind no compila `rounded-l-lg`
+           en este repo (la hoja es un artefacto commiteado, no hay build). #}
+        <div class="bot-mode-seg inline-flex rounded-lg border border-gray-300 text-sm font-medium"
+             role="group" aria-label="Modo del bot">
+            <button type="button"
+                    hx-post="/settings/bot-default-mode"
+                    hx-vals='{"mode": "recepcionista"}'
+                    hx-target="#settings-content"
+                    hx-swap="innerHTML"
+                    class="tap-44 px-4 py-2 transition-colors {% if bot_default_mode == 'recepcionista' %}bg-onnix-black text-white{% else %}bg-white text-gray-600 hover:bg-gray-50{% endif %}">
+                Recepcionista
+            </button>
+            <button type="button"
+                    hx-post="/settings/bot-default-mode"
+                    hx-vals='{"mode": "busqueda"}'
+                    hx-target="#settings-content"
+                    hx-swap="innerHTML"
+                    class="tap-44 px-4 py-2 border-l border-gray-300 transition-colors {% if bot_default_mode == 'busqueda' %}bg-onnix-black text-white{% else %}bg-white text-gray-600 hover:bg-gray-50{% endif %}">
+                Búsqueda
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-Reply Leads InfoCasas Toggle -->
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Auto-Reply a Leads Directos de InfoCasas</h3>
+            <p class="text-sm text-gray-500">Cuando un cliente consulta por una propiedad de Onnix en InfoCasas que está en nuestro catálogo, el bot le envía automáticamente un mensaje de bienvenida con la propiedad y opciones para ver más detalles.</p>
+        </div>
+        <div x-data="{ icOn: {{ 'true' if ic_autoreply_enabled else 'false' }} }" class="flex items-center gap-3">
+            <span x-text="icOn ? 'Encendido' : 'Apagado'"
+                  :class="icOn ? 'text-green-600' : 'text-red-500'"
+                  class="text-sm font-medium"></span>
+            <button @click="icOn = !icOn"
+                    :class="icOn ? 'bg-green-600' : 'bg-gray-400'"
+                    hx-post="/settings/ic-autoreply-toggle"
+                    hx-target="#settings-content"
+                    hx-swap="innerHTML"
+                    aria-label="Alternar auto-reply leads InfoCasas"
+                    class="tap-44 relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none">
+                <span :class="icOn ? 'translate-x-6' : 'translate-x-1'"
+                      class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Followup Sender Toggle -->
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Seguimiento Automático de Leads Fríos</h3>
+            <p class="text-sm text-gray-500">Envía mensajes de seguimiento por WhatsApp a leads que no respondieron: primer recordatorio a las 24h, segundo a las 72h. Si siguen sin responder, se marcan como descartados automáticamente. Activar solo cuando hayas probado el flujo y estés lista para usarlo en masa.</p>
+        </div>
+        <div x-data="{ on: {{ 'true' if followup_enabled else 'false' }} }" class="flex items-center gap-3">
+            <span x-text="on ? 'Encendido' : 'Apagado'"
+                  :class="on ? 'text-green-600' : 'text-red-500'"
+                  class="text-sm font-medium"></span>
+            <button @click="on = !on"
+                    :class="on ? 'bg-green-600' : 'bg-gray-400'"
+                    hx-post="/settings/followup-toggle"
+                    hx-target="#settings-content"
+                    hx-swap="innerHTML"
+                    aria-label="Alternar envío automático de seguimiento"
+                    class="tap-44 relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none">
+                <span :class="on ? 'translate-x-6' : 'translate-x-1'"
+                      class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- IC Reenviados Toggle -->
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Auto-Reply a Leads Reenviados de InfoCasas</h3>
+            <p class="text-sm text-gray-500">Controla dos casos: leads reenviados de competencia, Y leads directos cuyas propiedades no están en nuestro catálogo. En ambos, el bot ofrece buscar opciones similares en la zona. Mantener apagado hasta probar el flujo.</p>
+        </div>
+        <div x-data="{ on: {{ 'true' if ic_reenviados_enabled else 'false' }} }" class="flex items-center gap-3">
+            <span x-text="on ? 'Encendido' : 'Apagado'"
+                  :class="on ? 'text-green-600' : 'text-red-500'"
+                  class="text-sm font-medium"></span>
+            <button @click="on = !on"
+                    :class="on ? 'bg-green-600' : 'bg-gray-400'"
+                    hx-post="/settings/ic-reenviados-toggle"
+                    hx-target="#settings-content"
+                    hx-swap="innerHTML"
+                    aria-label="Alternar auto-reply IC reenviados"
+                    class="tap-44 relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none">
+                <span :class="on ? 'translate-x-6' : 'translate-x-1'"
+                      class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- All Settings Table -->
+<div class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto table-scroll-container">
+    <table class="tabla-card w-full text-sm md:min-w-[600px]">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+            <tr>
+                <th class="px-4 py-3 text-left w-1/4">Clave</th>
+                <th class="px-4 py-3 text-left w-1/4">Valor</th>
+                <th class="px-4 py-3 text-left w-1/3">Descripción</th>
+                <th class="px-4 py-3 text-left w-auto">Actualizado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for setting in settings %}
+            <tr class="border-b border-gray-100 hover:bg-gray-50 row-hover">
+                <td data-label="Clave" class="px-4 py-3 font-mono text-xs text-gray-700">{{ setting.key }}</td>
+                <td data-label="Valor" class="px-4 py-3">
+                    {% if setting.key == 'bot_enabled' %}
+                    <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                        {% if setting.value == 'true' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-600{% endif %}">
+                        {{ setting.value }}
+                    </span>
+                    {% elif setting.key == 'whatsapp_mode' %}
+                    <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
+                        {% if setting.value == 'auto' %}bg-blue-100 text-blue-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                        {{ setting.value|upper }}
+                    </span>
+                    {% else %}
+                    <span class="text-gray-800 text-sm block max-w-xs truncate" title="{{ setting.value }}">{{ setting.value }}</span>
+                    {% endif %}
+                </td>
+                <td data-label="Descripción" class="px-4 py-3 text-gray-500 text-xs">{{ setting.description or '' }}</td>
+                <td data-label="Actualizado" class="px-4 py-3 text-onnix-ink-400 text-xs">
+                    {{ setting.updated_at|pyt('%d/%m %H:%M') if setting.updated_at else '—' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

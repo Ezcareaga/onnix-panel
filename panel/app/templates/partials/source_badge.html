@@ -1,0 +1,18 @@
+{# Uso: {% with badge_source=lead.source %}{% include 'partials/source_badge.html' %}{% endwith %}
+
+   Las fuentes son informacion, no urgencia: todas van en `default`. Antes eran
+   cinco matices distintos compitiendo con el estado del lead, que es lo unico
+   de la fila que de verdad pide algo. #}
+{% set _fuentes = {
+    'whatsapp':      'WhatsApp',
+    'telegram':      'Telegram',
+    'infocasas':     'InfoCasas',
+    'vista_publica': 'Portal',
+    'manual':        'Manual'
+} %}
+{% if badge_source and badge_source.startswith('import:') %}
+    {% set _etiqueta = 'Importado' %}
+{% else %}
+    {% set _etiqueta = _fuentes.get(badge_source, badge_source or '—') %}
+{% endif %}
+<span class="badge badge--default">{{ _etiqueta }}</span>

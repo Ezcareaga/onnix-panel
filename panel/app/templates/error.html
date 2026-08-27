@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ code }} — {{ titulo }} — Onnix</title>
+    <link rel="preload" href="/static/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/css/tailwind.css?v=24">
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/custom.css?v=9">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <main class="bg-white rounded-lg shadow-lg p-10 max-w-md w-full text-center">
+        <div class="text-6xl font-bold mb-2 {% if code == 404 %}text-onnix-accent-ink{% else %}text-[color:var(--danger)]{% endif %}">{{ code }}</div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-3">{{ titulo }}</h1>
+        <p class="text-gray-600 mb-6">{{ detalle }}</p>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+            {% if code != 404 %}
+            {# Reintentar primero: un 500 suele ser transitorio y volver al
+               dashboard pierde lo que la persona estaba haciendo. #}
+            <button type="button" onclick="window.location.reload()"
+                    class="inline-block bg-onnix-accent text-white font-semibold px-6 py-2.5 rounded hover:bg-onnix-accent-dark transition-colors">
+                Reintentar
+            </button>
+            <a href="/dashboard" class="text-sm text-gray-600 hover:text-gray-900 underline">
+                Ir al dashboard
+            </a>
+            {% else %}
+            <a href="/dashboard"
+               class="inline-block bg-onnix-accent text-white font-semibold px-6 py-2.5 rounded hover:bg-onnix-accent-dark transition-colors">
+                Ir al dashboard
+            </a>
+            {% endif %}
+        </div>
+
+        {% if correlacion %}
+        {# Sin esto, «avisale a Ez» es inaccionable: no hay forma de encontrar
+           este error entre los miles de lineas de log del dia. #}
+        <p class="text-xs text-gray-500 mt-6">
+            Si le escribís a soporte, pasale este código:
+            <code class="font-mono text-gray-700">{{ correlacion }}</code>
+        </p>
+        {% endif %}
+        <p class="text-xs text-onnix-ink-400 mt-4">Onnix SA — Panel Admin</p>
+    </main>
+</body>
+</html>

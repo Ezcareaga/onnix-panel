@@ -1,0 +1,41 @@
+{#
+  La foto de la ficha de propiedad — una sola definición para el panel y el
+  portal público.
+
+  Antes vivía copiada: dos veces idéntica en `properties/partials/properties_table.html`
+  (una rama por `local_image_count`, otra por `main_image_url`) y **cero veces**
+  en el portal, que por eso mostraba la caja de imagen rota del navegador en la
+  página que ve el cliente. `photo_url` sale de `local_image_count` en la base,
+  no de mirar el disco, y esos dos ya divergieron cuando se perdieron las 9,7 GB
+  de fotos: la degradación no es un caso raro, es el caso que ya pasó.
+
+  El fallback es `onerror`, un atributo HTML: el portal no suma ni un script ni
+  una dependencia, y sigue sirviéndose sin auth. Techo conocido: con JavaScript
+  deshabilitado del todo el handler no corre y vuelve la caja rota — o sea,
+  exactamente lo que se ve hoy, nunca peor. La alternativa 100% CSS (placeholder
+  como fondo del contenedor) tampoco tapa el glifo de imagen rota en Chrome, así
+  que no compra nada.
+
+  El placeholder se emite SIEMPRE, oculto por `style`, y `onerror` lo destapa
+  poniendo `display=''`: vuelve al valor de la hoja de estilos (`flex` en el
+  portal, `flex` en el panel) en vez de imponer uno desde el handler, que es lo
+  que hacía la versión vieja y lo que ataba el partial a un layout.
+
+  Uso:
+      {% from "partials/property_photo.html" import foto %}
+      {% call foto(src, alt="Casa en Villa Morra", ph_class="photo-placeholder") %}
+          <span class="monogram">Onnix</span>
+      {% endcall %}
+#}
+{% macro foto(src, alt="", img_class="", img_attrs="", ph_class="") -%}
+{%- if src -%}
+{#- `img_attrs` es markup de atributos, no texto: sin `| safe` el autoescape de
+    Starlette lo convierte en `loading=&#34;lazy&#34;` y el atributo no existe.
+    Pasaba desde que se creó el macro y no se veía: la miniatura igual se
+    dibuja, solo que sin lazy loading. Lo cubre test_property_photo_partial.
+    El contrato es que lo escribe la plantilla, nunca el usuario. -#}
+<img src="{{ src }}" alt="{{ alt }}"{% if img_class %} class="{{ img_class }}"{% endif %}{{ img_attrs | safe }}
+     onerror="this.style.display='none';this.nextElementSibling.style.display=''">
+{%- endif %}
+<div{% if ph_class %} class="{{ ph_class }}"{% endif %} aria-hidden="true"{% if src %} style="display:none"{% endif %}>{{ caller() }}</div>
+{%- endmacro %}

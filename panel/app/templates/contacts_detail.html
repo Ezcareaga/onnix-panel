@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+{% block title %}{{ contact.name or 'Contacto' }} — Onnix{% endblock %}
+{% block page_title %}{{ contact.name or 'Sin nombre' }}{% endblock %}
+
+{% block content %}
+{% from "partials/empty_state.html" import vacio %}
+<div id="contact-updated-banner"
+     class="hidden bg-amber-50 border border-amber-200 rounded px-4 py-2 mb-4 text-sm text-amber-800 flex items-center justify-between">
+    <span id="contact-updated-banner-msg">Este contacto fue actualizado por otro usuario.</span>
+    <button onclick="window.location.reload()"
+            class="text-amber-700 underline font-medium ml-4">Recargar</button>
+</div>
+
+<div class="flex items-center gap-3 mb-6">
+    <a href="/contacts" class="inline-flex min-h-11 items-center text-onnix-ink-400 hover:text-gray-600 text-sm">← Contactos</a>
+    {% if contact.baja_at %}
+    <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-700 border border-red-300 rounded-full px-3 py-1 text-sm font-semibold" title="Este contacto solicitó baja — opt-out irreversible">
+        Opt-out (baja)
+        <span class="text-red-500 font-normal text-xs">{{ contact.baja_at|pyt('%d/%m/%Y') }}</span>
+    </span>
+    {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+    {# Zona 1 — quien es. Lo unico que se mira sin buscarlo. #}
+    <div class="lg:col-span-1">
+        <!-- Card editable -->
+        <div x-data='{
+            editing: false,
+            statusOpen: false,
+            currentStatus: {{ contact.status | tojson }},
+            name: {{ (contact.name or "") | tojson }},
+            phone: {{ (contact.phone or "") | tojson }},
+            email: {{ (contact.email or "") | tojson }},
+            operacion: {{ ((contact.preferences or {}).get("operacion", "") if contact.preferences else "") | tojson }},
+            zona: {{ ((contact.preferences or {}).get("zona", "") if contact.preferences else "") | tojson }},
+            presupuesto: {{ ((contact.preferences or {}).get("presupuesto", "") if contact.preferences else "") | tojson }},
+            dormitorios: {{ ((contact.preferences or {}).get("dormitorios", "") if contact.preferences else "") | tojson }}
+        }' @contact-updated.window="editing = false" class="bg-white rounded-lg shadow p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold text-gray-700">Datos del Contacto</h2>
+                <div class="flex items-center gap-2">
+                    <!-- Status block (badge + dropdown + lockout) — refreshed
+                         via HX-Trigger=refreshStatusBlock from visit POST endpoints.
+                         Listens on the body event, swaps its own innerHTML. -->
+                    <div id="contact-status-block"
+                         hx-get="/contacts/{{ contact.id }}/status-block"
+                         hx-trigger="refreshStatusBlock from:body"
+                         hx-swap="innerHTML">
+                        {% include 'partials/contact_status_block.html' %}
+                    </div>
+                    <button type="button" @click="editing = !editing"
+                        class="inline-flex min-h-11 items-center px-2 text-xs text-onnix-accent-ink hover:text-onnix-accent-dark"
+                        x-text="editing ? 'Cancelar' : 'Editar'"></button>
+                </div>
+            </div>
+
+            <form hx-post="/contacts/{{ contact.id }}/update"
+                  hx-target="#update-result"
+                  hx-swap="innerHTML"
+                  x-show="editing">
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="text-onnix-ink-400 text-xs block mb-0.5">Estado</label>
+                        {% set _status_locked = has_active_visit or contact.baja_at %}
+                        <select name="status" x-model="currentStatus" aria-label="Estado del contacto"
+                            {% if _status_locked %}disabled{% endif %}
+                            hx-post="/contacts/{{ contact.id }}/status"
+                            hx-include="this"
+                            hx-target="#status-result"
+                            hx-swap="innerHTML"
+                            hx-trigger="change"
+                            title="{% if contact.baja_at %}Contacto con opt-out — estado bloqueado{% elif has_active_visit %}Cancelar visitas activas para cambiar estado{% endif %}"
+                            {# El bloqueado lo pinta `select:disabled` en custom.css, con
+                               los tokens: ui.md prohíbe señalar estado con opacidad. #}
+                            class="w-full border rounded px-2 py-1.5 text-sm bg-white focus:ring-onnix-accent focus:border-onnix-accent">
+                            {% set edit_status_options = [
+                                ('new', 'Nuevo'),
+                                ('bot_replied', 'Bot respondió'),
+                                ('agent_replied', 'Agente escribió'),
+                                ('visit_scheduled', 'Visita agendada'),
+                                ('interested', 'Interesado'),
+                                ('closed', 'Cerrado'),
+                                ('no_response', 'Sin respuesta'),
+                                ('discarded', 'Descartado'),
+                            ] %}
+                            {% for value, label in edit_status_options %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if contact.baja_at %}
+                        <p class="text-xs text-red-500 mt-1">Opt-out irreversible — no se puede cambiar el estado.</p>
+                        {% elif has_active_visit %}
+                        <p class="text-xs text-onnix-ink-400 mt-1">Cancelar todas las visitas activas para poder cambiar status.</p>
+                        {% endif %}
+                    </div>
+                    <hr class="border-gray-100">
+
+                    {% with form_mode='edit', contact=contact, phone_info=phone_info, property_title=linked_property.title if linked_property else None %}
+                    {% include 'partials/contact_form.html' %}
+                    {% endwith %}
+
+
+
+                    <button type="submit"
+                        class="w-full bg-onnix-accent text-white py-2 rounded text-sm font-medium hover:bg-onnix-accent-dark mt-1">
+                        Guardar cambios
+                    </button>
+                    <div id="update-result" class="text-center min-h-4"></div>
+                </div>
+            </form>
+
+            <!-- Vista modo lectura -->
+            <dl x-show="!editing" class="space-y-2 text-sm">
+                <div><dt class="text-onnix-ink-400 text-xs">Nombre</dt>
+                    <dd class="font-medium" x-text="name || '—'"></dd></div>
+                <div><dt class="text-onnix-ink-400 text-xs">Teléfono</dt>
+                    <dd class="font-medium" x-text="phone || '—'"></dd></div>
+                <div><dt class="text-onnix-ink-400 text-xs">Email</dt>
+                    <dd class="text-gray-700 break-all" x-text="email || '—'"></dd></div>
+                {# Phase 116 UAT — Asesor asignado (read-only, dt/dd).
+                   Visible para admin siempre; para role=agent solo si NO es
+                   ellos mismos (evita "asignado a vos" como ruido). #}
+                {% set _agent_display = agents_display_map.get(contact.agent_user_id) if contact.agent_user_id else '' %}
+                {% if user.role == 'admin' or (user.role == 'agent' and contact.agent_user_id != user.id) %}
+                <div><dt class="text-onnix-ink-400 text-xs">Asesor</dt>
+                    <dd class="max-w-full truncate" title="{{ _agent_display or 'Sin asesor asignado' }}">
+                    {% if _agent_display %}
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-gray-400 align-middle mr-1"></span>
+                        <span class="text-gray-700 align-middle">{{ _agent_display }}</span>
+                    {% else %}
+                        <span class="text-onnix-ink-400 italic">— sin asignar</span>
+                    {% endif %}
+                    </dd></div>
+                {% endif %}
+                <div><dt class="text-onnix-ink-400 text-xs">Fuente</dt>
+                    <dd>{% if contact.source %}
+                        {% if contact.source == 'infocasas' %}InfoCasas
+                        {% elif contact.source == 'telegram' %}Telegram
+                        {% elif contact.source == 'whatsapp' %}WhatsApp
+                        {% elif contact.source == 'manual' %}Manual
+                        {% elif 'import' in contact.source %}Import
+                        {% else %}{{ contact.source }}{% endif %}
+                    {% else %}<span class="text-onnix-ink-400">—</span>{% endif %}</dd></div>
+                <div><dt class="text-onnix-ink-400 text-xs">Creado</dt>
+                    <dd>{{ contact.created_at|pyt('%d/%m/%Y %H:%M') if contact.created_at else '' }}<span class="text-onnix-ink-400" style="{{ '' if not contact.created_at else 'display:none' }}">—</span></dd></div>
+                <div><dt class="text-onnix-ink-400 text-xs">Última actividad</dt>
+                    <dd>{{ contact.last_activity_at|pyt('%d/%m/%Y %H:%M') if contact.last_activity_at else '' }}<span class="text-onnix-ink-400" style="{{ '' if not contact.last_activity_at else 'display:none' }}">—</span></dd></div>
+
+                <!-- Preferencias en modo lectura -->
+                <template x-if="operacion || zona || presupuesto || dormitorios">
+                    <div class="pt-2 border-t border-gray-100">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Intereses</p>
+                        <div class="space-y-1.5">
+                            <template x-if="operacion">
+                                <div><dt class="text-onnix-ink-400 text-xs">Operación</dt>
+                                    <dd x-text="operacion"></dd></div>
+                            </template>
+                            <template x-if="zona">
+                                <div><dt class="text-onnix-ink-400 text-xs">Zona</dt>
+                                    <dd x-text="zona"></dd></div>
+                            </template>
+                            <template x-if="presupuesto">
+                                <div><dt class="text-onnix-ink-400 text-xs">Presupuesto</dt>
+                                    <dd x-text="'USD ' + Number(presupuesto).toLocaleString()"></dd></div>
+                            </template>
+                            <template x-if="dormitorios">
+                                <div><dt class="text-onnix-ink-400 text-xs">Dormitorios</dt>
+                                    <dd x-text="dormitorios + ' dorm.'"></dd></div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </dl>
+        </div>
+    </div>
+
+    {# Zona 2 — que esta pasando. El trabajo del dia: seguimiento, visitas y
+       lo que hizo el bot. En el celular va SEGUNDO, antes que cualquier
+       cosa que se pueda plegar — antes iba despues del boton de eliminar. #}
+    <div class="lg:col-span-2 space-y-6">
+        {# La consulta que escribio el cliente. Se guardaba al 100 % en
+           contacts.first_message y no la mostraba ninguna pantalla: adentro
+           hay preguntas concretas ("¿esta disponible a partir del 13 de
+           septiembre?", "¿tienen generador?"). Para los leads de InfoCasas
+           —hoy la unica fuente viva— es lo unico que dice el cliente, porque
+           el bot esta apagado y no hay conversacion.
+
+           `clean_description` es el mismo filtro que las descripciones de las
+           fichas: cambia <br> por saltos, BORRA el resto de los tags y
+           decodifica entidades. Devuelve str, no Markup, asi que Jinja lo
+           escapa igual — 366 de 865 mensajes traen HTML de un tercero y
+           renderizarlo con |safe seria inyeccion. #}
+        {% set consulta_cliente = contact.first_message | clean_description %}
+        {% if consulta_cliente %}
+        <div class="bg-white rounded-lg shadow p-5">
+            <h2 class="font-semibold text-gray-700 mb-3">Consulta del cliente</h2>
+            <p class="text-sm text-gray-700 whitespace-pre-line">{{ consulta_cliente }}</p>
+        </div>
+        {% endif %}
+        <!-- Notas y recordatorios: un solo carril cronologico -->
+        <div class="bg-white rounded-lg shadow p-5" id="followup-list">
+            {% set contact_id = contact.id %}
+            {% include "partials/crm_followup.html" %}
+        </div>
+        <!-- Visitas (M6.2) — lazy-loaded via HTMX -->
+        <div id="visits-content"
+             hx-get="/contacts/{{ contact.id }}/visits"
+             hx-trigger="load, refreshVisits from:body"
+             hx-swap="innerHTML">
+            <div class="bg-white rounded-lg shadow p-5">
+                <p class="text-onnix-ink-400 text-sm">Cargando visitas…</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-5" id="events-panel"
+             hx-get="/contacts/{{ contact.id }}/events"
+             hx-trigger="refreshEvents from:body"
+             hx-target="#events-content"
+             hx-swap="innerHTML">
+            <h2 class="font-semibold text-gray-700 mb-4">Historial de eventos</h2>
+            <div id="events-content">
+                {% include "partials/events_timeline.html" %}
+            </div>
+        </div>
+    </div>
+
+    {# Zona 3 — de donde viene. Seis carpetas plegadas: se abren cuando
+       hacen falta y mientras tanto no empujan al resto fuera de la pantalla.
+       La ultima es la irreversible, y va ultima a proposito. #}
+    <div class="lg:col-span-3 space-y-3">
+        <!-- Propiedad consultada -->
+        {% if ic_property %}
+        {# InfoCasas lead: show InfoCasas property with IC URL #}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Propiedad consultada</summary>
+            <div class="px-5 pb-5">
+            <div class="space-y-2 text-sm">
+                {% if ic_property.url %}
+                <a href="{{ ic_property.url }}" target="_blank"
+                   class="block text-onnix-accent-ink hover:text-onnix-accent-dark font-medium leading-snug hover:underline">
+                    {{ ic_property.title or 'Ver en InfoCasas' }}
+                </a>
+                {% else %}
+                <p class="font-medium text-gray-700 leading-snug">{{ ic_property.title or 'Propiedad IC' }}</p>
+                {% endif %}
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                    {% if ic_property.price_sale %}
+                    <span class="font-medium text-gray-700">{{ ic_property.currency_sale or 'USD' }} {{ miles(ic_property.price_sale) }}</span>
+                    {% elif ic_property.price_rent %}
+                    <span class="font-medium text-gray-700">{{ ic_property.currency_rent or 'USD' }} {{ miles(ic_property.price_rent) }}/mes</span>
+                    {% endif %}
+                    {% if ic_property.city %}
+                    <span>{{ ic_property.neighborhood ~ ', ' if ic_property.neighborhood else '' }}{{ ic_property.city }}</span>
+                    {% endif %}
+                    {% if ic_property.operation %}
+                    <span class="capitalize">{{ ic_property.operation }}</span>
+                    {% endif %}
+                    {% if ic_property.property_type %}
+                    <span class="capitalize">{{ ic_property.property_type }}</span>
+                    {% endif %}
+                    {% if ic_property.bedrooms %}
+                    <span>{{ ic_property.bedrooms }} dorm.</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2 text-xs text-onnix-ink-400">
+                    <span class="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-xs">InfoCasas</span>
+                    {% if contact.source_id %}
+                    <span>Consulta #{{ contact.source_id }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        </details>
+        {% elif linked_property %}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Propiedad consultada</summary>
+            <div class="px-5 pb-5">
+            {% if not linked_property.is_active %}
+            <div class="flex items-center gap-2 mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+                <span>Propiedad ya no disponible</span>
+                <a href="/leads?source={{ contact.source }}&status={{ contact.status }}"
+                   class="ml-auto font-medium text-amber-700 hover:text-amber-900 underline whitespace-nowrap">Buscar similares</a>
+            </div>
+            {% endif %}
+            <div class="space-y-2 text-sm {% if not linked_property.is_active %}opacity-60{% endif %}">
+                {% if linked_property.url %}
+                <a href="{{ linked_property.url }}" target="_blank"
+                   class="block text-onnix-accent-ink hover:text-onnix-accent-dark font-medium leading-snug hover:underline">
+                    {{ linked_property.title or 'Ver propiedad' }}
+                </a>
+                {% else %}
+                <p class="font-medium text-gray-700 leading-snug">{{ linked_property.title or 'Propiedad #' ~ linked_property.id }}</p>
+                {% endif %}
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                    {% if linked_property.price_usd %}
+                    <span class="font-medium text-gray-700">{{ precio(linked_property.price_usd) }}</span>
+                    {% endif %}
+                    {% if linked_property.city %}
+                    <span>{{ linked_property.neighborhood ~ ', ' if linked_property.neighborhood else '' }}{{ linked_property.city }}</span>
+                    {% endif %}
+                    {% if linked_property.operation %}
+                    <span class="capitalize">{{ linked_property.operation }}</span>
+                    {% endif %}
+                    {% if linked_property.property_type %}
+                    <span class="capitalize">{{ linked_property.property_type }}</span>
+                    {% endif %}
+                    {% if linked_property.bedrooms %}
+                    <span>{{ linked_property.bedrooms }} dorm.</span>
+                    {% endif %}
+                </div>
+                {% if contact.source_id %}
+                <p class="text-xs text-onnix-ink-400">Consulta #{{ contact.source_id }}</p>
+                {% endif %}
+            </div>
+        </div>
+        </details>
+        {% elif contact.source == 'infocasas' and contact.source_id %}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Propiedad consultada</summary>
+            <div class="px-5 pb-5">
+            <a href="https://www.infocasas.com.py" target="_blank"
+               class="text-sm text-onnix-accent-ink hover:underline">Consulta #{{ contact.source_id }}</a>
+        </div>
+        </details>
+        {% endif %}
+        {% if inquiry_history %}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Consultas anteriores de InfoCasas ({{ inquiry_history|length }})</summary>
+            <div class="px-5 pb-5">
+            <div class="space-y-3">
+                {% for inquiry in inquiry_history %}
+                <div class="border-l-2 border-amber-400 pl-3 py-1">
+                    <div class="flex items-center gap-2 text-xs text-onnix-ink-400 mb-1">
+                        <span>{{ inquiry.consulta_date|pyt('%d/%m/%Y %H:%M') if inquiry.consulta_date else '' }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 font-medium">{{ inquiry.property_title or 'Ref: ' ~ inquiry.infocasas_ref }}</p>
+                    {% if inquiry.consulta_id %}<p class="text-xs text-gray-500">Consulta #{{ inquiry.consulta_id }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        </details>
+        {% endif %}
+        {% if search_history %}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Historial de búsquedas ({{ search_history|length }})</summary>
+            <div class="px-5 pb-5">
+            <div class="space-y-3">
+                {% for search in search_history[:10] %}
+                <div class="border-l-2 border-onnix-accent pl-3 py-1">
+                    <div class="flex items-center gap-2 text-xs text-onnix-ink-400 mb-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <span>{{ search.fecha[:16].replace('T', ' ') if search.fecha else '' }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 font-medium">
+                        {{ search.tipo|capitalize if search.tipo else 'Propiedad' }}
+                        {% if search.operacion %} en {{ search.operacion }}{% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        {% if search.barrio %}{{ search.barrio }}, {% endif %}
+                        {% if search.ciudad %}{{ search.ciudad }}{% endif %}
+                        {% if search.presupuesto_max %} · Hasta {{ search.moneda|upper if search.moneda else 'USD' }} {{ miles(search.presupuesto_max) }}{% endif %}
+                    </p>
+                    <p class="text-xs text-onnix-ink-400">{{ search.resultados_encontrados or 0 }} resultados</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        </details>
+        {% endif %}
+        {% if viewed_properties %}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Propiedades vistas ({{ viewed_properties|length }})</summary>
+            <div class="px-5 pb-5">
+            <div class="space-y-3">
+                {% for item in viewed_properties %}
+                {% if item.url %}
+                <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer"
+                   class="block border-l-2 border-onnix-accent pl-3 py-1 hover:bg-onnix-accent-wash rounded-r transition-colors">
+                {% else %}
+                <div class="border-l-2 border-onnix-accent pl-3 py-1 rounded-r">
+                {% endif %}
+                    <div class="flex items-center gap-2 text-xs text-onnix-ink-400 mb-1">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span>{{ item.viewed_at|pyt('%d/%m/%Y %H:%M') if item.viewed_at else '' }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 font-medium truncate">{{ item.title or 'Sin título' }}</p>
+                    <p class="text-xs text-gray-500">
+                        {%- if item.neighborhood %}{{ item.neighborhood }}, {% endif -%}
+                        {{- item.city -}}
+                        {%- if item.price_usd %}
+                        <span class="ml-1">· {{ item.price_currency|upper }} {{ miles(item.price_usd) }}</span>
+                        {%- endif %}
+                    </p>
+                {% if item.url %}</a>{% else %}</div>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        </details>
+        {% endif %}
+        <!-- Conversaciones -->
+        {% if conversations %}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Conversaciones ({{ conversations|length }})</summary>
+            <div class="px-5 pb-5">
+            <div class="space-y-2">
+                {% for conv in conversations %}
+                <a href="/conversations/{{ conv.id }}"
+                    class="block p-2 border rounded hover:bg-onnix-accent-wash text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">Conv #{{ conv.id }}</span>
+                        <span class="text-onnix-ink-400 text-xs">{{ conv.message_count or 0 }} msgs</span>
+                    </div>
+                    <div class="text-xs text-onnix-ink-400">
+                        {{ conv.last_message_at|pyt('%d/%m %H:%M') if conv.last_message_at else 'Sin mensajes' }}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        </details>
+        {% else %}
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Conversaciones</summary>
+            <div class="px-5 pb-5">
+            {# Tenía su propio icono, su propio tamaño y su propia jerarquía:
+               era el noveno formato de estado vacío del panel. #}
+            {{ vacio("Sin conversaciones",
+                     "Cuando este contacto escriba, la conversación aparece acá.",
+                     superficie=false) }}
+        </div>
+        </details>
+        {% endif %}
+        <!-- Eliminar contacto -->
+        <details class="crm-fold bg-white rounded-lg shadow">
+            <summary class="cursor-pointer px-5 py-3.5 font-semibold text-gray-700 text-sm marker:text-onnix-ink-400">Zona de peligro</summary>
+            <div class="px-5 pb-5">
+            <button
+                hx-post="/contacts/{{ contact.id }}/delete"
+                hx-confirm="¿Seguro que querés eliminar este contacto? Esta acción no se puede deshacer."
+                class="w-full min-h-11 border border-red-200 text-red-700 rounded text-sm hover:bg-red-50 hover:border-red-300 transition-colors">
+                Eliminar contacto
+            </button>
+            <p class="text-xs text-onnix-ink-400 mt-1.5 text-center">El contacto quedará archivado en la BD</p>
+        </div>
+        </details>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.currentUserId = {{ user.id }};
+(function () {
+    var evtSource = new EventSource('/events');
+    var CONTACT_ID = {{ contact_id }};
+    evtSource.addEventListener('contact.updated', function (e) {
+        var data = JSON.parse(e.data || '{}');
+        if (data.contact_id !== CONTACT_ID) return;
+        if (data.user_id === window.currentUserId) return;
+        var msg = document.getElementById('contact-updated-banner-msg');
+        if (msg) {
+            msg.textContent = data.user_name
+                ? 'Este contacto fue actualizado por ' + data.user_name + '.'
+                : 'Este contacto fue actualizado por otro usuario.';
+        }
+        var banner = document.getElementById('contact-updated-banner');
+        if (banner) banner.classList.remove('hidden');
+    });
+    window.addEventListener('beforeunload', function () { evtSource.close(); });
+})();
+</script>
+{% endblock %}

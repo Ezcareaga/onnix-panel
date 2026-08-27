@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* La familia ya la pone preflight desde theme.fontFamily.sans, que ahora es
+     Outfit. Antes este bloque cableaba Inter y Plus Jakarta Sans a mano, o sea
+     una tercera declaracion de tipografia que habia que acordarse de cambiar.
+     Queda solo el peso de los titulos, que preflight no opina. */
+  h1, h2, h3 {
+    font-weight: 600;
+  }
+}

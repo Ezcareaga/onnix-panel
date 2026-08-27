@@ -1,0 +1,15 @@
+[Unit]
+Description=Red de contención: si quedó un job sin procesar, lo levanta
+
+[Timer]
+# El .path unit dispara con la transición vacío→no-vacío. Si el pipeline muere
+# antes de drenar (permisos, disco, un bug), la cola queda no-vacía y no hay
+# transición nueva: el job se queda ahí para siempre y el deploy nunca llega,
+# en silencio. Este timer arranca el service igual; si la cola está vacía sale
+# en un segundo.
+OnBootSec=5min
+OnUnitActiveSec=10min
+Unit=onnix-pipeline.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,1110 @@
+/* ═══════════════════════════════════════
+   Onnix SA — Landing Page Styles
+   ═══════════════════════════════════════ */
+
+/* ─── Variables ─── */
+:root {
+    --accent: #FFFFFF;
+    --accent-light: #E5E5E3;
+    --accent-dark: #C9C9C6;
+    --black: #0A0A0A;
+    --dark: #141414;
+    --dark-card: #1A1A1A;
+    --dark-border: #2A2A2A;
+    --gray: #7C7C7C;          /* 4,74:1 sobre --black; #6B6B6B daba 3,72:1 */
+    --gray-light: #9A9A9A;    /* 7,04:1 */
+    --border-control: #6B6B6B;
+    --tap: 44px;              /* area tactil minima, WCAG 2.2 SC 2.5.8 */ /* borde de control: 3,27:1 sobre --dark-card,
+                                  3,46:1 sobre --dark. --dark-border (#2A2A2A)
+                                  da 1,38:1 y solo sirve de separador visual. */
+    --white: #F5F0E8;
+    /* El verde de WhatsApp. Es la marca de un tercero, no una eleccion
+       estetica: `ui.md` lo declara como excepcion de canal y no gasta cupo del
+       presupuesto de dos matices. Entra el 2026-08-23 porque la pildora
+       flotante estaba en acento y la ficha del portal en verde — la misma accion,
+       dos superficies publicas del mismo sitio, dos tintas. La tinta del texto
+       es --black y NO blanco: blanco sobre este verde da 1,75:1, que fue
+       exactamente el fallo de AA que la ficha ya arreglo. */
+    --wa-green: #25D366;      /* --black encima: 9,98:1 */
+    --wa-green-hv: #1EBE5D;   /* --black encima: 8,09:1 */
+    --font-body: 'Outfit', system-ui, sans-serif;
+    --radius: 4px;            /* shape lock: un solo valor para toda la pagina */
+}
+
+/* ─── Fuente ───
+
+   Outfit es variable: un solo woff2 de 32 KB cubre 400 y 600, y por eso el
+   rango de font-weight va declarado. Antes la pagina pedia 8 archivos de dos
+   familias a fonts.googleapis.com. Cormorant Garamond se fue del proyecto: la
+   serif italica de display esta prohibida por ui.md:26. */
+@font-face {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/landing-assets/fonts/outfit-latin-var.woff2') format('woff2');
+    /* Solo latin. El espanol entero (tildes, enie, ordinales, m²) vive en
+       U+0000-00FF; latin-ext seria un segundo archivo que no se usa. */
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+                   U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD;
+}
+
+/* ─── Base ─── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Un solo anillo de foco para toda la pagina. Oro, porque sobre --black da
+   8,72:1: la prohibicion del acento como anillo es para tema claro (2,12:1 sobre
+   --paper), y esta pagina es oscura. */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: var(--font-body);
+    background: var(--black);
+    color: var(--white);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Animations ─── */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes lineGrow {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+}
+
+.reveal {
+    opacity: 0;
+    animation: fadeUp 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* Retrasos, no duraciones: el limite de 150-200ms es de la animacion. Aun
+   asi se acortaron, porque encadenados sumaban casi dos segundos de espera. */
+.reveal-d1 { animation-delay: 0.05s; }
+.reveal-d2 { animation-delay: 0.10s; }
+.reveal-d3 { animation-delay: 0.15s; }
+.reveal-d4 { animation-delay: 0.20s; }
+.reveal-d5 { animation-delay: 0.25s; }
+.reveal-d6 { animation-delay: 0.30s; }
+
+/* ─── Nav ─── */
+nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    isolation: isolate;
+    padding: 1.25rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Solo background-color. El `padding` de la version anterior es layout, y
+       ui.md enumera las cuatro propiedades que se pueden animar: transform,
+       opacity, color y background-color. El encogido sigue existiendo; lo que
+       se va es la transicion que lo animaba. */
+    transition: background-color 0.2s ease-out;
+}
+/* El piso de legibilidad de la nav no puede depender del JS.
+   `nav.scrolled` lo pone main.js escuchando scroll: con el JS apagado la clase
+   no llega nunca y la nav se queda transparente sobre TODA la pagina, con el
+   logo y los links flotando sobre el texto de cada seccion. Este degradado es
+   CSS puro, va siempre, y no tapa la foto del hero porque se apaga a los 96px.
+   `background-image` y no `background-color` a proposito: asi `nav.scrolled`
+   pisa el color sin tener que anular nada. */
+nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: linear-gradient(to bottom, rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0));
+    pointer-events: none;
+}
+nav.scrolled {
+    /* Opaco. El `backdrop-filter: blur(12px)` de antes es glassmorphism, que
+       ui.md:26 prohibe, y ademas fuerza una capa de composicion sobre el hero
+       en cada scroll. */
+    background-color: var(--black);
+    padding: 0.75rem 2rem;
+    border-bottom: 1px solid var(--dark-border);
+}
+nav .logo img {
+    height: 44px;
+    width: auto;
+}
+nav.scrolled .logo img {
+    height: 34px;
+}
+nav .nav-links {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+nav .nav-links a {
+    color: var(--gray-light);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+}
+nav .nav-links a:hover {
+    color: var(--accent);
+}
+nav .nav-links .nav-cta {
+    background: transparent;
+    border: 1px solid var(--accent);
+    min-height: var(--tap);
+    display: inline-flex;
+    align-items: center;
+    color: var(--accent);
+    padding: 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: background-color 0.2s ease-out, color 0.2s ease-out;
+    font-family: var(--font-body);
+}
+nav .nav-links .nav-cta:hover {
+    background: var(--accent);
+    color: var(--black);
+}
+
+/* ─── Hero ─── */
+.hero {
+    position: relative;
+    /* dvh, no vh: en Safari iOS la barra de direcciones hace saltar 100vh, y
+       ahora el hero lleva el buscador adentro. El vh queda de fallback. */
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem;
+    overflow: hidden;
+}
+
+/* ── Foto de fondo ──
+   Residencia real de la cartera (Las Piedras, Luque — ID 37437). La foto es lo
+   que hay: el CDN de Onnix no sirve mas de 1200px, asi que en pantallas
+   grandes escala. Va en un <img> y no en background-image para que el navegador
+   la trate como el LCP que es. */
+.hero-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+    z-index: 0;
+}
+
+/* El scrim. No es una decision estetica, es una cota: no importa que pixel de
+   la foto toque detras del titular, porque el scrim acota cuanto de la foto
+   pasa. Con la foto sustituida por BLANCO PURO (255,255,255) el pixel mas claro
+   que sale del scrim es rgb(50,50,50) —medido a 1440x900 contra el rasterizador
+   de gradientes del navegador, no a ojo—, y sobre el --white da 11,30:1 y
+   --accent 5,65:1. Con la foto real el peor pixel es rgb(49,49,47): 11,47:1.
+   Los pisos son 3,0 (texto grande) y 4,5 (cuerpo).
+
+   Quien baje estas alfas tiene que rehacer la cuenta: la verifica
+   panel/tests/test_landing_scrim.py, que la calcula del CSS y no la lee de
+   este comentario. */
+.hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        radial-gradient(ellipse 90% 70% at 50% 45%,
+            rgba(10, 10, 10, 0.88) 0%,
+            rgba(10, 10, 10, 0.80) 55%,
+            rgba(10, 10, 10, 0.62) 100%),
+        linear-gradient(to bottom, rgba(10,10,10,0.55), rgba(10,10,10,0.20) 40%, var(--black));
+    pointer-events: none;
+}
+.hero-line {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+    transform-origin: top;
+    animation: lineGrow 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+}
+.hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    color: var(--white);
+    margin-bottom: 1.5rem;
+}
+.hero h1 em {
+    /* El acento sobre la foto scrimeada pasa (5,65:1 en el peor caso), asi que
+       esto NO es una correccion de contraste: es la regla de los dos matices
+       de ui.md. El acento ya es el acento de la pagina; usarlo tambien como color
+       del titular lo gasta. Entra como regla de 2px debajo de la palabra, que
+       es acento y no texto. */
+    font-style: normal;
+    color: var(--white);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 0.05em;
+}
+.hero-sub {
+    font-size: 1.05rem;
+    font-weight: 400;
+    /* --gray-light daba 1,84:1 sobre la foto. Sobre fotografia el cuerpo va
+       casi blanco: --white queda en 5,79:1. */
+    color: var(--white);
+    max-width: 520px;
+    margin: 0 auto 3rem;
+    line-height: 1.7;
+}
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--accent);
+    color: var(--black);
+    padding: 0.9rem 2.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-out, transform 0.15s ease-out;
+    font-family: var(--font-body);
+}
+.btn-primary:hover {
+    background-color: var(--accent-light);
+    transform: translateY(-1px);
+}
+.btn-primary:active {
+    transform: scale(0.98);
+}
+.btn-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* ─── Buscador del hero (C3) ───
+   Solidos, no traslucidos: cada control se pinta sobre --dark-card para que el
+   contraste sea un numero fijo y no dependa del pixel de la foto que le toque
+   detras. Medidos: --white sobre --dark-card 15,34:1; --gray-light (el
+   placeholder) 6,19:1; --border-control 3,27:1 (piso 3:1 de borde de control);
+   --black sobre --accent 8,72:1. */
+.hero-search {
+    max-width: 620px;
+    margin: 0 auto 1.25rem;
+}
+.search-ops {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+/* El radio real sigue en el DOM y sigue siendo enfocable: sin JS, el estado de
+   la pestana ES el radio marcado, y eso es lo que viaja en la query. */
+.search-ops input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    clip-path: inset(50%);
+    overflow: hidden;
+    white-space: nowrap;
+}
+.search-ops label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--tap);
+    padding: 0 1.4rem;
+    background: var(--dark-card);
+    border: 1px solid var(--border-control);
+    color: var(--white);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: color 0.2s ease-out, background-color 0.2s ease-out;
+}
+.search-ops input:checked + label {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--black);
+}
+.search-ops input:focus-visible + label {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.search-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.search-label {
+    flex: 1 0 100%;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--white);
+    margin-bottom: 0.1rem;
+}
+.search-input {
+    flex: 1 1 260px;
+    min-width: 0;
+    min-height: var(--tap);
+    padding: 0 0.9rem;
+    background: var(--dark-card);
+    border: 1px solid var(--border-control);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 400;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.2s ease-out;
+}
+.search-input::placeholder {
+    color: var(--gray-light);
+    opacity: 1;
+}
+.search-input:focus {
+    border-color: var(--accent);
+}
+.search-submit {
+    min-height: var(--tap);
+    justify-content: center;
+    padding: 0 2rem;
+}
+
+/* ─── Chips de busqueda ─── */
+.hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 620px;
+    margin: 0 auto 1.5rem;
+    list-style: none;
+}
+.hero-chips a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 0 1rem;
+    background: var(--dark-card);
+    border: 1px solid var(--border-control);
+    color: var(--white);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: color 0.2s ease-out, background-color 0.2s ease-out;
+}
+.hero-chips a:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--black);
+}
+.hero-alt {
+    font-size: 0.85rem;
+    color: var(--white);
+}
+/* Sin oro: sobre la foto scrimeada da 2,89:1. El link se distingue por el
+   subrayado, no por el color. */
+.hero-alt a {
+    color: var(--white);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.hero-alt a:hover {
+    text-decoration-thickness: 2px;
+}
+
+/* ─── Section shared ─── */
+section {
+    padding: 7rem 2rem;
+}
+.section-title {
+    font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: var(--white);
+    margin-bottom: 1rem;
+}
+.section-desc {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--gray-light);
+    max-width: 540px;
+    line-height: 1.7;
+}
+
+/* ─── Contact ─── */
+.contact {
+    background: var(--dark);
+    border-top: 1px solid var(--dark-border);
+    text-align: center;
+}
+.contact-inner {
+    max-width: 600px;
+    margin: 0 auto;
+}
+.contact-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 750px;
+    margin: 0 auto;
+}
+.contact-option {
+    border: 1px solid var(--dark-border);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--white);
+    transition: border-color 0.2s, background 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+.contact-option:hover {
+    border-color: var(--accent-dark);
+    background: rgba(200, 169, 81, 0.04);
+}
+.contact-option svg {
+    color: var(--accent);
+    opacity: 0.8;
+}
+.contact-option:hover svg {
+    opacity: 1;
+}
+.contact-option-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--white);
+}
+.contact-option-desc {
+    font-size: 0.78rem;
+    /* --gray sobre --dark da 4,41:1 y el piso de texto normal es 4,5.
+       Medido, no copiado: el comentario del token dice 4,74:1 y ese numero es
+       sobre --black, que no es el fondo de esta tarjeta. */
+    color: var(--gray-light);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+/* ─── Footer ─── */
+footer {
+    padding: 3rem 2rem 2rem;
+    border-top: 1px solid var(--dark-border);
+    background: var(--black);
+}
+.footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+.footer-brand {
+    max-width: 320px;
+}
+.footer-brand img {
+    height: 36px;
+    width: auto;
+    margin-bottom: 0.75rem;
+}
+.footer-brand p {
+    font-size: 0.78rem;
+    color: var(--gray);
+    line-height: 1.6;
+    max-width: 280px;
+}
+.footer-links h3 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--gray-light);
+    margin-bottom: 0.75rem;
+}
+.footer-links a {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--gray);
+    text-decoration: none;
+    margin-bottom: 0.4rem;
+    transition: color 0.2s;
+}
+.footer-links a:hover {
+    color: var(--accent);
+}
+.footer-bottom {
+    max-width: 1200px;
+    margin: 2rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--dark-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--gray);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* ═══════════════════════════════════════
+   MENU MOVIL — <details>, sin JavaScript
+   ═══════════════════════════════════════
+
+   Bajo 768px `nav .nav-links` era `display: none` sin ningun reemplazo: la
+   navegacion entera desaparecia del celular. Ahora el <details> le da al
+   navegador el estado, el foco, el rol de expansion y el toggle con Enter y
+   Espacio, todo sin una linea de JS.
+
+   Esto esta escrito mobile-first, y no por gusto. El menu desplegable es el
+   estado BASE y el escritorio es la mejora: se destapa con
+   `::details-content`, que es la forma que la especificacion define para eso.
+
+   Al reves —hamburguesa solo bajo 768px, `::details-content` para el resto—
+   se veia igual en Chrome y dejaba SIN NINGUNA nav a todo escritorio cuyo
+   navegador no conozca el pseudo-elemento (Chrome <131, Safari <18.4, Firefox
+   <139): el override no aplicaba, el <details> cerrado seguia tapando los
+   links, y la hamburguesa estaba en `display: none` porque el ancho era de
+   escritorio. Exactamente el bug que este carril venia a arreglar, mudado del
+   celular al escritorio viejo. Con el orden invertido, ese navegador se queda
+   con la hamburguesa, que es la degradacion que corresponde. */
+
+.nav-menu {
+    position: relative;
+}
+.nav-burger {
+    display: inline-flex;
+    list-style: none;           /* saca el triangulito del <summary> */
+    cursor: pointer;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--tap);
+    min-width: var(--tap);
+    padding: 0 0.75rem;
+    color: var(--white);
+    font-size: 0.85rem;
+    border: 1px solid var(--border-control);
+    border-radius: var(--radius);
+    transition: background-color 0.2s ease-out, color 0.2s ease-out;
+}
+.nav-burger::-webkit-details-marker { display: none; }
+.nav-burger:hover {
+    background-color: var(--dark-card);
+}
+.nav-burger svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Estado base: desplegable. Lo ve el celular y lo ve cualquier navegador que
+   no sepa destapar ::details-content. */
+nav .nav-links {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.75rem);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-width: 220px;
+    padding: 0.5rem;
+    background: var(--dark);
+    border: 1px solid var(--border-control);
+    border-radius: var(--radius);
+}
+nav .nav-links a {
+    padding: 0 0.75rem;
+}
+nav .nav-links .nav-cta {
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+/* La mejora: en escritorio, y solo si el navegador sabe destapar el panel, la
+   nav vuelve a ser una fila y la hamburguesa se va. Las dos condiciones juntas
+   — sin el @supports, un navegador viejo se quedaria sin nav y sin boton. */
+@supports selector(::details-content) {
+    @media (min-width: 769px) {
+        .nav-burger { display: none; }
+        .nav-menu::details-content {
+            content-visibility: visible;
+            block-size: auto;
+        }
+        nav .nav-links {
+            position: static;
+            flex-direction: row;
+            align-items: center;
+            gap: 2rem;
+            min-width: 0;
+            padding: 0;
+            background: none;
+            border: 0;
+        }
+        nav .nav-links a { padding: 0; }
+        nav .nav-links .nav-cta { margin-top: 0; }
+    }
+}
+
+
+/* ═══════════════════════════════════════
+   SECCIONES — reglas de 1px y espacio, no cards
+   ═══════════════════════════════════════ */
+
+.seccion-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+.seccion-inner .section-desc {
+    margin-bottom: 2.5rem;
+}
+/* Link de cierre de seccion. Es la unica accion secundaria que se repite, y
+   cada aparicion apunta a una consulta distinta del portal. */
+.link-seccion {
+    margin-top: 2rem;
+    color: var(--white);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 2px;
+    transition: color 0.2s ease-out;
+}
+.link-seccion:hover {
+    color: var(--accent);
+}
+
+
+/* ─── Destacadas ─── */
+
+.destacadas .section-title {
+    margin-bottom: 2.5rem;
+}
+.destacadas-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+    /* El truco de la grilla de servicios, que era lo unico que el audit
+       elogio de la construccion anterior: 1px de gap sobre fondo de borde da
+       la reticula sin dibujar una sola card. */
+    gap: 1px;
+    background: var(--dark-border);
+    border: 1px solid var(--dark-border);
+}
+.destacada a {
+    display: block;
+    height: 100%;
+    padding-bottom: 1.25rem;
+    background: var(--dark-card);
+    color: var(--white);
+    text-decoration: none;
+    transition: background-color 0.2s ease-out;
+}
+.destacada a:hover {
+    background-color: var(--dark);
+}
+.destacada img {
+    width: 100%;
+    /* `height: auto` no es decorativo: sin el, el atributo height="600" del
+       markup gana y aspect-ratio no se aplica. Los atributos siguen porque son
+       los que reservan el espacio antes de que baje la foto. */
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    margin-bottom: 1rem;
+}
+.destacada-precio {
+    /* El numero es el titular: en una inmobiliaria el precio es el display. */
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    padding: 0 1.25rem;
+}
+.destacada-tipo {
+    font-size: 0.95rem;
+    padding: 0 1.25rem;
+    margin-top: 0.15rem;
+}
+.destacada-specs {
+    font-size: 0.82rem;
+    color: var(--gray-light);
+    padding: 0 1.25rem;
+    margin-top: 0.5rem;
+}
+.destacadas-vacio {
+    color: var(--gray-light);
+    max-width: 480px;
+    line-height: 1.7;
+}
+
+
+/* ─── Doble carril ─── */
+
+.carriles {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--dark-border);
+    border-top: 1px solid var(--dark-border);
+    border-bottom: 1px solid var(--dark-border);
+}
+.carril {
+    background: var(--black);
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.carril .section-title {
+    margin-bottom: 1rem;
+}
+.carril .section-desc {
+    margin-bottom: 1rem;
+}
+.carril-nota {
+    font-size: 0.9rem;
+    color: var(--gray-light);
+    max-width: 460px;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+}
+.carril .btn-primary,
+.carril .link-seccion {
+    margin-top: auto;
+}
+
+
+/* ─── Franja de WhatsApp ─── */
+
+.franja-wa {
+    background: var(--dark);
+    border-top: 1px solid var(--dark-border);
+    border-bottom: 1px solid var(--dark-border);
+}
+.franja-wa-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+.franja-wa-frase {
+    font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--white);
+    margin-bottom: 1.25rem;
+}
+.franja-wa-nota {
+    font-size: 0.95rem;
+    color: var(--gray-light);
+    line-height: 1.7;
+    max-width: 620px;
+    margin: 0 auto 2.5rem;
+}
+
+
+/* ─── Nosotros ─── */
+
+.nosotros-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    /* Dos columnas cuando exista el retrato de la administradora; con una sola hija la
+       segunda pista queda vacia y no ocupa nada. */
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: 3rem;
+    align-items: center;
+}
+.nosotros-foto {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius);
+}
+.nosotros-rol {
+    color: var(--accent);
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+}
+.nosotros-contacto {
+    margin-top: 1.75rem;
+}
+.nosotros-contacto a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--white);
+    text-decoration: none;
+    border-bottom: 2px solid var(--accent);
+    transition: color 0.2s ease-out;
+}
+.nosotros-contacto a:hover {
+    color: var(--accent);
+}
+.nosotros-legal {
+    margin-top: 1.25rem;
+    font-size: 0.78rem;
+    color: var(--gray);
+    line-height: 1.6;
+}
+
+
+/* ─── Barrios ─── */
+
+.barrios-lista {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--dark-border);
+    border-top: 1px solid var(--dark-border);
+    border-bottom: 1px solid var(--dark-border);
+}
+.barrio {
+    background: var(--black);
+    padding: 1.5rem;
+}
+.barrio dt {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.4rem;
+}
+.barrio-cuenta {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    margin-top: 0.2rem;
+}
+.barrio dd {
+    font-size: 0.9rem;
+    color: var(--gray-light);
+    line-height: 1.65;
+}
+
+
+/* ─── Boton flotante de WhatsApp ─── */
+
+.wa-flotante {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 90;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--tap);
+    padding: 0 1.1rem;
+    border-radius: 999px;
+    background: var(--wa-green);
+    color: var(--black);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease-out, transform 0.15s ease-out;
+}
+.wa-flotante:hover {
+    background-color: var(--wa-green-hv);
+}
+.wa-flotante:active {
+    transform: scale(0.98);
+}
+.wa-flotante svg {
+    width: 22px;
+    height: 22px;
+}
+
+
+/* ─── Piezas sueltas ─── */
+
+/* El rango de precios rescatado del FAQ, pegado al buscador. */
+.hero-precios {
+    font-size: 0.9rem;
+    color: var(--white);
+    margin-bottom: 0.75rem;
+}
+.hero-precios a {
+    color: var(--white);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+}
+.hero-precios a:hover {
+    color: var(--accent);
+}
+
+/* La etiqueta del boton de menu y la del flotante se esconden donde el ancho
+   no da, pero siguen en el DOM: son el nombre accesible del control, asi que
+   `display: none` las borraria del arbol de accesibilidad y el control
+   quedaria sin nombre. `clip-path` lo oculta sin sacarlo. */
+.nav-burger-texto,
+.wa-flotante-texto {
+    white-space: nowrap;
+}
+@media (max-width: 420px) {
+    .nav-burger-texto,
+    .wa-flotante-texto {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+    .wa-flotante {
+        padding: 0 0.85rem;
+    }
+}
+
+.nosotros-texto {
+    min-width: 0;
+}
+
+
+/* ─── Footer ─── */
+
+.footer-red {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--gray);
+    line-height: 1.6;
+    max-width: 280px;
+}
+
+
+/* ─── Responsive ───
+
+   `nav .nav-links { display: none }` estaba aca y no tenia reemplazo: bajo
+   768px la navegacion entera desaparecia. Ahora la esconde y la muestra el
+   <details> de arriba. */
+@media (max-width: 768px) {
+    .footer-inner { flex-direction: column; }
+    section { padding: 4.5rem 1.25rem; }
+    /* ── El hero del celular: la foto sale de fondo y pasa a banda propia ──
+       Recortada a 390x854 desde un original apaisado de 1200x799, la casa
+       quedaba fuera de cuadro; encima le caia el scrim de 0,88 y el primer
+       viewport del visitante era texto blanco sobre negro, sin una sola
+       propiedad a la vista. En banda no lleva texto encima: no necesita scrim
+       y se ve entera. El titular pasa a fondo solido, o sea que su contraste
+       deja de depender del degradado — el scrim del hero queda solo para
+       escritorio, que es donde el texto sigue apoyado sobre la foto. */
+    .hero {
+        display: block;
+        min-height: auto;
+        padding: 5.5rem 1.25rem 0;
+    }
+    .hero-photo {
+        position: relative;
+        height: 230px;
+        width: calc(100% + 2.5rem);
+        margin: 1.5rem -1.25rem 0;
+        object-position: 50% 55%;
+    }
+    .hero::before {
+        background: linear-gradient(to bottom,
+            rgba(10, 10, 10, 0.55), rgba(10, 10, 10, 0.20) 40%, var(--black));
+    }
+    .contact-options { grid-template-columns: 1fr; }
+    .carriles { grid-template-columns: 1fr; }
+    .barrios-lista { grid-template-columns: 1fr; }
+    .nosotros-inner { grid-template-columns: 1fr; }
+    .destacadas-grid { grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); }
+    /* El campo y el boton pasan a ocupar el ancho: en 320px la fila de dos
+       columnas dejaba el input en 90px y empujaba el boton fuera de pantalla. */
+    .search-input { flex: 1 0 100%; }
+    .search-submit { flex: 1 0 100%; }
+}
+
+
+/* ═══════════════════════════════════════
+   AREA TACTIL — los controles chicos a 44px
+   ═══════════════════════════════════════
+
+   WCAG 2.2 SC 2.5.8. El resto ya llega por su padding; estos no llegaban. */
+
+nav .nav-links a,
+.link-seccion {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+}
+.footer-links a {
+    /* flex y no inline-flex: si no, los tres links de una columna se acuestan
+       en una sola linea. El `display: block` de arriba lo pisa este bloque, que
+       gana por cascada, asi que la correccion tiene que vivir aca. */
+    display: flex;
+    align-items: center;
+    min-height: var(--tap);
+    /* el margin-bottom sobraba: ahora la separacion la da la altura tactil */
+    margin-bottom: 0;
+}
+
+/* ═══════════════════════════════════════
+   PREFERS-REDUCED-MOTION — bloque global
+   ═══════════════════════════════════════
+
+   No habia ninguno. La unica aparicion del repo estaba en
+   public/propiedades.html:434, y con no-preference, que es la condicion
+   contraria. Va al final para ganar por cascada.
+
+   El `opacity: 0` de .reveal se anula explicito: si se apagara solo la
+   animacion, las secciones con .reveal se quedarian invisibles para siempre. */
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .reveal {
+        opacity: 1;
+        animation: none;
+    }
+}

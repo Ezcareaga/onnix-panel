@@ -1,0 +1,39 @@
+{# La descripcion minima de una propiedad, en una linea.
+
+   Se usa para dos cosas que TIENEN que decir lo mismo: la linea que la card
+   muestra debajo del precio, y el texto que el boton «Copiar link publico»
+   pone en el portapapeles. Cuando el asesor manda el link por WhatsApp, del
+   otro lado se lee esta linea antes de abrir nada.
+
+   Vive en un macro y no repetida en cada template porque el boton de copiar
+   esta en TRES lugares —la card, la tabla y la ficha del panel— y la linea de
+   display en otros tantos. Seis copias de la misma composicion es como
+   divergen: en este repo ya paso cuatro veces.
+
+   `ubicacion` va aparte porque la card la muestra en su propio renglon.
+#}
+
+{%- macro ubicacion(row) -%}
+{%- if row.city and row.neighborhood %}{{ row.neighborhood }}, {{ row.city }}
+{%- elif row.city %}{{ row.city }}
+{%- elif row.neighborhood %}{{ row.neighborhood }}
+{%- else %}—{% endif -%}
+{%- endmacro -%}
+
+{%- macro caracteristicas(row) -%}
+{%- if row.operation %}{{ row.operation | title }}{% endif -%}
+{%- if row.property_type %} · {{ row.property_type | replace("_", " ") | title }}{% endif -%}
+{%- if row.bedrooms is not none %} · {{ row.bedrooms }} dorm{% endif -%}
+{%- if row.bathrooms is not none %} · {{ row.bathrooms }} baños{% endif -%}
+{%- if row.total_area_m2 is not none %} · {{ row.total_area_m2 }} m²{% endif -%}
+{%- endmacro -%}
+
+{# Lo que va al portapapeles: ubicacion y caracteristicas en un solo renglon. #}
+{%- macro resumen(row) -%}
+{%- set u = ubicacion(row) | trim -%}
+{%- set c = caracteristicas(row) | trim -%}
+{%- if u and u != '—' and c %}{{ c }} · {{ u }}
+{%- elif c %}{{ c }}
+{%- elif u and u != '—' %}{{ u }}
+{%- endif -%}
+{%- endmacro -%}

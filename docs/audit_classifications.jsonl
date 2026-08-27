@@ -1,0 +1,486 @@
+{"id": 379, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno urbano sin construcción, desarrollable"}
+{"id": 32825, "source": "onnixpy", "tipo_declarado": "propiedad-agricola", "codigo_llm": 9, "confianza": 0.9, "razon": "Propiedad rural con cultivos y plantaciones"}
+{"id": 411083, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.85, "razon": "Departamento 2 dormitorios, 96m² en edificio"}
+{"id": 31354, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 3, "confianza": 0.9, "razon": "Duplex explícito: 2 plantas, 3 dormitorios"}
+{"id": 662186, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.9, "razon": "Casa en country club con 1417m² terreno, piscina"}
+{"id": 1442, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 3, "confianza": 0.95, "razon": "Duplex tipo explícito: 2 plantas + terraza"}
+{"id": 33765, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.85, "razon": "Lote 1000m² en barrio cerrado con amenities"}
+{"id": 53457, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento en pozo, 2 dormitorios, 85m²"}
+{"id": 33875, "source": "onnixpy", "tipo_declarado": "campo", "codigo_llm": 9, "confianza": 0.95, "razon": "Campo rural 185.5 hectáreas agrícola"}
+{"id": 31349, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 10, "confianza": 0.9, "razon": "Edificio en pozo múltiples departamentos"}
+{"id": 32407, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.85, "razon": "Monoambiente/estudio en edificio, 46.6m²"}
+{"id": 54254, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa chalet moderno 3 dormitorios, 139m²"}
+{"id": 34147, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Lote residencial 240m² barrio cerrado"}
+{"id": 34063, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "Lote proyecto barrio cerrado 644m²"}
+{"id": 634232, "source": "onnixpy", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.95, "razon": "Duplex 2-3 habitaciones explícito en pozo"}
+{"id": 662054, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento 2 dormitorios, 90.83m²"}
+{"id": 1213, "source": "onnixpy", "tipo_declarado": "quinta", "codigo_llm": 8, "confianza": 0.95, "razon": "Casa quinta 3240m² terreno, 5 dormitorios"}
+{"id": 371283, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.85, "razon": "Departamento 2 habitaciones, 117m² en pozo"}
+{"id": 905947, "source": "onnixpy", "tipo_declarado": "edificio", "codigo_llm": 5, "confianza": 0.8, "razon": "Edificio oficinas corporativas, no residencial"}
+{"id": 32611, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno esquina 384m² zona residencial"}
+{"id": 33044, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Lotes 360m² proyecto Colinas del Lago"}
+{"id": 122, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 2 dormitorios, 130m² construidos"}
+{"id": 1013, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.85, "razon": "Monoambiente 29m² proyecto en pozo"}
+{"id": 53616, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento 1 dormitorio, 45m² en pozo"}
+{"id": 31479, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento 1 dormitorio, 47m²"}
+{"id": 33391, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Lote 370m² nivelado, zona residencial"}
+{"id": 53851, "source": "onnixpy", "tipo_declarado": "inmueble-productivo", "codigo_llm": 99, "confianza": 0.85, "razon": "Propiedad comercial 3 niveles uso mixto"}
+{"id": 33991, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.8, "razon": "Casa residencia 700m² terreno, 500m² construida"}
+{"id": 576, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Lotes 733m² con amenities playa"}
+{"id": 752830, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.85, "razon": "Monoambiente 28m², piso 6"}
+{"id": 33478, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.85, "razon": "Lotes 600m² country lodge entorno natural"}
+{"id": 53491, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento 1 dormitorio, 47m² en pozo"}
+{"id": 52621, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 3 dormitorios, 107m²"}
+{"id": 32158, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.85, "razon": "Casa piedra 1772m² terreno, arquitectónica"}
+{"id": 52611, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento premium 213m², 2 dormitorios"}
+{"id": 1146, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.8, "razon": "Departamento planta baja domotizado, 85m²"}
+{"id": 33702, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "Lotes 1304m² en altura con vistas privilegiadas"}
+{"id": 54490, "source": "onnixpy", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.95, "razon": "Duplex 3 dormitorios 2 plantas, 119m²"}
+{"id": 556972, "source": "onnixpy", "tipo_declarado": "casa-en-condominio", "codigo_llm": 1, "confianza": 0.85, "razon": "Casa barrio cerrado 3 dormitorios, 80m²"}
+{"id": 615, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento 3 dormitorios, 136m²"}
+{"id": 34012, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Lotes 450-1400m² barrio cerrado"}
+{"id": 1290, "source": "onnixpy", "tipo_declarado": "edificio", "codigo_llm": 6, "confianza": 0.85, "razon": "Salón comercial 400m² 2 niveles"}
+{"id": 54566, "source": "onnixpy", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.9, "razon": "Duplex 4 dormitorios, 290m² construida"}
+{"id": 31620, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento 1 dormitorio, 32.2m² en pozo"}
+{"id": 33338, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno amplio 2979m² zona desarrollo"}
+{"id": 34325, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 99, "confianza": 0.9, "razon": "Lote parque industrial, uso comercial/logístico"}
+{"id": 54569, "source": "onnixpy", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.95, "razon": "Duplex 3 dormitorios 2 plantas, 192m²"}
+{"id": 33306, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Lotes 360-845m² urbanización residencial"}
+{"id": 31575, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.85, "razon": "Departamento 1 dormitorio, 52m² en pozo"}
+{"id": 32835, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "4 lotes 1584m² zona poblada crecimiento"}
+{"id": 32409, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Monoambiente en proyecto Edificio Tres Kandu"}
+{"id": 31369, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Monoambiente o 1 habitación Junior en Zuba Molas Plaza"}
+{"id": 52634, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "1-2 dormitorios en Edificio Davanti, centro Asunción"}
+{"id": 52758, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "1 habitación en condominio Bernardino, suite+social"}
+{"id": 167453, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "420 m² sin construcción, sin bedrooms, Ytu Caacupé"}
+{"id": 653552, "source": "onnixpy", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.95, "razon": "Local comercial 47.5 m² con cochera, zona Laguna Grande"}
+{"id": 32016, "source": "onnixpy", "tipo_declarado": "nave", "codigo_llm": 7, "confianza": 0.95, "razon": "Depósito 312 m² techado + oficinas dos plantas"}
+{"id": 33691, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.85, "razon": "360 m² a orillas arroyo, ideal quinta o casa fin de semana"}
+{"id": 485700, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "2 dormitorios Torre 2 Altamira Surubii, alquiler"}
+{"id": 53693, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.97, "razon": "3 dormitorios en Edificio Albor Apartments, pre-venta"}
+{"id": 564, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.93, "razon": "Casa 3 dormitorios 120 m² construidos, 360 m² terreno"}
+{"id": 32064, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "242 m² sin construcción, barrio cerrado Isla Bogado Luque"}
+{"id": 54319, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.94, "razon": "Chalet 2 dormitorios 77 m² construidos, Yukyry Luque"}
+{"id": 52373, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.92, "razon": "Casa esquina 310 m² construidos, 360 m² terreno, Loma Pyta"}
+{"id": 32271, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.93, "razon": "1870 m² sin construcción, Laguna Grande Luque"}
+{"id": 55078, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "1 dormitorio 38.82 m² Aristone proyecto, Fernando de la Mora"}
+{"id": 54392, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 3 dormitorios 1200 m² terreno rústico, Surubii"}
+{"id": 32678, "source": "onnixpy", "tipo_declarado": "propiedad-agricola", "codigo_llm": 9, "confianza": 0.88, "razon": "5556 m² cercado vista Paraná, especial quinta, San Cosme"}
+{"id": 919788, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.92, "razon": "2 dormitorios 58 m² Edificio Prime Campus II zona UMAX"}
+{"id": 1082, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "2329 m² amurallado avenida principal Villa Hayes"}
+{"id": 54999, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.96, "razon": "2 dormitorios 68 m² Marlin San Lorenzo frente IPS Ingavi"}
+{"id": 32681, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "372.8 m² sin construcción Encarnación barrio esperanza"}
+{"id": 33060, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "360+ m² terrenos Colinas del Lago Altos cercano Asunción"}
+{"id": 485699, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.93, "razon": "Monoambiente 38 m² Zuba 13 Luque, alquiler"}
+{"id": 55350, "source": "onnixpy", "tipo_declarado": "quinta", "codigo_llm": 8, "confianza": 0.96, "razon": "Casa quinta 1618.5 m² terreno, 4 dormitorios Ypacarai"}
+{"id": 32693, "source": "onnixpy", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.88, "razon": "Local comercial 432 m² zona centro Encarnación"}
+{"id": 32633, "source": "onnixpy", "tipo_declarado": "quinta", "codigo_llm": 9, "confianza": 0.92, "razon": "68634 m² (7 hectáreas) sobre Ruta 1 Encarnación"}
+{"id": 389555, "source": "onnixpy", "tipo_declarado": "casa-en-condominio", "codigo_llm": 1, "confianza": 0.92, "razon": "Casa 3 dormitorios 80 m² construidos Arasy 3"}
+{"id": 371284, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamentos 2 habitaciones Zuba Park Limpio barrio cerrado"}
+{"id": 257508, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Monoambiente 30.8 m² Living Trinidad epicentro barrio"}
+{"id": 191, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "3 dormitorios 90 m² Innova Las Mercedes Asunción"}
+{"id": 710, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamentos 1-3 dormitorios Edificio Benedicto Lambaré"}
+{"id": 977982, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "3 dormitorios Edificio Fénix Fernando de la Mora norte"}
+{"id": 54554, "source": "onnixpy", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.96, "razon": "Dúplex 2 dormitorios explícitamente dos plantas"}
+{"id": 34030, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Lotes 450-1400 m² barrio cerrado Bosque Soñado"}
+{"id": 369303, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "1 dormitorio 67.85 m² Torre Cedros Distrito Perseverancia"}
+{"id": 31286, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.93, "razon": "Monoambiente Ætherr by Civis 50 pisos cerca Shopping Sol"}
+{"id": 1351, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.88, "razon": "1792 m² terreno 4 dormitorios canchas tenis futbol San Bernardo"}
+{"id": 32758, "source": "onnixpy", "tipo_declarado": "fraccionamiento", "codigo_llm": 99, "confianza": 0.95, "razon": "Fraccionamiento 10 lotes La Azotea Encarnación"}
+{"id": 31486, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.94, "razon": "Monoambientes 35.6 m² Ayre Santa Teresa pre-lanzamiento"}
+{"id": 612814, "source": "onnixpy", "tipo_declarado": "casa-en-condominio", "codigo_llm": 1, "confianza": 0.92, "razon": "Casa 2 dormitorios 61 m² construidos Arasy 2 Luque"}
+{"id": 33722, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "1052 m² eco-barrio Madre Selva San Bernardino"}
+{"id": 573, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "893 m² esquina condominio residencial playa privada"}
+{"id": 498757, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 391 m² terreno 140 m² construida Distrito Perseverancia"}
+{"id": 52695, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.96, "razon": "2 dormitorios Edificio Orquídeas Av. Cacique Lambaré"}
+{"id": 32471, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.92, "razon": "Residencia 2000 m² terreno 850 m² construida Paraná Country Club"}
+{"id": 1239, "source": "onnixpy", "tipo_declarado": "inmueble-productivo", "codigo_llm": 99, "confianza": 0.9, "razon": "Complejo deportivo 2 canchas fútbol, canchas alquiler"}
+{"id": 33394, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "1932 m² Ciervo Cua San Bernardino natural surroundings"}
+{"id": 31186, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.94, "razon": "Monoambiente 30 m² Inarco Herrera barrio Herrera"}
+{"id": 629105, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.93, "razon": "Casa 5 dormitorios 595 m² terreno 389 m² construida Jara"}
+{"id": 53645, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento en pozo, 2 dormitorios, 65.72m²"}
+{"id": 55158, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento en pozo pequeño, 28.6m², zona universitaria"}
+{"id": 33512, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.92, "razon": "1000m² con spa, laguna, campo de polo, establos"}
+{"id": 32370, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.98, "razon": "Monoambiente 30.2m², 1 dormitorio, proyecto en pozo"}
+{"id": 55016, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento en pozo, 2 dormitorios, 59m², 5 torres"}
+{"id": 1376, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 70m², 2 habitaciones, 1 baño"}
+{"id": 52677, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 95m² propios, 2 dormitorios, en suite"}
+{"id": 979173, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Lote 844m² frente pista atlética, sin construcción"}
+{"id": 33151, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Lotes residenciales 360m+, Colinas del Lago"}
+{"id": 997453, "source": "onnixpy", "tipo_declarado": "campo", "codigo_llm": 9, "confianza": 0.95, "razon": "8 hectáreas granja productiva, infraestructura agropecuaria"}
+{"id": 449, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "6 lotes 360m², zona unifamiliar tradicional"}
+{"id": 634, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 255m² construidos, 3 dormitorios, 422m² terreno"}
+{"id": 55202, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento en pozo pequeño 28.15m²"}
+{"id": 294551, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 1 dormitorio 53m² en edificio"}
+{"id": 616091, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Monoambiente 28m², 1 dormitorio, zona CIT"}
+{"id": 54782, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 87m² propios, 2 dormitorios"}
+{"id": 31631, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 178m² construidos, 3 habitaciones, céntrica"}
+{"id": 32509, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 338m² construidos, 4 dormitorios, piscina"}
+{"id": 1000, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Monoambiente en pozo 21.9m², zona corporativa"}
+{"id": 54258, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 3, "confianza": 0.96, "razon": "Dúplex a estrenar, 2 plantas, 3 habitaciones"}
+{"id": 871, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Monoambiente en pozo 30m², área dormitorio"}
+{"id": 1018, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Monoambiente en pozo 21.9m², proyecto corporativo"}
+{"id": 32741, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 471m² construidos, 4 dormitorios, 2065m² terreno"}
+{"id": 31428, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.85, "razon": "Anuncio dice 2 dorm pero especifica 1 dorm, 40.8m²"}
+{"id": 33177, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.88, "razon": "Posada rural 1500m² terreno, renta activa, vegetación"}
+{"id": 815, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento en pozo 1 dorm"}
+{"id": 33265, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Lotes desde 360-845m², urbanización Altos"}
+{"id": 33672, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "Lotes 636m², para quinta o casa de fin de semana"}
+{"id": 32885, "source": "onnixpy", "tipo_declarado": "propiedad-agricola", "codigo_llm": 9, "confianza": 0.98, "razon": "20 hectáreas terreno agrícola, zona rural"}
+{"id": 34230, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Lote residencial 543m², complejo habitacional"}
+{"id": 33451, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "Terreno 400m² ruta principal, 2 lotes separables"}
+{"id": 32731, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Lote 360m² zona desarrollo, Cambyreta"}
+{"id": 52751, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 10, "confianza": 0.92, "razon": "Edificio con 4 locales+10 depts+2 dúplex, venta completa"}
+{"id": 1273, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 350m² construidos, 4 hab en suite, San Bernardino"}
+{"id": 244, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento en pozo 35m², zona CONMEBOL"}
+{"id": 54351, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa dos pisos 263m² construidos, 4 dormitorios, piscina"}
+{"id": 942165, "source": "onnixpy", "tipo_declarado": "casa-en-condominio", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 204m² construidos, 3 dormitorios, San Bernardino"}
+{"id": 53514, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento en pozo 78m², 2 dormitorios, Los Laureles"}
+{"id": 32360, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 0.9, "razon": "Monoambiente Tres Kandu, especificación incierta"}
+{"id": 55066, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 3, "confianza": 0.9, "razon": "Depto tipo dúplex 2 niveles, 4 dormitorios, 441m²"}
+{"id": 55325, "source": "onnixpy", "tipo_declarado": "nave", "codigo_llm": 7, "confianza": 0.98, "razon": "Depósito nave 480m², 12x40, altura 5m portón"}
+{"id": 610643, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 122m², 2 habitaciones en suite"}
+{"id": 880, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 110m² construidos, 3 habitaciones, patio"}
+{"id": 649744, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 300m² construidos, 5 dormitorios, Lambaré"}
+{"id": 1320, "source": "onnixpy", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.98, "razon": "Local consultorio 21.32m² independiente"}
+{"id": 31355, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 300m² construidos, 3 dormitorios, 480m² terreno"}
+{"id": 855, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Terreno residencial 1091m², zona tranquila céntrica"}
+{"id": 32607, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Lote 486m², zona comercial residencial Encarnación"}
+{"id": 493, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.98, "razon": "Casa 400m² construidos, 4 habitaciones, Recoleta"}
+{"id": 52615, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 76m², 2 habitaciones, con renta activa"}
+{"id": 31547, "source": "onnixpy", "tipo_declarado": "departamento-en-pozo", "codigo_llm": 2, "confianza": 1.0, "razon": "Departamento en pozo código 2"}
+{"id": 54389, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.95, "razon": "1618m² terreno + piscina + altillo + jardín privado = QUINTA"}
+{"id": 32211, "source": "onnixpy", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "103m² terreno, 80m² construido, 2 dorm, zona Luque urbana"}
+{"id": 33280, "source": "onnixpy", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Lotes urbanización desde 360m², sin construcción"}
+{"id": 31116, "source": "onnixpy", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "45m² edificio, 2 dorm menciona pero muestra 1"}
+{"id": 1250, "source": "onnixpy", "tipo_declarado": "casa-en-condominio", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 1800m² jardín propio, condominio, 3 dorm"}
+{"id": 4333, "source": "coldwell", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.85, "razon": "Casa 55m² 2 dorm Limpio"}
+{"id": 4879, "source": "coldwell", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa terreno 63m² 2 dorm Luque"}
+{"id": 4780, "source": "coldwell", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento edificio 2 dorm Sajonia"}
+{"id": 4807, "source": "coldwell", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "967m² lotes ribera sin construcción"}
+{"id": 4361, "source": "coldwell", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "3200m² terreno Emboscada sin construcción"}
+{"id": 4547, "source": "coldwell", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.85, "razon": "Casa 2 dorm 1 baño Mariano Roque Alonso"}
+{"id": 423920, "source": "coldwell", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 98m² 2 dorm 2 baños edificio"}
+{"id": 4435, "source": "coldwell", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento monoambiente 30m² Fernando Mora"}
+{"id": 88700, "source": "coldwell", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 297m² 5 dorm Lambaré"}
+{"id": 4898, "source": "coldwell", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 103m² 3 dorm Shopping Sol"}
+{"id": 4368, "source": "psir", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 243m² 3 dorm balcón piso 12"}
+{"id": 4533, "source": "psir", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.85, "razon": "1076m² terreno 565m² construcción 5 dorm country"}
+{"id": 4453, "source": "psir", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "1250m² lote condominio country sin construcción"}
+{"id": 4383, "source": "psir", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 88m² 2 dorm Asunción"}
+{"id": 4330, "source": "psir", "tipo_declarado": null, "codigo_llm": 9, "confianza": 0.95, "razon": "1680000m² ruta Acahay potencial agropecuario = CAMPO"}
+{"id": 11720, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "720m² dos lotes juntos con construcción antigua"}
+{"id": 7694, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 80m² 3 dorm edificio Insignia"}
+{"id": 12799, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "1095m² tres lotes juntos San Bernardino"}
+{"id": 7419, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 612m² terreno 252m² construcción 5 dorm"}
+{"id": 11797, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "600m² terreno con construcción a demoler"}
+{"id": 5416, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 72m² 2 dorm Villa Olimpia"}
+{"id": 7863, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "399m² esquina zona premium Recoleta sin construcción"}
+{"id": 640085, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 921m² 538m² construido 5 dorm Lambaré"}
+{"id": 16154, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "731m² dos terrenos playa San Juan Paraná"}
+{"id": 10690, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "1000m² terreno La Paz Itapúa"}
+{"id": 17272, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "420m² terreno Fernando Mora zona norte"}
+{"id": 11083, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 90m² 2 dorm The Avenue"}
+{"id": 234578, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 2, "confianza": 0.85, "razon": "PH Encarnación 1 dorm = DEPARTAMENTO"}
+{"id": 12716, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "359m² cinco lotes Guarambaré"}
+{"id": 15672, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.95, "razon": "350m² dos plantas oficina corporativa"}
+{"id": 16718, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.9, "razon": "3920m² terreno 2 dorm Atyra quinta semirural"}
+{"id": 13057, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "1600m² terreno Ita sin construcción"}
+{"id": 9592, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "412m² lote Cambyreta sin construcción"}
+{"id": 8620, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "497m² terreno Ypacaraí sin construcción"}
+{"id": 14245, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 103m² 2 dorm 2 baños edificio"}
+{"id": 10803, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "1000m² lote country club Nueva Italia"}
+{"id": 287351, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 33m² 1 dorm edificio Asunción"}
+{"id": 14489, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 734m² 300m² construido 4 dorm Luque"}
+{"id": 15133, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "401m² lotes Capitán Miranda sin construcción"}
+{"id": 18224, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "480m² terreno Loma Plata residencial"}
+{"id": 869481, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 59m² 2 dorm OGA Luque"}
+{"id": 359174, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 101m² 2 dorm Molas López"}
+{"id": 9857, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 462m² 77m² construido 2 dorm Caacupe"}
+{"id": 10632, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "432m² terreno residencial Santa Maria"}
+{"id": 16465, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Lote residencial sin construir, fracción urbana"}
+{"id": 9645, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno residencial urbano, zona de crecimiento"}
+{"id": 14707, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno residencial amplio, Bella Vista"}
+{"id": 17271, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 2 dorm en edificio moderno"}
+{"id": 16644, "source": "remax", "tipo_declarado": "edificio", "codigo_llm": 10, "confianza": 0.95, "razon": "Edificio multiunidades con deptos y comercios"}
+{"id": 9502, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 4 dorm en edificio Insignia"}
+{"id": 15944, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.95, "razon": "10 hectáreas para ganadería/forestal, rural"}
+{"id": 472223, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 3 dorm planta baja urbana, barrio"}
+{"id": 11224, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "Departamento monoambiente en proyecto San Blas"}
+{"id": 10518, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dorm en pozo, proyecto Encarnación"}
+{"id": 12360, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 361m² urbano, inversión comercial"}
+{"id": 10123, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.9, "razon": "Casa quinta 2 niveles, 2800m² terreno, piscina"}
+{"id": 13783, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 360m² residencial urbano titulado"}
+{"id": 6828, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 360m² zona Mboi Ka'e"}
+{"id": 14759, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 2 dorm rural, Yaguarón Km 54"}
+{"id": 16686, "source": "remax", "tipo_declarado": "edificio", "codigo_llm": 10, "confianza": 0.95, "razon": "Edificio 10 deptos con comercios, San Lorenzo"}
+{"id": 5868, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 2 dorm, Edificio Altea"}
+{"id": 10517, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno comercial/residencial sobre avenida"}
+{"id": 17015, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 360m² urbano, J. Augusto Saldívar"}
+{"id": 267976, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 3 dorm con patio y quincho"}
+{"id": 17350, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 2 dorm, proyecto Barrio Herrera"}
+{"id": 12085, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.95, "razon": "Propiedad para oficinas, zona Artigas"}
+{"id": 17600, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 3 dorm, proyecto Urban Las Lomas"}
+{"id": 664258, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dorm, ACRO Home 43"}
+{"id": 10434, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 2 dorm, Petra Imperiale en pozo"}
+{"id": 11411, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 2 dorm, Quantum Park"}
+{"id": 5477, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.85, "razon": "Casa quinta 1309m² terreno, 5 dorm, piscina"}
+{"id": 670834, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 3 dorm, First Element Villa Morra"}
+{"id": 10951, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 4 dorm urbana, comercial/residencial"}
+{"id": 16116, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 427m² residencial/comercial"}
+{"id": 552764, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dorm, MARENA laguna cristalina"}
+{"id": 8104, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dorm alquiler, The Station"}
+{"id": 12211, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno residencial, Colinas del Lago Altos"}
+{"id": 13637, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 360m² área urbana Ypacaraí"}
+{"id": 14685, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno arbolado urbano Encarnación"}
+{"id": 12571, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 730m² residencial Minga Guazú"}
+{"id": 15635, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 3 dorm lujosa amoblada, 1000m² terreno"}
+{"id": 7384, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dorm, Petra Signature en pozo"}
+{"id": 12992, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 1732m² residencial barrio cerrado"}
+{"id": 10452, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dorm, Petra Imperiale"}
+{"id": 18098, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 594m² San Lorenzo, calle a calle"}
+{"id": 83622, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dorm alquiler amoblado"}
+{"id": 898440, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 360m² San Lorenzo, crecimiento"}
+{"id": 9404, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 2 dorm, Emerald V en pozo"}
+{"id": 16237, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 5 dorm sobre asfalto ruta, comercial"}
+{"id": 5794, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 1068m² residencial Minga Guazú"}
+{"id": 11157, "source": "remax", "tipo_declarado": "deposito", "codigo_llm": 7, "confianza": 0.95, "razon": "Depósito con oficina San Isidro"}
+{"id": 9990, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 1, "confianza": 0.85, "razon": "Terreno con casa 3 dorm a remodelar, 2 plantas"}
+{"id": 9831, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 1920m² residencial Itauguá"}
+{"id": 105904, "source": "remax", "tipo_declarado": "deposito", "codigo_llm": 7, "confianza": 0.95, "razon": "Depósito tinglado con oficina alquiler"}
+{"id": 14380, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno urbano 600m², zona FM1A, sin construcción"}
+{"id": 13248, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.92, "razon": "162 hectáreas rurales, ganadería, Ñeembucu, CAMPO"}
+{"id": 18163, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Tres lotes 660m² cada uno, San Bernardino"}
+{"id": 16083, "source": "remax", "tipo_declarado": "deposito", "codigo_llm": 7, "confianza": 0.98, "razon": "Depósito 432m², 12x36m, almacenamiento comercial"}
+{"id": 7371, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.98, "razon": "Oficina corporativa 105m², edificio centro Asunción"}
+{"id": 375461, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.96, "razon": "Casa 4 dorm, 190m² construida, Villa Amelia San Lorenzo"}
+{"id": 567769, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 360m² (12x30), barrio Lovato, sin construcción"}
+{"id": 7168, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.98, "razon": "Local comercial 280m², circuito comercial"}
+{"id": 11594, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 600m² condominio Alto Los Pinos titulado"}
+{"id": 12614, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 4700m² (34m frente), San Antonio Ypecurú"}
+{"id": 9383, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 1022m² condominio Almarena, vista lago"}
+{"id": 17873, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.93, "razon": "Casa/chalet 3 dorm, 81m² construida, quincho en pozo"}
+{"id": 6876, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.94, "razon": "Casa 2 dorm, 80m² construida, Marambure Luque"}
+{"id": 8714, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "Terreno 360m² Itapuamí Luque, sin construcción"}
+{"id": 10857, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Lote 369m² (10.25x36), Arroyo Pora, sin mejoras"}
+{"id": 233566, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Monoambiente 30m² 1 dorm, centro Asunción alquiler"}
+{"id": 6808, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "Terreno 1442m² con casita 80m² a refaccionar"}
+{"id": 6540, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.94, "razon": "Terreno esquina 380m², Ñemby-Caaguazú sin mejoras"}
+{"id": 490957, "source": "remax", "tipo_declarado": "deposito", "codigo_llm": 7, "confianza": 0.96, "razon": "Tinglado/nave 360m² con 200m² construido, San Lorenzo"}
+{"id": 15706, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 400m², San Rafael del Paraná, para construir"}
+{"id": 199022, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.94, "razon": "Terreno 480m² Mora Kue Luque, barrio tranquilo"}
+{"id": 7022, "source": "remax", "tipo_declarado": "deposito", "codigo_llm": 7, "confianza": 0.97, "razon": "Tinglado 360m² + oficinas, San Lorenzo comercial"}
+{"id": 6883, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "Terreno 604m² (12x50.5), San Miguel Curuzu sin terminar"}
+{"id": 15932, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.96, "razon": "Dpto 55m² 1 dorm, centro Luque, comercial/alquiler"}
+{"id": 138781, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Dpto 30m² 1 dorm preventa Laguna Grande"}
+{"id": 8208, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "Dpto 43m² 1 dorm, Paseo La Galería en pozo"}
+{"id": 13358, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Dpto 53m² 1 dorm Las Lomas Asunción edificio"}
+{"id": 11430, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Dpto premium 167m² 2 dorm, edificio The Address"}
+{"id": 16600, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.94, "razon": "Terreno 307m² (13.5x23), San Lorenzo zona Sur"}
+{"id": 9168, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Monoambiente 32m², Parques Inga Loma Pyta"}
+{"id": 7165, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.93, "razon": "Terreno 2200m² esquina ruta, km11 Acaray CDE"}
+{"id": 14991, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 10, "confianza": 0.75, "razon": "Propiedad esquina 751m² 7 dorm, dos plantas, edificio multiúso"}
+{"id": 505242, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 360m² Pirayú Paraguarí, tranquilo"}
+{"id": 5777, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Lotes condominio 518-1577m², fraccionamiento cerrado"}
+{"id": 14468, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.94, "razon": "Dpto 54m² 1 dorm Ycua Satí, amenities premium"}
+{"id": 10158, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 364m² Colinas Lago Altos, condominio"}
+{"id": 12273, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.94, "razon": "Local comercial 117m² San Miguel, alto potencial"}
+{"id": 5823, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.93, "razon": "Terreno 1160m² Ita Enramada, residencial comercial"}
+{"id": 141331, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.94, "razon": "Casa 2 dorm 84m² construida Kennedy Capiatá"}
+{"id": 11845, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.93, "razon": "Terreno 880m² Ñemby Acceso Sur comercial/residencial"}
+{"id": 599919, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "Terreno 360m² (12x30) Luque Ykua Karanday Aeropuerto"}
+{"id": 11109, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.85, "razon": "Terreno 651m² con 2 casas 250m², Capiatá 4 dorm"}
+{"id": 11346, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Dpto 438m² 3 dorm Jade Park, múltiples unidades"}
+{"id": 14917, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.93, "razon": "Terreno esquina 480m² Ypane comercial/residencial"}
+{"id": 747812, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.88, "razon": "Casa 5 dorm 54m² construida, Ypacarai a metros ruta"}
+{"id": 16058, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.88, "razon": "Casa 2 dorm 137m² construida, a refaccionar San Lorenzo"}
+{"id": 15122, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Loteamiento 424m² Carmen Paraná, fraccionamiento"}
+{"id": 13995, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.94, "razon": "Terreno 1017m² Itauguá centro, apto crédito"}
+{"id": 608595, "source": "remax", "tipo_declarado": "quinta", "codigo_llm": 8, "confianza": 0.92, "razon": "Casa quinta 382m², desconectar ciudad, amenities"}
+{"id": 13346, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno 1074m² La Sierra San Bernardino vista lago"}
+{"id": 14364, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.85, "razon": "1162m² con vista lago, ideal quinta o cabañas"}
+{"id": 412556, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.95, "razon": "Oficinas modernas escritorio fijo hub empresarial"}
+{"id": 16587, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "92m² 2 dorm departamento con balcon y amenities"}
+{"id": 554072, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.8, "razon": "432m² urbanizacion para construir casa o quinta"}
+{"id": 13050, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "408m² residencial zona Itaugua orilla lago"}
+{"id": 473574, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.95, "razon": "10m² escritorio fijo espacios corporativos"}
+{"id": 11593, "source": "remax", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.98, "razon": "Dúplex explícito 2 dorm master suite quincho"}
+{"id": 9076, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Proyecto 42 deptos 2 dorm 92m² total balcon"}
+{"id": 6442, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "453m² esquina Encarnacion forma regular"}
+{"id": 17743, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 2 plantas 4 dorm 3 baño quincho Hernandarias"}
+{"id": 9769, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.95, "razon": "350m² local comercial segundo piso Encarnacion"}
+{"id": 290902, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "502m² zona touring apto clinica consultorios"}
+{"id": 16306, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.8, "razon": "5520m² inversión ruta 12 rural Jose Falcon"}
+{"id": 16225, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.85, "razon": "Salones comerciales 448m² multifamiliar Lambare"}
+{"id": 17433, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "45m² estudio 1 dorm departamento Petra Imperiale"}
+{"id": 13693, "source": "remax", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.98, "razon": "Dúplex lujoso minimalista 4 dorm doble cochera"}
+{"id": 7241, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "720m² avenida Madame Lynch zona regulatoria"}
+{"id": 10984, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "322m² Encarnacion residencial comercial mixto"}
+{"id": 8874, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 3 dorm 2 baño barrio cerrado Luque"}
+{"id": 15808, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.9, "razon": "720m² comercial Concepcion zona alto transito"}
+{"id": 15959, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "585m² residencial Obligado en construccion"}
+{"id": 8965, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "408m² Villeta zona tranquila crecimiento"}
+{"id": 11591, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "96m² 2 dorm proyecto Palmanova Recoleta"}
+{"id": 138246, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "390m² moderna 3 dorm alquiler Santa Rita"}
+{"id": 7066, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.85, "razon": "2580m² doble esquina casa quinta barrio premium"}
+{"id": 925704, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "40m² monoambiente The Avenue cochera"}
+{"id": 7819, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.75, "razon": "200m² Villa Elisa zona residencial tranquila"}
+{"id": 13051, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "50m² 1 dorm amoblado salon comedor integrado"}
+{"id": 8566, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "694m² 3 dorm Capiatá acceso rapido"}
+{"id": 17777, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "844m² San Lorenzo construccion terminar"}
+{"id": 8106, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "728m² dos esquina Fernando de la Mora comercial"}
+{"id": 9957, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.8, "razon": "4250m² Caacupe ruta acceso proyecto agricola"}
+{"id": 13606, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "155m² 3 dorm suite vestidor Las Camelias"}
+{"id": 11191, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "49m² 1 dorm Parana Playa shopping costanera"}
+{"id": 12737, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.85, "razon": "360m² casa construir San Miguel Presidente Franco"}
+{"id": 16188, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "900m² 3 dorm vista lago Altos Cordillera"}
+{"id": 7250, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "70m² 2 dorm complejo verde Luque"}
+{"id": 15363, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "741m² dos terrenos costanera San Francisco"}
+{"id": 8997, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "840m² 4 dorm alquiler San Bernardino"}
+{"id": 12128, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.95, "razon": "36m² salon peluqueria estetica San Lorenzo"}
+{"id": 665274, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.9, "razon": "40m² monoambiente First Element inversion alquiler"}
+{"id": 7339, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.85, "razon": "1m² oficina minima Santa Rita Alto Parana"}
+{"id": 759004, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "120m² 3 dorm 2 cocheras Molas Tower piso 16"}
+{"id": 16156, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "900m² 5 dorm 3 baño varios niveles"}
+{"id": 380710, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "39m² 1 hab cochera Edif Alemania Sajonia"}
+{"id": 6676, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "42m² 1 dorm Petra Tower piso 30"}
+{"id": 8203, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.85, "razon": "21000m² ruta 3 industrial logistica rural"}
+{"id": 8521, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.75, "razon": "360m² ruta 14 comercial alto transito"}
+{"id": 11137, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.9, "razon": "10000m² quinta alquiler temporal familia"}
+{"id": 13061, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 7, "confianza": 0.85, "razon": "3370m² con tinglado galpón deposito Itaugua"}
+{"id": 12938, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento a estrenar, 72m², smart building"}
+{"id": 12546, "source": "remax", "tipo_declarado": "deposito", "codigo_llm": 7, "confianza": 0.98, "razon": "Depósito industrial 5.6ha, parque industrial"}
+{"id": 422837, "source": "remax", "tipo_declarado": "nave", "codigo_llm": 99, "confianza": 0.9, "razon": "Estación de servicio comercial, uso especial"}
+{"id": 15513, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 113m², 2-3 dormitorios, edificio"}
+{"id": 10801, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "Terreno 726m², ideal para casa quinta"}
+{"id": 7582, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 1 dormitorio, 360m² terreno urbana"}
+{"id": 18222, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.92, "razon": "Casa quinta 758m², 2 dorm, refugio natural"}
+{"id": 14887, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "Terreno 1552m², urbanizable, inversión"}
+{"id": 7065, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 410m², loteamiento residencial"}
+{"id": 15528, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 72.6m², 2 dormitorios, edificio"}
+{"id": 17620, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.94, "razon": "Local comercial 541m², Av. Perú"}
+{"id": 12140, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.94, "razon": "Departamento 80m², 2 dormitorios alquiler"}
+{"id": 14097, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 2 dormitorios, 430m² terreno"}
+{"id": 8012, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.88, "razon": "Terreno 720m², ideal quinta descanso"}
+{"id": 467936, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.85, "razon": "Casa 1250m² terreno, 400m² construída"}
+{"id": 546848, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno 803m², residencial privado"}
+{"id": 5683, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.96, "razon": "Departamento 62m², torre Petra Imperiale"}
+{"id": 8200, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 360m², zona residencial, ampliable"}
+{"id": 17410, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.92, "razon": "Casa 3 dormitorios, 491m² terreno"}
+{"id": 8935, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Departamento 2 dormitorios alquiler"}
+{"id": 13959, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.85, "razon": "Terreno 36813m², 3ha, elevado, rural"}
+{"id": 986220, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.94, "razon": "Departamento 116m², 2 dormitorios Lomas"}
+{"id": 11024, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.88, "razon": "Casa 4 dormitorios, 472m² terreno"}
+{"id": 14041, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.82, "razon": "Terreno 362m², ideal quinta o vivienda"}
+{"id": 5498, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 10, "confianza": 0.8, "razon": "Casa con 3 departamentos independientes"}
+{"id": 7570, "source": "remax", "tipo_declarado": "campo", "codigo_llm": 9, "confianza": 0.96, "razon": "Campo 19.5ha, agroindustrial, cultivo"}
+{"id": 17832, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno 439m², urbano comercial"}
+{"id": 17346, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.92, "razon": "Casa 420m² terreno, 380m² construida"}
+{"id": 10791, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 8, "confianza": 0.88, "razon": "Casa verano 1600m², con playa privada"}
+{"id": 14785, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 467m², lote urbanizado"}
+{"id": 81599, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terrenos 411m², zona proyección Luque"}
+{"id": 13588, "source": "remax", "tipo_declarado": "campo", "codigo_llm": 9, "confianza": 0.96, "razon": "Campo 27ha, agrícola Caaguazú"}
+{"id": 16117, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno 360m², urbano poblado"}
+{"id": 15596, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 56m², 2 dormitorios Molas"}
+{"id": 9200, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 540m², urbanizable Encarnación"}
+{"id": 743708, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Departamento 2 dormitorios alquiler"}
+{"id": 11737, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 378m² plano, inversión CDE"}
+{"id": 10631, "source": "remax", "tipo_declarado": "quinta", "codigo_llm": 8, "confianza": 0.96, "razon": "Quinta 2360m², 2 dormitorios Nueva Colombia"}
+{"id": 9684, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 374m², fracción loteamiento"}
+{"id": 637254, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno 360m² residencial Ñemby"}
+{"id": 15658, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.94, "razon": "Departamento 43m², 1 dormitorio centro"}
+{"id": 27176, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.75, "razon": "Casa múltiple 480m², 15 dormitorios"}
+{"id": 16166, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 1, "confianza": 0.8, "razon": "Casa 3 dormitorios, 582m² terreno"}
+{"id": 13059, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 6082m², apto loteamiento"}
+{"id": 12447, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Monoambiente 33m², esquina con balcón"}
+{"id": 282607, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 420m² comercial/residencial"}
+{"id": 496935, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.85, "razon": "Terreno 4.5ha, desarrollo grande"}
+{"id": 11368, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.94, "razon": "Departamento 94m², 2 dormitorios Barrio Jara"}
+{"id": 17023, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Departamento alquiler zona céntrica"}
+{"id": 227419, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 3, "confianza": 0.8, "razon": "Departamento duplex 77m², 2 dormitorios"}
+{"id": 16531, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno residencial pequeño sin construcción"}
+{"id": 10269, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Apartamento moderno 2 dormitorios en edificio"}
+{"id": 9439, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 2, "confianza": 0.92, "razon": "Unidad hotel 1 dorm, clasificar como departamento"}
+{"id": 9978, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno sin habitar sin bedrooms"}
+{"id": 937045, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.96, "razon": "Casa 3 dormitorios zona residencial"}
+{"id": 666419, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.98, "razon": "Terreno con casa demoler, valor lote"}
+{"id": 11687, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.97, "razon": "Terreno residencial 522m2 sin construcción"}
+{"id": 16792, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno residencial 390m2 zona urbanizada"}
+{"id": 16778, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno con árboles zona tranquila"}
+{"id": 7768, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno con mejoras murallas construcción"}
+{"id": 637324, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno comercial esquina 994m2"}
+{"id": 17529, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.92, "razon": "Campo rural 37998m2 inversión agrícola"}
+{"id": 7608, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno residencial 360m2 desarrollo zona"}
+{"id": 13965, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.98, "razon": "Local comercial 2 salones alquiler"}
+{"id": 10212, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.98, "razon": "Oficina corporativa 200m2 plaza comercial"}
+{"id": 10176, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno con chalet centro precio lote"}
+{"id": 9425, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Lote barrio cerrado 834m2 condominio"}
+{"id": 11691, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno comercial 622m2 Filadelfia"}
+{"id": 14959, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno 1732m2 zona exclusiva residencial"}
+{"id": 712227, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.97, "razon": "Chalet 3 dormitorios lote 420m2"}
+{"id": 7476, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno 1706m2 barrio cerrado Surubii"}
+{"id": 8863, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno 360m2 zona norte urbanizada"}
+{"id": 14953, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.97, "razon": "Chalet 2 dormitorios a estrenar"}
+{"id": 15755, "source": "remax", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.98, "razon": "Dúplex 3 dormitorios dos plantas"}
+{"id": 13172, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 1 dormitorio a estrenar"}
+{"id": 530197, "source": "remax", "tipo_declarado": "deposito", "codigo_llm": 7, "confianza": 0.98, "razon": "Tinglado 264m2 ruta Transchaco"}
+{"id": 497954, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.98, "razon": "Local comercial 595m2 showroom"}
+{"id": 10534, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 2 dormitorios inversión"}
+{"id": 6702, "source": "remax", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.98, "razon": "Dúplex 3 dormitorios dos plantas"}
+{"id": 6986, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 3 dormitorios en edificio"}
+{"id": 14099, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno residencial 480m2"}
+{"id": 14350, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 2 dormitorios edificio"}
+{"id": 12509, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.97, "razon": "Casa 3 dormitorios a estrenar"}
+{"id": 12454, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Lote barrio cerrado 595m2"}
+{"id": 17067, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 9, "confianza": 0.92, "razon": "Terreno grande 5005m2 inversión potencial"}
+{"id": 989727, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.97, "razon": "Casa 3 dormitorios 330m2 construido"}
+{"id": 16004, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno 1118m2 barrio cerrado"}
+{"id": 13556, "source": "remax", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.98, "razon": "Dúplex 2 dormitorios dos plantas"}
+{"id": 516976, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.97, "razon": "Casa 4 dormitorios 545m2 rural"}
+{"id": 6566, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno 542m2 zona crecimiento"}
+{"id": 11934, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.92, "razon": "Terreno esquina 420m2 con 1 dorm"}
+{"id": 59852, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 8, "confianza": 0.94, "razon": "Quinta 3207m2 con casa residencial"}
+{"id": 470214, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "Terreno 420m2 esquina zona residencial"}
+{"id": 12382, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 600m2 barrio cerrado"}
+{"id": 7686, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa 8 dormitorios 600m2 construido"}
+{"id": 11115, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.96, "razon": "Casa 2 dormitorios 89m2 construido"}
+{"id": 16111, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 3 dormitorios alquiler"}
+{"id": 766655, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.96, "razon": "5 terrenos 1946m2 total"}
+{"id": 14407, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.96, "razon": "Loft studio 28m2 1 dormitorio"}
+{"id": 9095, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 1 dormitorio alquiler"}
+{"id": 665661, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Casa residencial 560m2 con 2 dorm, estilo arquitectonico unico"}
+{"id": 8358, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Monoambiente 32m2, Villa Morra, 1 dorm, edificio"}
+{"id": 9135, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.92, "razon": "Casa residencial 1200m2 total, 4 dorm, Las Carmelitas"}
+{"id": 8297, "source": "remax", "tipo_declarado": "campo", "codigo_llm": 9, "confianza": 0.98, "razon": "Estancia rural 483 hectareas, Villa Franca, agricola"}
+{"id": 13622, "source": "remax", "tipo_declarado": "local", "codigo_llm": 6, "confianza": 0.95, "razon": "Local comercial showroom+deposito 620m2 construido"}
+{"id": 13500, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 1 dorm 42m2, piso 18, Petra Imperiale"}
+{"id": 17570, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.98, "razon": "Oficina 80m2 piso 11, Sky Park, Avenida Aviadores"}
+{"id": 15951, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.95, "razon": "Chalet 300m2 total, 2 dorm, Ñemby San Carlos"}
+{"id": 12025, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno sin construir 411m2, Trigal 1, Hernandarias"}
+{"id": 6687, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 1250m2 con casa 2 dorm construida, esquina"}
+{"id": 15589, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Departamento 38m2, Las Mercedes, tipo studio"}
+{"id": 16891, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa condominio 68m2 construidos, 3 dorm, Luque"}
+{"id": 12948, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 2 dorm, piso 3, Edificio Hassler, industrial"}
+{"id": 13739, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.85, "razon": "Terreno 725m2 con 3 dorm, esquina, Ykua Dure Luque"}
+{"id": 12891, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 503m2 sin construir, Itauguá, esquina"}
+{"id": 20488, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.98, "razon": "Departamento 148m2 propios, 2 dorm, zona Goethe"}
+{"id": 11960, "source": "remax", "tipo_declarado": "edificio", "codigo_llm": 10, "confianza": 0.98, "razon": "Edificio completo 4 deptos nuevos, Lambaré zona Yacht"}
+{"id": 14597, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 877m2, Avda Espana, Recoleta"}
+{"id": 12906, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.9, "razon": "Terreno 362m2, barrio cerrado Floresta, Villa Elisa"}
+{"id": 17119, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.88, "razon": "Terreno 480m2 esquina, ideal duplex, Encarnacion"}
+{"id": 13418, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.85, "razon": "Casa 702m2 total, 4 dorm, construccion solida"}
+{"id": 14134, "source": "remax", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.98, "razon": "Duplex 85m2 total, 2 dorm, Luque Yka'a"}
+{"id": 10029, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.8, "razon": "Departamento 536m2 total, nueva construccion, Fram"}
+{"id": 11267, "source": "remax", "tipo_declarado": "oficina", "codigo_llm": 5, "confianza": 0.95, "razon": "Oficina corporativa 40m2, Ycua Sati, eje empresarial"}
+{"id": 5668, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 92m2, 2 dorm, Bertoni Residence"}
+{"id": 13808, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 3825m2 sin construir, Itauguá, inversion"}
+{"id": 17679, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno esquina 6494m2, Carmen del Parana, amplio"}
+{"id": 13492, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Departamento 86m2, 1 dorm, tipo duplex, Boston 842"}
+{"id": 7731, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.9, "razon": "Casa 433m2 total, 2 dorm, Ñemby San Carlos"}
+{"id": 12484, "source": "remax", "tipo_declarado": "local", "codigo_llm": 99, "confianza": 0.85, "razon": "Terreno comercial 4831m2, Ruta 3, Santa Rosa Aguaray"}
+{"id": 16672, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.92, "razon": "Monoambiente 30m2, Altea del Sol, shopping"}
+{"id": 8977, "source": "remax", "tipo_declarado": "casa-duplex", "codigo_llm": 3, "confianza": 0.98, "razon": "Duplex 117m2, 3 dorm, Pilar del Norte Limpio"}
+{"id": 13659, "source": "remax", "tipo_declarado": "departamento", "codigo_llm": 2, "confianza": 0.95, "razon": "Departamento 104m2, 3 dorm, Parque Pinar Ñemby"}
+{"id": 6383, "source": "remax", "tipo_declarado": "casa", "codigo_llm": 1, "confianza": 0.8, "razon": "Casa 559m2, 6 dorm, centro Asuncion, usos comerciales"}
+{"id": 14124, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 495m2 con edificio demoler, Fernando de la Mora"}
+{"id": 17032, "source": "remax", "tipo_declarado": "terreno", "codigo_llm": 4, "confianza": 0.95, "razon": "Terreno 650m2, Mariano Roque Alonso, Shopping Mariano"}

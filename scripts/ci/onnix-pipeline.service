@@ -1,0 +1,16 @@
+[Unit]
+Description=Pipeline de CI/CD de Onnix — fetch, test, build, deploy
+Documentation=file:///srv/onnix/work/.planning/CICD_PLAN.md
+
+[Service]
+Type=oneshot
+User=onnix
+Group=onnix
+# Este servicio corre docker y por lo tanto es root efectivo. Está asumido:
+# la frontera de seguridad es el HMAC del receptor y la validación del SHA
+# contra el mirror, no los permisos de este ejecutor (ver D-b del plan).
+WorkingDirectory=/srv/onnix
+Environment=HOME=/home/onnix
+ExecStart=/usr/local/bin/onnix-pipeline
+# La suite completa son ~13 min y puede esperar hasta 30 el lock.
+TimeoutStartSec=4200

@@ -1,0 +1,5 @@
+{# Cascara: el markup vive en `bot_toggle.html`. Este archivo existe solo
+   porque `conversations.py:226` lo renderiza por nombre como respuesta del
+   POST. Ver el porque de la unificacion en `bot_toggle.html`. #}
+{% from "partials/bot_toggle.html" import bot_switch %}
+{{ bot_switch('global', is_auto) }}

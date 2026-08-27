@@ -1,0 +1,129 @@
+<!-- Demanda — qué consulta la gente: leads InfoCasas + búsquedas/leads del bot.
+     Server-rendered, sin chart libs: sparkline SVG inline + donut conic-gradient.
+     Partial COMPARTIDO por dashboard (columna derecha, 30d fijo) y stats
+     (sección Demanda con selector de período). Espera `demand` en contexto;
+     `demand_layout_class` opcional para cambiar el layout del wrapper. -->
+<div class="{{ demand_layout_class | default('flex flex-col gap-5 min-w-0') }}" data-demand-section>
+
+    <!-- Demanda Nd + tendencia 6 meses (sparkline SVG server-rendered) -->
+    <div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5">
+        <div class="flex items-baseline justify-between flex-wrap gap-x-4 gap-y-1">
+            <h3 class="text-sm font-semibold text-gray-800">Demanda
+                <span class="font-normal text-onnix-ink-400">· últimos {{ demand.days }} días</span>
+            </h3>
+        </div>
+        <p class="mt-3 font-display text-3xl font-bold tracking-tight text-gray-900 num-format">{{ demand.total }}</p>
+        <p class="text-xs text-onnix-ink-400 mt-0.5">
+            consulta{% if demand.total != 1 %}s{% endif %}
+            <span class="text-onnix-ink-400 mx-0.5">·</span>
+            {{ demand.by_source.infocasas }} InfoCasas
+            <span class="text-onnix-ink-400 mx-0.5">·</span>
+            {{ demand.by_source.whatsapp + demand.by_source.telegram }} bot (WA/TG)
+        </p>
+
+        {% set series = demand.monthly %}
+        {% set n = series|length %}
+        <div data-sparkline class="mt-4 pt-4 border-t border-gray-100">
+            <div class="flex items-baseline justify-between gap-2 mb-2">
+                <h4 class="text-[11px] uppercase tracking-wider text-onnix-ink-400">Tendencia · últimos 6 meses</h4>
+                <span class="text-[10px] text-onnix-ink-400">{{ series[-1].label }} en curso</span>
+            </div>
+            {% set pts = [] %}
+            {% for item in series %}
+                {% set x = (4 + loop.index0 * (232 / (n - 1)))|round(1) if n > 1 else 120 %}
+                {% set y = (50 - item.pct * 0.44)|round(1) %}
+                {% set _ = pts.append(x ~ ',' ~ y) %}
+            {% endfor %}
+            <svg viewBox="0 0 240 56" class="w-full h-auto" aria-hidden="true">
+                <line x1="4" y1="52" x2="236" y2="52" stroke="#E5E7EB" stroke-width="1"/>
+                <polygon points="4,52 {{ pts|join(' ') }} 236,52" fill="#16181A" fill-opacity="0.12" stroke="none"/>
+                <polyline points="{{ pts|join(' ') }}" fill="none" stroke="#16181A" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                {% for item in series %}
+                <circle cx="{{ pts[loop.index0].split(',')[0] }}" cy="{{ pts[loop.index0].split(',')[1] }}" r="2.5"
+                        fill="{% if loop.last %}#000000{% else %}#ffffff{% endif %}" stroke="#16181A" stroke-width="1.5"/>
+                {% endfor %}
+            </svg>
+            <div class="flex justify-between mt-1">
+                {% for item in series %}
+                <div class="text-center {% if loop.first %}text-left{% elif loop.last %}text-right{% endif %}">
+                    <p class="text-[11px] font-semibold num-format {% if loop.last %}text-gray-900{% else %}text-gray-600{% endif %}">{{ item.count }}</p>
+                    <p class="text-[10px] uppercase tracking-wide text-onnix-ink-400">{{ item.label }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Operación — donut CSS (conic-gradient), split Venta/Alquiler -->
+        {% set ops_total = demand.operations.venta + demand.operations.alquiler %}
+        {% set venta_pct = (demand.operations.venta / ops_total * 100)|round(1) if ops_total > 0 else 0 %}
+        <div class="mt-4 pt-4 border-t border-gray-100">
+        <h4 class="text-[11px] uppercase tracking-wider text-onnix-ink-400 mb-3">Operación</h4>
+        <div data-donut class="flex items-center gap-5">
+            <div class="relative w-28 h-28 rounded-full shrink-0"
+                 style="background: {% if ops_total > 0 %}conic-gradient(#16181A 0% {{ venta_pct }}%, #2D2D2D {{ venta_pct }}% 100%){% else %}conic-gradient(#E5E7EB 0% 100%){% endif %};">
+                <div class="absolute inset-[17px] bg-white rounded-full flex flex-col items-center justify-center">
+                    {% if ops_total > 0 %}
+                    <span class="font-display text-lg font-bold text-gray-900 leading-none num-format">{{ venta_pct|round|int }}%</span>
+                    <span class="text-[10px] uppercase tracking-wide text-onnix-ink-400 mt-0.5">venta</span>
+                    {% else %}
+                    <span class="text-[10px] uppercase tracking-wide text-onnix-ink-400">sin datos</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex-1 min-w-0 space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-2 text-xs text-gray-600 min-w-0">
+                        <span class="inline-block w-2.5 h-2.5 rounded-[3px] bg-onnix-accent shrink-0"></span>Venta
+                    </span>
+                    <span class="text-xs text-gray-900 num-format font-semibold">{{ demand.operations.venta }}
+                        {% if ops_total > 0 %}<span class="font-normal text-onnix-ink-400">({{ (demand.operations.venta / ops_total * 100) | round | int }}%)</span>{% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-2 text-xs text-gray-600 min-w-0">
+                        <span class="inline-block w-2.5 h-2.5 rounded-[3px] bg-onnix-dark shrink-0"></span>Alquiler
+                    </span>
+                    <span class="text-xs text-gray-900 num-format font-semibold">{{ demand.operations.alquiler }}
+                        {% if ops_total > 0 %}<span class="font-normal text-onnix-ink-400">({{ (demand.operations.alquiler / ops_total * 100) | round | int }}%)</span>{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Ciudades y tipos más consultados -->
+    <div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5">
+        {% if demand.total > 0 %}
+        <h4 class="text-[11px] uppercase tracking-wider text-onnix-ink-400 mb-3">Ciudades más consultadas</h4>
+        {% for item in demand.top_cities %}
+        <div class="flex items-center gap-3 mb-2.5">
+            <span class="text-xs text-gray-600 w-24 truncate text-right shrink-0" title="{{ item.label }}">{{ item.label }}</span>
+            <div class="flex-1 bg-gray-50 rounded-full h-2 overflow-hidden">
+                <div class="stat-bar bg-onnix-accent" style="width: {{ item.pct }}%;"></div>
+            </div>
+            <span class="text-xs text-gray-700 num-format w-7 text-right shrink-0">{{ item.count }}</span>
+        </div>
+        {% else %}
+        <p class="text-xs text-onnix-ink-400">Sin datos de ciudad en el período.</p>
+        {% endfor %}
+        {% if demand.sin_ciudad > 0 %}
+        <p class="text-[11px] text-onnix-ink-400 mt-2">{{ demand.sin_ciudad }} consulta{% if demand.sin_ciudad != 1 %}s{% endif %} sin ciudad informada</p>
+        {% endif %}
+
+        <h4 class="text-[11px] uppercase tracking-wider text-onnix-ink-400 mb-3 mt-5 pt-4 border-t border-gray-100">Tipos de propiedad</h4>
+        {% for item in demand.top_types %}
+        <div class="flex items-center gap-3 mb-2.5">
+            <span class="text-xs text-gray-600 w-24 truncate text-right shrink-0" title="{{ item.label }}">{{ item.label | capitalize }}</span>
+            <div class="flex-1 bg-gray-50 rounded-full h-2 overflow-hidden">
+                <div class="stat-bar bg-onnix-dark" style="width: {{ item.pct }}%;"></div>
+            </div>
+            <span class="text-xs text-gray-700 num-format w-7 text-right shrink-0">{{ item.count }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-sm text-onnix-ink-400">Sin consultas registradas en los últimos {{ demand.days }} días.</p>
+        {% endif %}
+    </div>
+
+</div>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Onnix</title>
+    <link rel="preload" href="/static/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/css/tailwind.css?v=28">
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/static/img/favicon-180.png">
+    <link rel="stylesheet" href="/static/css/custom.css?v=12">
+</head>
+<body class="bg-onnix-black min-h-screen flex items-center justify-center">
+    <div class="bg-onnix-dark rounded-lg shadow-xl p-8 w-full max-w-md animate-cardEnter">
+        <div class="text-center mb-8">
+            <img src="/static/img/onnix_logo.svg" alt="Onnix SA" decoding="async" class="h-14 w-auto mx-auto mb-2">
+            <p class="text-gray-300 text-sm">Panel Admin</p>
+        </div>
+
+        {% if error %}
+        <div role="alert" class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4 text-sm">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {# El feedback de envio cuelga del submit del form, no del onclick del
+           boton: asi corre despues de la validacion del navegador (antes
+           `form.submit()` la salteaba y un envio vacio le sumaba una marca al
+           contador de bloqueo de auth.py) y tambien al ingresar con Enter. #}
+        <form method="POST" action="/login" class="space-y-4"
+              onsubmit="const b = this.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Ingresando…';">
+            {# CSRF double-submit cookie — hidden field for plain (non-HTMX) form (D1) #}
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <div>
+                <label for="email" class="block text-gray-300 text-sm mb-1">Email</label>
+                <input type="email" name="email" id="email" required autocomplete="username"
+                       class="tap-44-nativo w-full bg-onnix-black border border-onnix-gray rounded px-3 py-2 text-white focus:border-white focus:outline-none transition-colors"
+                       placeholder="tu@email.com">
+            </div>
+            <div>
+                <label for="password" class="block text-gray-300 text-sm mb-1">Password</label>
+                <input type="password" name="password" id="password" required autocomplete="current-password"
+                       class="tap-44-nativo w-full bg-onnix-black border border-onnix-gray rounded px-3 py-2 text-white focus:border-white focus:outline-none transition-colors">
+            </div>
+            <button type="submit"
+                    class="w-full bg-white text-onnix-black font-semibold py-2.5 rounded hover:bg-gray-200 transition-colors">
+                Iniciar sesión
+            </button>
+        </form>
+    </div>
+</body>
+</html>

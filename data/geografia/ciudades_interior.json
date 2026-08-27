@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "fuente": "Wikipedia ES, informacionpublica.paraguay.gov.py, Catastro Estudio de Limites Distritales",
+    "fecha_extraccion": "2026-03-15",
+    "tipo": "ciudades_interior_paraguay_adyacentes",
+    "notas": "Adjacencies for interior cities with significant property stock (>= 50 properties). Only includes neighboring cities that also have property stock. Grouped by department cluster."
+  },
+  "ciudades": {
+    "encarnacion": {
+      "display": "Encarnacion",
+      "departamento": "Itapua",
+      "vecinas": ["cambyreta", "san juan del parana", "capitan miranda", "carmen del parana", "fram"],
+      "fuente": "explicita",
+      "notas": "Capital de Itapua. Limita al S con Rio Parana (Argentina/Posadas). Al O con San Juan del Parana, al SE con Cambyreta, al NE con Capitan Miranda, al N con Carmen del Parana y Fram."
+    },
+    "cambyreta": {
+      "display": "Cambyreta",
+      "departamento": "Itapua",
+      "vecinas": ["encarnacion", "capitan miranda"],
+      "fuente": "explicita",
+      "notas": "Distrito de Itapua al SE de Encarnacion. Area metropolitana de Encarnacion. 295 propiedades."
+    },
+    "san juan del parana": {
+      "display": "San Juan Del Parana",
+      "departamento": "Itapua",
+      "vecinas": ["encarnacion", "fram"],
+      "fuente": "explicita",
+      "notas": "Distrito de Itapua al O de Encarnacion. Area metropolitana de Encarnacion. 142 propiedades."
+    },
+    "capitan miranda": {
+      "display": "Capitan Miranda",
+      "departamento": "Itapua",
+      "vecinas": ["encarnacion", "cambyreta", "carmen del parana"],
+      "fuente": "explicita",
+      "notas": "Distrito de Itapua al NE de Encarnacion. Aeropuerto Tte. Amin Ayub Gonzalez. 120 propiedades."
+    },
+    "carmen del parana": {
+      "display": "Carmen Del Parana",
+      "departamento": "Itapua",
+      "vecinas": ["encarnacion", "capitan miranda", "fram"],
+      "fuente": "inferida_cruzada",
+      "notas": "Distrito de Itapua al N de Encarnacion. 53 propiedades."
+    },
+    "fram": {
+      "display": "Fram",
+      "departamento": "Itapua",
+      "vecinas": ["encarnacion", "san juan del parana", "carmen del parana"],
+      "fuente": "inferida_cruzada",
+      "notas": "Distrito de Itapua al NO de Encarnacion. 37 propiedades."
+    },
+    "ciudad del este": {
+      "display": "Ciudad del Este",
+      "departamento": "Alto Parana",
+      "vecinas": ["hernandarias", "presidente franco", "minga guazu"],
+      "fuente": "explicita",
+      "notas": "Capital de Alto Parana. Limita al N con Hernandarias (Rio Acaray), al SE con Presidente Franco (Arroyo Saltito), al O con Minga Guazu. Puente de la Amistad a Foz do Iguacu (Brasil)."
+    },
+    "hernandarias": {
+      "display": "Hernandarias",
+      "departamento": "Alto Parana",
+      "vecinas": ["ciudad del este", "minga guazu", "santa rita"],
+      "fuente": "explicita",
+      "notas": "Distrito de Alto Parana al N de CDE. Represa de Itaipu. 173 propiedades."
+    },
+    "presidente franco": {
+      "display": "Presidente Franco",
+      "departamento": "Alto Parana",
+      "vecinas": ["ciudad del este"],
+      "fuente": "explicita",
+      "notas": "Distrito de Alto Parana al SE de CDE. Cataratas del Monday. 111 propiedades."
+    },
+    "minga guazu": {
+      "display": "Minga Guazu",
+      "departamento": "Alto Parana",
+      "vecinas": ["ciudad del este", "hernandarias", "santa rita"],
+      "fuente": "explicita",
+      "notas": "Distrito de Alto Parana al O de CDE. Aeropuerto Internacional Guarani. 118 propiedades."
+    },
+    "santa rita": {
+      "display": "Santa Rita",
+      "departamento": "Alto Parana",
+      "vecinas": ["hernandarias", "minga guazu", "naranjal"],
+      "fuente": "inferida_cruzada",
+      "notas": "Distrito de Alto Parana. Zona agricola. 124 propiedades. Naranjal (10 propiedades) al S."
+    },
+    "naranjal": {
+      "display": "Naranjal",
+      "departamento": "Alto Parana",
+      "vecinas": ["santa rita"],
+      "fuente": "inferida_cruzada",
+      "notas": "Distrito de Alto Parana al S de Santa Rita. 10 propiedades."
+    },
+    "piribebuy": {
+      "display": "Piribebuy",
+      "departamento": "Cordillera",
+      "vecinas": ["caacupe"],
+      "fuente": "explicita",
+      "notas": "Distrito de Cordillera. Limita al N con Caacupe y Eusebio Ayala, al S con Paraguari, al E con Eusebio Ayala, al O con Pirayu. Solo Caacupe tiene stock. 124+43 propiedades (dual spelling Pirebebuy/Piribebuy). Canonical key: piribebuy (matches alias mapping)."
+    },
+    "filadelfia": {
+      "display": "Filadelfia",
+      "departamento": "Boqueron",
+      "vecinas": ["loma plata"],
+      "fuente": "explicita",
+      "notas": "Capital de Boqueron (Chaco). Colonia Mennonita Fernheim. 123 propiedades."
+    },
+    "loma plata": {
+      "display": "Loma Plata",
+      "departamento": "Boqueron",
+      "vecinas": ["filadelfia"],
+      "fuente": "explicita",
+      "notas": "Distrito de Boqueron (Chaco). Colonia Mennonita Menno. 101 propiedades."
+    }
+  }
+}

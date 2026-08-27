@@ -1,0 +1,1117 @@
+/* ========================================
+   TIPOGRAFIA — una familia, self-hosteada
+   ========================================
+
+   Antes el shell pedia 13 variantes de 3 familias (Inter, Plus Jakarta Sans y
+   Cormorant Garamond) a fonts.bunny.net: dos handshakes contra un tercero y
+   un bloqueo del render antes de pintar nada.
+
+   Queda Outfit, la de DESIGN_DIRECTION, servida desde el propio dominio. Es
+   variable: los dos archivos cubren TODO el rango de peso, asi que 400, 600 y
+   700 salen del mismo byte. Son 47 KB en total.
+
+   `latin` alcanza para el castellano entero — tildes, ñ, ¿ y ¡ viven en
+   U+0000-00FF. `latin-ext` queda declarada y el navegador solo la baja si
+   algun caracter la necesita, que en este panel casi nunca pasa. */
+
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/static/fonts/outfit-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/static/fonts/outfit-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+                 U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+                 U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+                 U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ========================================
+   TOKENS — la unica fuente de color del panel
+   ========================================
+
+   De docs/audit/DESIGN_DIRECTION_20260817.md, con el contraste ya calculado
+   ahi (27 combinaciones, cero fallas). Antes de escribir un hex nuevo en este
+   archivo o en un template, buscar el token.
+
+   Las tres cosas que hace el acento, y no hay una cuarta:
+     1. Relleno de la UNICA accion primaria de la vista, siempre con
+        blanco encima (17,80:1). Con --ink-900 encima daria 1,00:1.
+     2. Regla de acento de 2px para lo que esta activo.
+     3. --accent-ink cuando tiene que ser texto sobre claro (17,80:1).
+
+   El acento es el negro de marca, asi que la direccion se invierte respecto
+   del acento que habia antes: sobre el acento el texto va BLANCO, y sobre el
+   shell oscuro el acento no puede ser texto (1,00:1) — ahi va --shell-ink.
+   El anillo de foco sigue en --ink-900. */
+
+:root {
+  --paper: #F7F7F6;
+  --surface: #FFFFFF;
+
+  --ink-900: #16181A;
+  --ink-600: #55595E;
+  --ink-400: #6B7075;
+
+  --rule: #DFDFDC;
+  --rule-strong: #8C8C88;   /* borde de control, 3,15:1 sobre paper */
+
+  --accent: #16181A;        /* el negro de marca: relleno del primario */
+  --accent-dark: #000000;   /* hover del primario, 21,00:1 con blanco */
+  --accent-ink: #16181A;    /* el acento como texto sobre claro, 17,80:1 */
+  --accent-wash: #ECECEA;   /* superficie de seleccion, gris neutro */
+
+  --danger: #B42318;
+
+  --shell: #16181A;
+  --shell-raised: #1B1D1F;
+  --shell-ink: #F2F2F0;
+
+  --disabled-bg: #EDEDEA;
+  --disabled-ink: #55595E;
+
+  --focus: var(--ink-900);  /* el mismo negro del acento, 16,61:1 sobre paper */
+
+  --radius: 4px;
+
+  --h-sm: 32px;
+  --h-md: 36px;
+  --h-lg: 44px;
+  --tap: 44px;              /* area tactil minima */
+
+  --dur: 180ms;
+  --ease: ease-out;
+}
+
+/* HTMX loading indicator */
+.htmx-indicator { opacity: 0; transition: opacity 200ms ease-out; }
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator { opacity: 1; }
+
+/* Suppress per-row spinners during background conv-list poll.
+   Only #search-spinner (sibling of conv-list) should show during polls. */
+#conv-list.htmx-request .htmx-indicator { opacity: 0 !important; transition: none !important; }
+
+/* Chat scrollbar */
+.chat-scroll::-webkit-scrollbar { width: 6px; }
+.chat-scroll::-webkit-scrollbar-track { background: var(--surface); }
+.chat-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: var(--radius); }
+
+/* Item activo del menu.
+
+   Sin fondo y sin borde: el activo se distingue por peso y por luminancia, que
+   es como lo resuelve una barra lateral de escritorio. El side-tab de 2px en
+   oro a la izquierda era lo contrario — el audit lo describe como el tell mas
+   reconocible de una interfaz generada, y ademas B1 lo habia dejado sobre
+   --accent-wash, un token de superficie CLARA, asi que el item donde estabas
+   parado se leia a 1,04:1 contra el shell.
+
+   Los tres estados quedan separados sin repetir recurso: reposo en gray-400
+   (7,01:1), hover con la superficie levantada, activo en --shell-ink con peso
+   600 (15,6:1). El svg hereda por currentColor.
+
+   custom.css se carga despues de tailwind.css, asi que esta clase le gana al
+   text-gray-400 del template con la misma especificidad. */
+.nav-active { color: var(--shell-ink); font-weight: 600; }
+
+/* Mobile sidebar */
+[x-cloak] { display: none !important; }
+
+/* ========================================
+   MODAL — <dialog> nativo
+   ========================================
+
+   El navegador ya pone el focus trap, el Escape, la inertizacion del resto de
+   la pagina y el ::backdrop. Lo unico que falta es centrarlo: el default de
+   <dialog> es un margin auto que lo pega arriba. */
+
+.modal {
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-width: min(100% - 2rem, 40rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: visible;
+}
+.modal::backdrop {
+  background: rgba(10, 10, 10, 0.5);
+}
+/* :modal solo matchea mientras esta abierto con showModal(), asi que centra
+   sin necesidad de una clase extra que alguien tenga que acordarse de poner. */
+dialog:modal {
+  margin: auto;
+}
+
+/* El drawer de plantillas: mismo <dialog> nativo, pegado al borde derecho en
+   vez de centrado. Es la variante, no un componente aparte — hereda el
+   ::backdrop y todo lo que da el navegador: focus trap, Escape, y el resto de
+   la pagina inertizada.
+
+   La especificidad le gana a `dialog:modal { margin: auto }` — (0,2,0) contra
+   (0,1,1)— asi que no hace falta `!important`.
+
+   `100dvh` y no `100vh`: en iOS Safari el segundo cuenta el alto sin la barra
+   de direcciones y el pie del drawer queda tapado.
+
+   Sin animacion de entrada, a proposito: los otros cinco modales del panel no
+   la tienen y `ui.md` pide un solo patron. Ademas un `<dialog>` no puede
+   animar su entrada sin `@starting-style`, que no esta en todos los
+   navegadores que usan los asesores — una animacion que anda a veces es peor
+   que ninguna. */
+.drawer {
+  border: none;
+  padding: 0;
+  background: transparent;
+  width: 100%;
+  max-width: min(100%, 28rem);
+  height: 100dvh;
+  max-height: 100dvh;
+}
+.drawer:modal {
+  margin: 0 0 0 auto;
+}
+.drawer::backdrop {
+  background: rgba(10, 10, 10, 0.5);
+}
+
+/* ========================================
+   BADGE — cuatro variantes, cero color por estado
+   ========================================
+
+   Decision de Ez: el estado deja de comunicarse con matiz. Eran 11 geometrias
+   y 12 matices en 158 usos solo en CRM, y ui.md:87 admite como mucho dos
+   matices saturados en toda la interfaz — el estado del lead se comia los dos.
+
+   Lo que distingue una variante de otra es el peso visual, no el tono: cuanto
+   mas oscuro, mas exige. Eso ordena la lectura de arriba hacia abajo en vez de
+   pedirle al ojo que recuerde que significa cada color.
+
+   Contraste sobre --surface, verificado:
+     default 7,05  ·  quiet 5,00  ·  strong 17,80  ·  danger 6,57
+
+   El acento no aparece en ningun badge. */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Estados vivos y fuentes: estan pasando, no piden nada. */
+.badge--default { background: var(--paper); border-color: var(--rule); color: var(--ink-600); }
+
+/* Terminales. Retroceden a proposito: un lead cerrado no compite por atencion. */
+.badge--quiet   { background: transparent; border-color: var(--rule); color: var(--ink-400); }
+
+/* Lo que exige accion ahora. Es lo mas oscuro de la pantalla. */
+.badge--strong  { background: var(--ink-900); border-color: var(--ink-900); color: var(--shell-ink); }
+
+/* SOLO irreversible (ui.md: el rojo se reserva para destructivo). */
+.badge--danger  { background: transparent; border-color: var(--danger); color: var(--danger); }
+
+/* ========================================
+   ERROR MESSAGE — un solo patron inline
+   ========================================
+
+   El parcial anterior era una linea a 3,76:1, sin role y sin accion. Estas
+   tres variantes miden 6,05 / 7,21 / 6,58 sobre su propio fondo. El borde usa
+   currentColor: con un tinte tan claro, un borde decorativo de 1,79:1 no
+   delimita nada. */
+
+/* El error de UN campo, sobre token y no sobre la paleta de Tailwind.
+
+   `ui.md` fija un techo de dos matices saturados decorativos en toda la
+   interfaz, y `test_matices_saturados.py` lo mide: el inventario **solo puede
+   bajar**. Escribir `text-red-600` y `border-red-500` en un formulario nuevo
+   sube el conteo y pone ese test en rojo — que es exactamente lo que paso al
+   agregarle el error al cambio de contrasena.
+
+   `user_create_form.html` usa las utilities de Tailwind y esta contado; esto no
+   lo migra, porque tocar ese archivo es una tanda de color aparte. Lo que hace
+   es dar el camino sobre token para todo lo que venga, asi el techo no sube por
+   goteo.
+
+   `--danger` es #B42318: 6,05:1 sobre el fondo claro de error y 7,26:1 sobre
+   blanco, o sea que pasa AA como texto normal en los dos. */
+
+.campo-error    { color: var(--danger); }
+.campo-invalido { border-color: var(--danger); }
+
+.error-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid currentColor;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.error-msg-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.error-msg-text { flex: 1; min-width: 0; }
+.error-msg-retry {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.5rem;
+  min-height: var(--h-sm);
+  cursor: pointer;
+}
+.error-msg--error   { background: #FEF3F2; color: var(--danger); }   /* 6,05:1 */
+.error-msg--warning { background: #FFFAEB; color: #93370D; }         /* 7,21:1 */
+.error-msg--info    { background: var(--paper); color: var(--ink-600); } /* 6,58:1 */
+
+/* ========================================
+   PAGE HEAD — el titulo y la unica accion primaria
+   ========================================
+
+   Vive dentro de <main>, no en la cabecera del shell. La cabecera pintaba un
+   <h2> con el mismo nombre y ANTES que el <h1>, asi que en 12 de 14 vistas el
+   nombre aparecia dos veces y en el orden equivocado.
+
+   .page-head-actions es el unico lugar donde puede haber un .btn-primary.
+   Hoy settings.html tiene cinco, y con el parcial de accesos incluido, siete. */
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.page-head-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink-900);
+  margin: 0;
+}
+.page-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+/* ========================================
+   AREA TACTIL — 44px sin agrandar la caja visual
+   ========================================
+
+   El carril B definio `--tap: 44px` y el patron del area tactil por `::after`,
+   y despues cada pantalla aplico el 44 por su cuenta o no lo aplico: el audit
+   del 2026-08-20 conto 105 controles por debajo de 44x44 en 31 templates, 39
+   de ellos en un carril ya cerrado. La decision estaba tomada; lo que faltaba
+   era la utility.
+
+   Esta es. Estira el area de toque sin tocar el tamano dibujado, que es lo que
+   hace falta en un switch de 20x36 o en un icono de 16: agrandar el dibujo
+   seria otro diseno, agrandar el area es corregir un bug tactil.
+
+   `position: relative` va sobre el elemento; el `::after` es transparente y no
+   captura nada mas que el toque. Necesita que el ancestro NO tenga
+   `overflow: hidden` a menos de 22px. */
+
+.tap-44 { position: relative; }
+.tap-44::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* `max()` y no `var(--tap)` pelado: la caja fija de 44 servia para un icono
+     cuadrado y le robaba ancho a todo lo demas. Sobre un chip de 66x24 plantaba
+     44x44 centrados — ganaba los 10px de alto que faltaban y perdia 22px de
+     area a cada lado. Medido con `elementFromPoint` sobre «Captar →» de
+     `/stats`: a 16px del centro el toque caia en el `<td>` de atras. Con
+     `max()` el ancho se conserva y solo crece la dimension que falta. */
+  width: max(100%, var(--tap));
+  height: max(100%, var(--tap));
+  transform: translate(-50%, -50%);
+}
+
+/* `input`, `select` y `textarea` son elementos reemplazados: NO renderizan
+   `::before` ni `::after`. Sobre ellos `.tap-44` no hace absolutamente nada, y
+   lo peor es que se lee como si lo hiciera. Para un nativo el area tactil es la
+   caja dibujada y la unica forma de subirla es agrandarla — que es lo que ya
+   hacen `.composer-input` y `.composer-send` mas abajo con este mismo
+   `min-height`. Medicion del 2026-08-23: 16 de las 102 regiones bajo 44x44 eran
+   nativos.
+
+   Un `<input type=checkbox>` no entra acá: subir su caja de 13 a 44 seria otro
+   diseno. Ese va envuelto en un `<label class="tap-44">`, que si toma
+   pseudo-elemento y al que el toque activa igual. */
+.tap-44-nativo { min-height: var(--tap); }
+
+/* El segmentado «Recepcionista / Búsqueda» de Configuración redondeaba sus dos
+   botones con un `overflow: hidden` en el grupo, y eso recortaba el `::after`
+   de `.tap-44`: la utility quedaba puesta y sin efecto, que es peor que no
+   estar. El recorte se fue y el redondeo de las puntas lo llevan los botones.
+
+   Va acá y no con `rounded-l-lg` en el template porque `tailwind.css` es un
+   artefacto commiteado —no hay build en el Dockerfile— y esas dos clases no
+   están compiladas. Los 8px son los de `rounded-lg`, que es lo que el grupo ya
+   tenía; `--radius` son 4 y cambiaría el dibujo. */
+.bot-mode-seg > :first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+.bot-mode-seg > :last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* El punto de «sin responder» en la lista de conversaciones. Era
+   `bg-blue-500`, uno de los trece matices saturados que conto el audit, para
+   decir lo que el sistema de badges ya resuelve sin matiz: esto es lo que
+   exige accion ahora, asi que es lo mas oscuro. 17,80:1 sobre --surface. */
+
+.conv-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ink-900);
+}
+
+/* ========================================
+   SWITCH DEL BOT — el estado se dice en palabras
+   ========================================
+
+   Eran dos plantillas casi identicas —`wa_mode_toggle.html` para el global y
+   `conversation_bot_toggle.html` para una conversacion—, y ya habian
+   divergido en lo unico que importaba: **el de una conversacion pedia
+   confirmacion y el global no**. O sea que el reversible confirmaba y el que
+   apaga el bot para TODOS los clientes de WhatsApp se disparaba de un click.
+
+   El color: eran `bg-blue-600` / `bg-amber-500` con la etiqueta en
+   `text-blue-600` / `text-amber-600`, o sea dos matices saturados para decir
+   algo que ya dice la posicion de la perilla y la palabra de al lado. Ahora el
+   encendido es la tinta del sistema y el apagado es el gris de deshabilitado.
+
+   Contraste sobre --surface: la etiqueta 7,05 y el track apagado 3,15 de
+   borde, que es el piso de un control. */
+
+.bot-switch {
+  display: inline-flex;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+.bot-switch__knob {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 150ms ease-out;
+}
+.bot-switch--on  { background: var(--ink-900); }
+.bot-switch--on  .bot-switch__knob { transform: translateX(16px); }
+.bot-switch--off { background: var(--disabled-bg); border-color: var(--rule-strong); }
+.bot-switch--off .bot-switch__knob { transform: translateX(0); }
+
+.bot-switch__label { font-size: 12px; font-weight: 500; color: var(--ink-600); }
+
+/* ========================================
+   CONVERSACIONES — la pantalla no scrollea, scrollea el hilo
+   ========================================
+
+   El contenedor pedia su altura a mano: `calc(100vh - 160px)`. El cromo real
+   mide ~148px en escritorio y ~188px en el celular, asi que en una sobraba y
+   en la otra faltaba — y lo que quedaba abajo del fold era el composer, justo
+   donde se escribe. Encima `100vh` en iOS Safari cuenta el alto SIN la barra
+   de direcciones, que despues tapa contenido.
+
+   Ahora no hay ningun numero: la cadena queda limitada en altura y el
+   contenedor se estira con flex. La resta la hace el navegador.
+
+   `100dvh` es el alto util de verdad (cambia cuando la barra se retrae).
+   El `100vh` de arriba es el fallback para quien no lo soporte: peor que hoy
+   no puede quedar, porque hoy es exactamente eso menos un numero inventado.
+
+   `min-height: 0` en cada eslabon no es supersticion: un item de flex tiene
+   `min-height: auto`, o sea que se niega a achicarse por debajo de su
+   contenido, y sin esto el panel crece hasta el largo del hilo y vuelve a
+   empujar el composer fuera de la pantalla. */
+
+body.page-conversations .shell-row {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+}
+body.page-conversations .shell-column,
+body.page-conversations main.main-content,
+body.page-conversations .conv-shell {
+  min-height: 0;
+}
+/* El wrapper de Alpine que envuelve la pantalla. Es un eslabon mas de la
+   cadena: si no se estira y no se deja achicar, todo lo de arriba no sirve. */
+body.page-conversations .conv-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+body.page-conversations main.main-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.page-conversations #panels-container {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* El body ya no scrollea en esta vista: si lo hiciera, el panel de altura fija
+   quedaria a medias fuera de cuadro y volveria el bug. */
+body.page-conversations { overflow: hidden; }
+
+/* ========================================
+   ESTADO DESHABILITADO — un solo tratamiento (M9)
+   ========================================
+
+   Dos cosas que el navegador no hace solo:
+
+   1. `aria-disabled="true"` no pinta NADA. Un control convertido por la regla de
+      ui.md —el que se apaga leyendo estado que su propio handler escribe— se ve
+      activo si nadie lo pinta, y eso es peor que no haberlo convertido: un boton
+      que parece encendido y no hace nada.
+   2. `:disabled` lo pinta el user-agent, y los templates lo tapaban con
+      `opacity-40` / `opacity-50` / `opacity-60`. ui.md prohibe la opacidad por
+      nombre: convierte cualquier color en uno que nadie eligio.
+
+   Va aca y no en `tailwind.config.js` porque `tailwind.css` se compila a mano y
+   se commitea; `custom.css` se sirve tal cual y carga DESPUES, asi que estas
+   reglas ganan sobre las utilities de una sola clase sin recompilar nada.
+
+   Cuidado con los `hover:` de Tailwind: son (0,2,0) y le ganan a estos
+   selectores. Un control que se apaga tiene que sacar su `hover:` del `class`
+   fijo — lo hace `properties/index.html` con un `:class`.
+
+   El submit del drawer va con selector de formulario a proposito: `login.html`
+   tambien deshabilita su submit desde JS y vive sobre una card oscura con su
+   propia paleta. No se toca desde aca. */
+
+button[aria-disabled="true"],
+input[aria-disabled="true"],
+select[aria-disabled="true"],
+textarea[aria-disabled="true"],
+select:disabled,
+input[type="text"]:disabled,
+form[action="/conversations/send_template"] button[type="submit"]:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  border-color: var(--rule-strong);
+  cursor: not-allowed;
+}
+
+/* ========================================
+   COMPOSER — el campo de responder del hilo
+   ========================================
+
+   El estado deshabilitado usaba `opacity-50` en el textarea y `opacity-75` en
+   el botón. ui.md lo prohíbe por nombre: la señal visual va con token de
+   color, nunca con opacidad — la opacidad convierte cualquier color en uno que
+   nadie eligió, y sobre el acento del primario dejaba el texto negro en un tono
+   que no está en la paleta. Los tokens --disabled-bg / --disabled-ink existen
+   en el :root desde el carril B y no los usaba nadie.
+
+   El botón mide 44px de alto: es la acción primaria de la pantalla y el panel
+   se usa desde el celular en visitas. Antes medía 36. */
+
+.composer-input {
+  min-height: var(--tap);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: none;
+  color: var(--ink-900);
+  background: var(--surface);
+}
+.composer-input::placeholder { color: var(--ink-400); }
+.composer-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  /* --accent al 25%: CSS no sabe darle alfa a un hex de var() sin color-mix. */
+  box-shadow: 0 0 0 2px rgba(22, 24, 26, 0.25);
+}
+/* M9 — el textarea pasa a `aria-disabled` + `readonly`. Esta regla existe
+   ademas de la generica de arriba porque `.composer-input:focus` es (0,2,0) y le
+   ganaria el borde de acento a un campo apagado que el usuario todavia puede
+   enfocar, que es justo lo que `aria-disabled` habilita. */
+.composer-input[aria-disabled="true"],
+.composer-input[aria-disabled="true"]:focus {
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  border-color: var(--rule-strong);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.composer-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--tap);
+  min-width: 108px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+.composer-send:hover:not(:disabled) { background: var(--accent-dark); }
+.composer-send:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  border-color: var(--rule-strong);
+  cursor: not-allowed;
+}
+
+/* El avatar del contacto en la cabecera del hilo. Un solo tratamiento: la
+   inicial no identifica a nadie por su color, y diez colores para eso costaban
+   diez matices y seis fallos de contraste. Es el mismo peso visual que
+   `.badge--strong`, que es lo mas oscuro de la pantalla. 15,88:1.
+   Va `aria-hidden`: la inicial no dice nada que el nombre de al lado no diga. */
+
+.conv-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--ink-900);
+  color: var(--shell-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* La etiqueta de intención, debajo de la burbuja. Eran 14 tipos de mensaje
+   mapeados a 10 matices saturados —el archivo más colorido del panel, contra
+   un techo de dos—. Lo que dice qué pasó es el icono y la palabra; el color no
+   agregaba información, competía con la que importa.
+
+   Misma decisión que el sistema de badges: cero color por estado. La única
+   excepción es `opt_out`, porque la baja es irreversible (regla 4 del
+   CLAUDE.md) y ui.md reserva el rojo exactamente para eso.
+
+   Contraste sobre --surface: 5,00 el neutro, 6,57 el irreversible. */
+
+.msg-intent               { color: var(--ink-400); }
+.msg-intent--irreversible { color: var(--danger); }
+
+/* ========================================
+   BURBUJA DEL HILO — clara, con tinta oscura
+   ========================================
+
+   Decision de Ez (2026-08-20). Antes el saliente era bg-blue-500 para el bot y
+   bg-indigo-600 para el agente, con texto blanco encima. El del bot daba
+   3,68:1 — abajo del piso AA, y no en un adorno: en el cuerpo del mensaje, en
+   la pantalla donde los asesores trabajan ocho horas. Y todo lo que colgaba de
+   la fila de la hora estaba peor, porque se dibujaba con `opacity`: la hora en
+   2,28, el doble check en 2,59, la etiqueta "agente" en 1,69.
+
+   El esquema nuevo saca el azul Y el indigo del panel de una vez (dos de los
+   trece matices saturados que conto el audit) y usa el acento de la marca donde
+   mas se mira. Bot y agente comparten fondo: los distingue la etiqueta, que
+   ahora se lee.
+
+   Contraste calculado, no copiado:
+     cuerpo saliente   ink-900 sobre accent-wash   15,05
+     hora saliente     ink-600 sobre accent-wash    5,96
+     etiqueta agente   accent-ink sobre accent-wash 15,05
+     fallido           danger  sobre accent-wash    5,56
+     cuerpo entrante   ink-900 sobre surface     17,80
+     borde entrante    rule-strong sobre surface  3,38  (piso 3, es borde)
+
+   La burbuja se queda en custom.css porque aca los tokens se usan directo y el
+   archivo se sirve sin compilar. Lo que cambio el 2026-08-23 es que
+   `--accent-wash` ADEMAS existe como `bg-onnix-accent-wash` en tailwind.config.js:
+   sin utility, las 13 superficies de seleccion del panel se pintaban
+   `amber-50` — oro con otro nombre, invisible a un cambio de paleta. El riesgo
+   que este comentario nombraba sigue siendo real (una clase de color que no
+   existe en el CSS compilado no falla: no pinta nada, en silencio) y por eso
+   `test_tailwind_no_contradice_al_root` compara los dos hex. */
+
+.msg-bubble__body {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Saliente: bot y agente. El gris de seleccion como fondo, tinta casi negra. */
+.msg-bubble__body--out {
+  background: var(--accent-wash);
+  color: var(--ink-900);
+  border: 1px solid var(--accent-wash);
+  border-bottom-right-radius: var(--radius);
+}
+
+/* Entrante: el cliente. Blanco sobre el blanco del panel, asi que el borde no
+   es decorativo — es lo unico que dibuja la burbuja. Por eso --rule-strong y
+   no --rule, que no llega a 3:1. */
+.msg-bubble__body--in {
+  background: var(--surface);
+  color: var(--ink-900);
+  border: 1px solid var(--rule-strong);
+  border-bottom-left-radius: var(--radius);
+}
+
+/* La fila de la hora. Antes era `opacity`, que ui.md prohibe justamente porque
+   convierte cualquier color en uno que nadie eligio. */
+.msg-bubble__meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-600);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quien lo escribio. Es lo unico que separa al bot del agente, asi que se lee. */
+.msg-bubble__author {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+
+/* El estado de entrega. Los que salieron bien son un icono con su palabra en
+   sr-only; los que fallaron se dicen en palabras y a la vista, porque son los
+   que piden algo. */
+.msg-bubble__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.msg-bubble__status--ok    { color: var(--ink-600); }
+.msg-bubble__status--read  { color: var(--accent-ink); }
+.msg-bubble__status--error { color: var(--danger); font-weight: 500; }
+
+/* El detalle del fallo. Vivia solo en un `title`, que en el celular no existe. */
+.msg-bubble__error {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--rule);
+  font-size: 11px;
+  color: var(--danger);
+}
+
+/* Aviso del sistema: no lo dijo nadie, asi que no es una burbuja. */
+.msg-bubble__system {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  color: var(--ink-600);
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 4px 16px;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+/* Message bubble entrance — only NEW messages (htmx-added), not existing ones on Idiomorph morph */
+@keyframes msgEnter {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.msg-bubble.htmx-added {
+  animation: msgEnter 0.2s ease-out both;
+}
+
+/* Login card entrance */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-cardEnter {
+  animation: cardEnter 0.2s ease-out both;
+}
+
+/* ========================================
+   TRANSITION UTILITIES
+   ======================================== */
+
+/* Smooth table row hover */
+.row-hover {
+  transition: background-color 0.15s ease;
+}
+
+/* ========================================
+   SIDEBAR MOBILE SLIDE
+   ======================================== */
+
+@media (max-width: 767px) {
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-out;
+  }
+  #sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+}
+
+/* Sidebar overlay fade */
+#sidebar-overlay {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+  pointer-events: none;
+}
+#sidebar-overlay.overlay-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ========================================
+   FUNNEL & STAT BARS
+   ======================================== */
+
+/* Dashboard funnel bar */
+.funnel-bar {
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 32px;
+}
+
+/* Stats horizontal bar */
+.stat-bar {
+  height: 8px;
+  border-radius: 4px;
+  min-width: 4px;
+}
+
+/* ========================================
+   TIMELINE
+   ======================================== */
+
+/* Events timeline dot */
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: white;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.timeline-line {
+  width: 2px;
+  background: var(--rule);
+  flex-shrink: 0;
+}
+
+/* ========================================
+   TABLE SCROLL INDICATOR (mobile)
+   ======================================== */
+
+/* Gradient shadow on right edge hints at horizontal overflow */
+.table-scroll-container {
+  position: relative;
+}
+.table-scroll-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.06));
+  border-radius: 0 0.5rem 0.5rem 0;
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+@media (min-width: 768px) {
+  .table-scroll-container::after {
+    display: none;
+  }
+}
+
+/* ========================================
+   LEADS — UNA SOLA FILA, DOS FORMAS
+   ======================================== */
+
+/* La fila y la card mobile eran dos plantillas distintas sobre los mismos
+   datos, y la card no tenia 7 de las 13 capacidades de la fila. Ahora hay
+   una sola (partials/lead_item.html): abajo de 768px la misma tabla se
+   reacomoda como card. Las celdas se ubican por su data-col, no por una
+   clase de estilo — el padding puede cambiar sin que se pierda el ancla. */
+
+@media (max-width: 767px) {
+  .leads-table,
+  .leads-table > tbody,
+  .leads-table > tbody > tr,
+  .leads-table > tbody > tr > td { display: block; }
+
+  .leads-table > thead { display: none; }
+
+  .leads-table > tbody > tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name     status"
+      "phone    source"
+      "interest interest"
+      "waiting  waiting"
+      "actions  actions";
+    gap: 0.125rem 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .leads-table > tbody > tr > td { padding: 0; }
+
+  .leads-table td[data-col="name"]     { grid-area: name; }
+  .leads-table td[data-col="phone"]    { grid-area: phone; }
+  .leads-table td[data-col="source"]   { grid-area: source; justify-self: end; }
+  .leads-table td[data-col="status"]   { grid-area: status; justify-self: end; }
+  .leads-table td[data-col="interest"] { grid-area: interest; margin-top: 0.375rem; }
+  .leads-table td[data-col="waiting"]  { grid-area: waiting; }
+  .leads-table td[data-col="actions"]  { grid-area: actions; margin-top: 0.5rem; }
+
+  /* El estado vacio es una fila sola: ocupa las dos columnas. */
+  .leads-table td[data-col="empty"] { grid-column: 1 / -1; }
+
+  /* La celda de interes envuelve su contenido en un <a> con padding propio
+     cuando el lead tiene propiedad; abajo de 768px ese padding descuadra la
+     card. */
+  .leads-table td[data-col="interest"] > a { display: block; padding: 0; }
+}
+
+/* ========================================
+   TABLA QUE SE VUELVE CARD — M4 del carril M
+   ========================================
+
+   Cuatro tablas quedaron con `min-w-[500..860px]`: abajo de 768px son scroll
+   horizontal, en las pantallas que el asesor abre parado frente a una casa.
+
+   G y J ya habían resuelto el patrón, pero de dos formas distintas: J
+   renderiza la tabla Y un set de cards aparte (dos markups, y en este repo
+   todo lo escrito dos veces ya divergió — la card de leads había perdido 7 de
+   las 13 capacidades de la fila), y G reacomoda la MISMA tabla con CSS. Gana
+   G, y esto es su versión genérica: no hace falta un `grid-template-areas` por
+   pantalla, cada celda dice su etiqueta con `data-label`.
+
+   Una celda sin `data-label` no imprime encabezado: es para la de acciones y
+   para la del checkbox, que no son un dato con nombre. */
+
+@media (max-width: 767px) {
+  .tabla-card,
+  .tabla-card > tbody,
+  .tabla-card > tbody > tr,
+  .tabla-card > tbody > tr > td { display: block; }
+
+  .tabla-card > thead { display: none; }
+
+  .tabla-card > tbody > tr {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .tabla-card > tbody > tr > td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.1875rem 0;
+    max-width: none;   /* los `max-w-*` de escritorio truncan de más acá */
+  }
+
+  .tabla-card > tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--ink-400);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Acciones y checkbox: ocupan la fila entera y no llevan encabezado. */
+  .tabla-card > tbody > tr > td:not([data-label]) {
+    justify-content: flex-start;
+    padding-top: 0.5rem;
+  }
+
+  /* El estado vacío es una fila sola y ya trae su propio centrado. */
+  .tabla-card > tbody > tr > td[colspan] { display: block; padding: 0; }
+}
+
+/* ========================================
+   RESPONSIVE OVERRIDES
+   ======================================== */
+
+@media (max-width: 767px) {
+  main.main-content {
+    padding: 1rem;
+  }
+}
+
+/* Number formatting helper */
+.num-format {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+   HTMX SWAP TRANSITIONS
+   ======================================== */
+
+/* Smooth HTMX content swap — exclude morph containers */
+.htmx-settling {
+  opacity: 0;
+}
+.htmx-added {
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+
+/* Override: disable settling/added transitions inside morph-swapped containers.
+   Idiomorph patches the DOM in-place, so the fade-out/fade-in is disruptive.
+   Must also cover the containers themselves (#conv-list.htmx-settling), not
+   only their children, because HTMX adds htmx-settling to the swap target too. */
+#conv-list.htmx-settling,
+#conv-list .htmx-settling,
+#conv-list.htmx-added,
+#conv-list .htmx-added,
+#message-list.htmx-settling,
+#message-list .htmx-settling,
+#message-list.htmx-added,
+#message-list .htmx-added {
+  opacity: 1 !important;
+  transition: none !important;
+}
+
+/* ========================================
+   CONVERSATION THREAD — PREMIUM CHAT VIEW
+   ======================================== */
+
+#conv-thread {
+  overflow-y: overlay; /* overlay scrollbar: no layout width impact, header covers full width */
+  transition: opacity 0.2s ease-out;
+}
+
+/* ========================================
+   HTMX LOADING SPINNER
+   ======================================== */
+
+.htmx-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--rule);
+  border-top: 2px solid var(--accent);
+  border-radius: 50%;
+  animation: htmxSpin 0.6s linear infinite;
+  vertical-align: middle;
+}
+.htmx-spinner.htmx-spinner-sm {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes htmxSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   TOAST — uno solo, dos variantes
+   ========================================
+
+   Habia tres sistemas: este, el que app.js armaba en #toast-container arriba
+   a la derecha, y el que leads.html construia con createElementNS. Y dos
+   regiones aria-live, asi que el lector anunciaba todo dos veces.
+
+   Dos variantes, no cuatro. Los colores viejos no pasaban AA: blanco sobre
+   #16a34a da 3,30:1 y sobre #d97706 da 3,19:1. Estos dan 15,88 y 6,57. */
+
+.toast-live {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 60;
+  max-width: 22rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.toast-live--neutral { background: var(--ink-900); color: var(--shell-ink); }  /* 15,88:1 */
+.toast-live--error   { background: var(--danger);  color: #FFFFFF; }           /* 6,57:1 */
+
+/* ========================================
+   PREFERS-REDUCED-MOTION — bloque global
+   ========================================
+
+   ui.md:107 lo pide en un solo lugar de panel/app/static/css/, no componente
+   por componente: esa es la version que se olvida en el proximo parcial. Va al
+   final para ganar por cascada. Nada rebota, nada pulsa, nada parpadea.
+
+   El spinner de HTMX es la unica excepcion: es el indicador de que el server
+   todavia no contesto, y sin giro no comunica nada. Se deja, mas lento. */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .htmx-spinner {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
+}

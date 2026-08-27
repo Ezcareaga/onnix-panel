@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block page_title %}Tutoriales{% endblock %}
+
+{#
+  Los videos se sirven desde el mismo dominio (`/videos/*.mp4`, montado en
+  main.py desde `/app/tutoriales`). Eso no es un detalle de comodidad: el CSP
+  del panel es `default-src 'self'`, y `media-src` cae en ese default. Un
+  embed de YouTube o de OneDrive obligaría a abrir `frame-src` a un tercero
+  para servir 136 MB que ya están en el servidor.
+
+  `preload="metadata"` y no `auto`: los cinco pesan 136 MB, y precargados
+  enteros son 136 MB por visita a una pantalla que se mira una vez.
+#}
+{% block content %}
+<p class="text-sm text-gray-600 mb-6 max-w-2xl">
+    Cinco videos cortos con lo que se hace todos los días en el panel. Cada uno
+    dura menos de un minuto y muestra la pantalla real, paso por paso.
+</p>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {% for video in videos %}
+    <article class="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden" data-tutorial="{{ video.id }}">
+        <video controls preload="metadata"
+               class="w-full aspect-video bg-onnix-black"
+               aria-label="Tutorial: {{ video.titulo }}">
+            <source src="{{ video.archivo }}" type="video/mp4">
+            {# El texto adentro del <video> lo ve quien tenga el elemento
+               deshabilitado. Es la única salida que le queda, así que es un
+               link al archivo, no una disculpa. #}
+            <a href="{{ video.archivo }}" class="tap-44 text-sm underline">Descargar el video</a>
+        </video>
+        <div class="p-4">
+            <h2 class="text-base font-medium text-gray-900">{{ video.titulo }}</h2>
+            <p class="text-sm text-gray-600 mt-1">{{ video.promesa }}</p>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% endblock %}
