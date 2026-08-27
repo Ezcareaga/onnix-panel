@@ -26,7 +26,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import require_agent_or_admin
 from app.models.contact import Contact
-from app.models.property import Property
 from app.models.user import User
 from app.repositories.contact_repo import contact_repo
 from app.repositories.user_repo import user_repo
@@ -73,68 +72,15 @@ def _hx_trigger_payload(toast: str) -> str:
     })
 
 
-async def _build_property_options(db: AsyncSession, contact_id: int) -> list[dict]:
-    """Dedup list of property options for the create/reschedule modal.
+def _build_property_options(*_args, **_kwargs) -> list[dict]:
+    """Sin catálogo no hay propiedades que ofrecer al agendar una visita.
 
-    Plan 114 OQ-11. Precedence:
-      1. linked_property  (contact.property_id)
-      2. ic_property      (only if its ic_ref resolves to a properties.id)
-      3. viewed_properties (from detail_view lead events)
-
-    Returns: list of {"id": properties.id, "label": "<type> — <city>"}.
+    Devolvía las propiedades candidatas del contacto (la vinculada, la de
+    InfoCasas, y las que había visto) para el selector del modal. Se fue con el
+    vertical inmobiliario. La visita sigue existiendo: es una reunión con un
+    contacto, y `property_id` quedó opcional y siempre en None.
     """
-    detail = await contact_service.get_contact_detail(db, contact_id)
-    if detail is None:
-        return []
-
-    seen_ids: set[int] = set()
-    options: list[dict] = []
-
-    def _label(prop: Property) -> str:
-        ptype = (prop.property_type or "Propiedad").strip().capitalize()
-        city = (prop.city or "").strip()
-        return f"{ptype} — {city}" if city else ptype
-
-    linked = detail.get("linked_property")
-    if linked is not None and linked.id not in seen_ids:
-        seen_ids.add(linked.id)
-        options.append({"id": linked.id, "label": _label(linked)})
-
-    # ic_property — resolve via panel `properties.id` only if a mapping
-    # exists (per Plan 114 OQ-11 fallback). Otherwise skip.
-    ic_prop = detail.get("ic_property")
-    if ic_prop is not None:
-        result = await db.execute(
-            sa_text("SELECT id FROM properties WHERE external_id=:ic_id LIMIT 1"),
-            {"ic_id": str(ic_prop.id)},
-        )
-        row = result.first()
-        if row is not None:
-            resolved_id = row[0]
-            if resolved_id not in seen_ids:
-                seen_ids.add(resolved_id)
-                # Build label inline — ic_prop is an InfocasasProperty, not a
-                # Property, so fall back to its own attrs for the display.
-                ic_label_type = (getattr(ic_prop, "property_type", None)
-                                 or "Propiedad").strip().capitalize()
-                ic_city = (getattr(ic_prop, "city", "") or "").strip()
-                label = f"{ic_label_type} — {ic_city}" if ic_city else ic_label_type
-                options.append({"id": resolved_id, "label": label})
-
-    for vp in detail.get("viewed_properties", []):
-        pid = vp.get("id")
-        if pid is None or pid in seen_ids:
-            continue
-        seen_ids.add(pid)
-        ptype = "Propiedad"
-        # viewed_properties dict already carries city/title; reuse them.
-        title = (vp.get("title") or "").strip()
-        city = (vp.get("city") or "").strip()
-        label = title or (f"{ptype} — {city}" if city else ptype)
-        options.append({"id": pid, "label": label})
-
-    return options
-
+    return []
 
 async def _build_users_map(db: AsyncSession) -> dict[int, str]:
     """Map of {user.id: display_name_or_name} for "Reg. por: …" labels."""

@@ -386,7 +386,6 @@ async def send_template_to_new_contact(
 ):
     """Create a new contact then send a template to them."""
     from app.repositories.contact_repo import contact_repo as _contact_repo
-    from app.repositories.property_repo import property_repo as _property_repo
     from app.repositories.lead_event_repo import lead_event_repo as _lead_event_repo
     from app.schemas.template import ALLOWED_TEMPLATE_KEYS
     from fastapi.responses import RedirectResponse
@@ -401,11 +400,10 @@ async def send_template_to_new_contact(
     if not cleaned_phone.startswith("+"):
         cleaned_phone = "+" + cleaned_phone.lstrip("+")
 
-    # Silently ignore invalid/inactive property_id — contact is still created
-    if property_id is not None:
-        prop = await _property_repo.get_by_id(db, property_id)
-        if not prop or not prop.is_active:
-            property_id = None
+    # `property_id` quedó como parámetro muerto: el catálogo se fue con el
+    # vertical inmobiliario. Se ignora en vez de rechazarlo para no romper un
+    # formulario viejo que todavía lo mande.
+    property_id = None
 
     try:
         contact = await _contact_repo.get_by_phone(db, cleaned_phone)

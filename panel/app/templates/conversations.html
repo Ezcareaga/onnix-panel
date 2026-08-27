@@ -3,7 +3,6 @@
 {% block page_title %}Conversaciones{% endblock %}
 {% block body_class %}page-conversations{% endblock %}
 
-{% from "partials/bot_toggle.html" import bot_switch %}
 {% block content %}
 {# `conv-shell` es el eslabon que faltaba: este wrapper de Alpine esta entre
    <main> y #panels-container, y sin el en la cadena crecia hasta el largo del
@@ -89,11 +88,7 @@
    del x-data de la vista. El carril H lo saca de esta pantalla igual. #}
 <div class="flex items-center justify-end mb-4">
     <div class="flex items-center gap-3">
-        {# Era la TERCERA copia del mismo switch, escrita inline. Las otras dos
-           estaban en wa_mode_toggle.html y conversation_bot_toggle.html, y ya
-           habian divergido: la de una conversacion pedia confirmacion y esta,
-           que apaga el bot para todos los clientes de WhatsApp, no. #}
-        {{ bot_switch('global', whatsapp_mode == 'auto') }}
+        {# El switch global del bot se fue con el bot. #}
         <button @click="drawerOpen = true"
                 aria-label="Nuevo mensaje de WhatsApp"
                 class="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 bg-onnix-accent hover:bg-onnix-accent-dark active:scale-95 active:brightness-75 text-white text-sm font-medium rounded-lg transition-[background-color,transform] duration-100">

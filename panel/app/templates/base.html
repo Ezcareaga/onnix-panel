@@ -25,37 +25,9 @@
     <script defer src="/static/js/vendor/htmx-2.0.4.min.js"></script>
     <script defer src="/static/js/vendor/idiomorph-ext-0.3.0.min.js"></script>
     <script defer src="/static/js/vendor/htmx-ext-sse-2.2.4.min.js"></script>
-    {# M6.5 — acumulador de links públicos (link basket).
-       link_basket.js (UMD → window.LinkBasket) va ANTES del vendor de Alpine:
-       ambos son deferred y corren en orden de documento; Alpine dispara
-       alpine:init en un microtask apenas evalúa, así que LinkBasket y el
-       listener deben existir antes. El store vive FUERA del DOM swapeado por
-       HTMX → las filas re-renderizadas leen $store.basket. #}
-    <script defer src="/static/js/link_basket.js"></script>
     <script>
       document.addEventListener("alpine:init", () => {
         const LinkBasket = window.LinkBasket;
-        Alpine.store("basket", {
-          state: LinkBasket.deserialize(window.sessionStorage.getItem(LinkBasket.STORAGE_KEY)),
-          get count() { return this.state.items.length; },
-          has(id) { return LinkBasket.has(this.state, id); },
-          toggle(item) {
-            this.state = LinkBasket.toggle(this.state, item);
-            this._persist();
-          },
-          clearAll() {
-            this.state = LinkBasket.clear();
-            this._persist();
-          },
-          // Botón por fila/detalle: copia el link público y togglea en la lista.
-          // Lee SOLO del dataset del botón (d = $el.dataset).
-          async copyAndToggle(d) {
-            try {
-              await navigator.clipboard.writeText(d.publicUrl);
-            } catch (e) {
-              return { ok: false };
-            }
-            this.toggle({ id: d.propId, title: d.title, priceLabel: d.priceLabel, url: d.publicUrl });
             return { ok: true, count: this.count, added: this.has(d.propId) };
           },
           // Barra flotante: copia el bloque completo (texto plano para WA).
@@ -217,44 +189,6 @@
         <span x-text="_toast?.message"></span>
     </div>
 
-    <!-- M6.5 Link basket — barra flotante del acumulador de links públicos -->
-    <div id="link-basket-bar"
-         x-cloak
-         x-show="($store.basket?.count ?? 0) > 0"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 translate-y-4"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 translate-y-4"
-         class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-2 bg-onnix-black text-white rounded-full shadow-xl border border-onnix-accent/40 pl-5 pr-2 py-2"
-         role="region"
-         aria-label="Links públicos acumulados">
-        <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-        </svg>
-        <span class="text-sm font-medium whitespace-nowrap"
-              x-text="($store.basket?.count ?? 0) === 1 ? '1 propiedad' : ($store.basket?.count ?? 0) + ' propiedades'"></span>
-        <span class="text-white/30 mx-1" aria-hidden="true">·</span>
-        <button type="button"
-                @click="$store.basket.copyAll().then(r => $dispatch('showToast', r.ok
-                    ? { type: 'success', message: r.count + (r.count === 1 ? ' link copiado' : ' links copiados') }
-                    : { type: 'error', message: 'No se pudo copiar' }))"
-                class="inline-flex items-center gap-1.5 bg-onnix-accent hover:bg-onnix-accent-dark text-white text-sm font-semibold px-3.5 py-1.5 rounded-full transition-colors">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-            Copiar todas
-        </button>
-        <button type="button"
-                @click="$store.basket.clearAll(); $dispatch('showToast', { type: 'info', message: 'Lista de links vaciada' })"
-                class="text-white/60 hover:text-white text-sm px-2.5 py-1.5 rounded-full transition-colors"
-                aria-label="Vaciar lista de links">
-            Vaciar
-        </button>
-    </div>
     {# htmx_error_policy.js (UMD → window.HtmxErrorPolicy) va ANTES de app.js:
        los dos son NO deferred y corren en orden de documento, así que la
        política existe cuando app.js registra sus handlers de error. #}

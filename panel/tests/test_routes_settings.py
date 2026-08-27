@@ -36,9 +36,10 @@ class TestGetSettings:
         assert b"Configuraci\xc3\xb3n del Bot" not in resp.content
         assert b"Auditor\xc3\xada de Login" not in resp.content
 
-    async def test_contains_bot_toggle(self, admin_client):
+    async def test_la_pagina_carga(self, admin_client):
+        """Antes buscaba el switch del bot. El bot se fue; la página no."""
         resp = await admin_client.get("/settings")
-        assert b"bot" in resp.content.lower()
+        assert resp.status_code == 200
 
 
 class TestSensitiveKeysHidden:

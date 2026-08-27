@@ -10,7 +10,7 @@ parcial con el caso exacto que lo delataba y falla si aparece CUALQUIER
 porcentaje mayor a 100. Asi cubre tambien la proxima division sin clamp que
 alguien agregue.
 
-`demand_section.html` se stubea a vacio: es un parcial compartido con /stats,
+(`demand_section.html` se stubeaba acá; se fue con el vertical inmobiliario)
 con su propio contexto, y no es lo que este test mide.
 """
 from __future__ import annotations
@@ -54,7 +54,6 @@ _PCT_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*%")
 def rendered() -> str:
     env = Environment(
         loader=ChoiceLoader([
-            DictLoader({"partials/demand_section.html": ""}),
             FileSystemLoader(str(_TEMPLATES)),
         ]),
         autoescape=True,
@@ -184,7 +183,6 @@ def test_los_dos_totales_son_el_mismo_numero():
     stats = dict(_STATS, status_counts=conteos, total_leads=sum(conteos.values()))
     env = Environment(
         loader=ChoiceLoader([
-            DictLoader({"partials/demand_section.html": ""}),
             FileSystemLoader(str(_TEMPLATES)),
         ]),
         autoescape=True,

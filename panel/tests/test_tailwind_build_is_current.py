@@ -52,7 +52,10 @@ def _clases_arbitrarias() -> list[str]:
 
 def test_hay_clases_arbitrarias_para_chequear():
     """Si el scanner deja de encontrar clases, el test de abajo no protege nada."""
-    assert len(_clases_arbitrarias()) > 20
+    # Eran >20 con el catálogo y el portal adentro; con esas plantillas
+    # borradas quedan 16. El piso sigue cumpliendo su función: si el
+    # scanner se rompe da 0 y el test de abajo deja de proteger nada.
+    assert len(_clases_arbitrarias()) > 10
 
 
 def _selector(cls: str) -> str:

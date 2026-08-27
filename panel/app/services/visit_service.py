@@ -18,7 +18,6 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.contact import Contact
-from app.models.property import Property
 from app.models.visit import Visit
 from app.repositories.contact_repo import contact_repo
 from app.repositories.lead_event_repo import lead_event_repo
@@ -97,7 +96,7 @@ class VisitService:
             (None, "Source inválido") if source not in valid set.
             (None, "Propiedad no encontrada") if property_id given and missing.
         """
-        # Validation order per Plan 114-01 §2.1: future date → source → contact → property.
+        # Validation order per Plan 114-01 §2.1: future date → source → contact.
         # (Future-date first so trivially-bad requests fail without a DB lookup.)
         if scheduled_at <= datetime.now(timezone.utc):
             return None, "La fecha debe ser futura"
@@ -108,12 +107,10 @@ class VisitService:
         if contact is None:
             return None, "Contacto no encontrado"
 
-        if property_id is not None:
-            prop = await db.execute(
-                select(Property.id).where(Property.id == property_id)
-            )
-            if prop.scalar_one_or_none() is None:
-                return None, "Propiedad no encontrada"
+        # La validación contra el catálogo se fue con el vertical inmobiliario.
+        # `visits.property_id` sigue en la base y queda siempre en None: una
+        # visita ahora es una reunión con un contacto, sin propiedad atada.
+        property_id = None
 
         visit = await visit_repo.insert(
             db,

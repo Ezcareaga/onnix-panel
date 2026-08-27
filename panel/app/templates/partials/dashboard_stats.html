@@ -51,13 +51,7 @@
             <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Nuevos hoy</p>
             <p class="mt-1.5 font-display text-2xl font-semibold num-format {% if stats.new_today > 0 %}text-gray-900{% else %}text-onnix-ink-400{% endif %}">{{ stats.new_today }}</p>
         </a>
-        <a href="/settings" class="block bg-white p-4 hover:bg-gray-50 transition-colors cursor-pointer">
-            <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Estado bot</p>
-            <p class="mt-1.5 flex items-center gap-2 font-display text-2xl font-semibold text-gray-900">
-                <span class="inline-block w-2 h-2 rounded-full {% if stats.bot_enabled %}bg-emerald-500{% else %}bg-red-500{% endif %}"></span>
-                {% if stats.bot_enabled %}Activo{% else %}Apagado{% endif %}
-            </p>
-        </a>
+        {# El tile «Estado bot» se fue con el bot. #}
         <a href="/conversations" class="block bg-white p-4 hover:bg-gray-50 transition-colors cursor-pointer">
             <p class="text-[11px] font-medium uppercase tracking-wider text-onnix-ink-400">Mensajes (24h)</p>
             <p class="mt-1.5 font-display text-2xl font-semibold text-gray-900 num-format">{{ stats.messages_24h }}</p>
@@ -154,6 +148,4 @@
 </div>
 
 <!-- ============ COLUMNA DERECHA — CONTEXTO ============ -->
-<!-- Demanda 30d — partial compartido con /stats (partials/demand_section.html) -->
-{% include "partials/demand_section.html" %}
 </div>

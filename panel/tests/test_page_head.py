@@ -37,7 +37,8 @@ def _sin_comentarios(path: Path) -> str:
 
 
 def test_hay_vistas_para_chequear():
-    assert len(_HIJAS) >= 10, f"solo {len(_HIJAS)} vistas extienden base.html"
+    # Eran 10; se fueron las dos de propiedades y la de salud del bot.
+    assert len(_HIJAS) >= 7, f"solo {len(_HIJAS)} vistas extienden base.html"
 
 
 def test_base_pinta_un_solo_h1():

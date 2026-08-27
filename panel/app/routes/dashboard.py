@@ -19,8 +19,7 @@ async def dashboard(request: Request, user: User = Depends(require_admin),
                     db: AsyncSession = Depends(get_db)):
     logger.info("Dashboard accessed: user=%s", user.email)
     stats = await dashboard_service.get_stats(db)
-    demand = await dashboard_service.get_demand_stats(db, days=30)
-    context = {"request": request, "user": user, "stats": stats, "demand": demand}
+    context = {"request": request, "user": user, "stats": stats}
 
     if request.headers.get("HX-Request"):
         return templates.TemplateResponse("partials/dashboard_stats.html", context)

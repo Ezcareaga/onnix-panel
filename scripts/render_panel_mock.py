@@ -646,16 +646,9 @@ HILO = {
         _msg(2106, "inbound", "contact",
              "¿El departamento de Villa Morra sigue disponible?", 3),
     ],
-    "properties_map": {
-        2104: [{"id": 4821, "title": "Departamento a estrenar en Villa Morra",
-                "price_usd": Decimal("145000"), "price_currency": "USD",
-                "city": "Asunción", "neighborhood": "Villa Morra",
-                "operation": "venta", "property_type": "departamento",
-                "bedrooms": 3, "bathrooms": 2,
-                "total_area_m2": Decimal("128.00"), "source": "onnixpy",
-                "external_id": "Onnix-4821", "local_image_count": 0,
-                "image_url": None, "url": "https://onnix.com.py/prop/4821"}],
-    },
+    # `properties_map` se fue con el vertical inmobiliario: el hilo ya no
+    # adjunta tarjetas de propiedad.
+    "properties_map": {},
 }
 
 # MOCK-FIN
@@ -750,27 +743,12 @@ def pantallas() -> list[Pantalla]:
                 filter_qs="",
             ),
         ),
-        Pantalla(
-            "propiedades-listado", "properties/index.html", "/properties",
-            "Propiedades — listado",
-            "El stock con sus filtros: operación, ciudad, tipo, precio y "
-            "estado. De acá sale el link público que se le pasa al cliente.",
-            _chrome("/properties", **PROPIEDADES_CTX),
-        ),
-        Pantalla(
-            "propiedades-ficha", "properties/detail.html", "/properties/4821",
-            "Propiedades — ficha",
-            "Una propiedad por dentro: precio, características, ubicación, "
-            "el asesor a cargo y el botón para copiar el link público.",
-            _chrome("/properties/4821", prop=FICHA,
-                    public_base_url="https://onnix.com.py",
-                    asesor_a_suffix="?a=1"),
-        ),
+        # Las dos pantallas de propiedades se fueron con el vertical
+        # inmobiliario, igual que la del portal público.
         Pantalla(
             "contactos-listado", "contacts.html", "/contacts",
             "Base de clientes — listado",
-            "Todos los contactos con su estado, de dónde llegaron y por qué "
-            "propiedad consultaron.",
+            "Todos los contactos con su estado y por qué canal llegaron.",
             _chrome(
                 "/contacts",
                 contacts=CONTACTOS,

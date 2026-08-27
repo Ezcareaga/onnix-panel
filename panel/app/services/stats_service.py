@@ -9,15 +9,9 @@ from app.repositories.lead_event_repo import lead_event_repo
 from app.repositories.lead_repo import lead_repo
 from app.repositories.message_repo import message_repo
 from app.repositories.bot_error_repo import bot_error_repo
-from app.repositories.property_repo import StockCombo, property_repo
 from app.tz import PYT
 
 logger = logging.getLogger(__name__)
-
-# El repo promete devolver todos los pares pedidos; el default es por si esa
-# promesa se rompe, para que la pantalla diga 0 en vez de tirar KeyError.
-_SIN_STOCK = StockCombo(0, None)
-
 
 def _a_fecha(valor) -> date | None:
     """La 'day' de cada repo llega como date o como texto, segun el driver."""
@@ -101,74 +95,10 @@ class StatsService:
             "conversion_converted": converted,
         }
 
-    @staticmethod
-    async def get_gap_analysis(
-        db: AsyncSession, days: int = 30, limit: int = 8,
-    ) -> dict:
-        """Gap oferta/demanda — qué piden vs qué tenemos.
-
-        Demanda: MISMO universo que get_demand_stats del dashboard (leads
-        InfoCasas + leads bot con property_id + búsquedas con filtros),
-        reusando los mismos repos. Se agrupa por combo (city_key,
-        ptype_key) — solo filas con ciudad Y tipo informados cuentan como
-        combo (honestidad del dato: lo demás no es accionable para captar).
-
-        Oferta: stock ACTIVO matching por combo via
-        property_repo.count_active_by_city_type (ciudad exacta, tipo con
-        match parcial bidireccional — ver docstring del repo).
-
-        Señal 'captar': stock < demanda/2 (menos de media propiedad por
-        cada dos consultas → vale salir a captar en esa combinación).
-
-        Cada fila trae ademas `ptype_slug`: el `properties.property_type` con
-        el que se conto ese stock, que es lo que el link a `/properties` tiene
-        que mandar. Sin stock viene en None y el link se queda con la ciudad.
-        """
-        rows = await lead_repo.get_demand_rows(db, days=days)
-        rows += await conversation_repo.get_demand_filter_rows(db, days=days)
-
-        combo_counts: Counter = Counter()
-        city_labels: dict[tuple, Counter] = defaultdict(Counter)
-        ptype_labels: dict[tuple, Counter] = defaultdict(Counter)
-        for row in rows:
-            if not (row["city_key"] and row["ptype_key"]):
-                continue
-            key = (row["city_key"], row["ptype_key"])
-            combo_counts[key] += 1
-            city_labels[key][row["city"].strip()] += 1
-            ptype_labels[key][row["ptype"].strip()] += 1
-
-        top = combo_counts.most_common(limit)
-        stock = await property_repo.count_active_by_city_type(
-            db, [key for key, _ in top],
-        )
-        # NB: la clave del dict de salida es "rows" (no "items") a propósito
-        # — en Jinja `gap.items` resuelve al método dict.items, no a la clave.
-        gap = {
-            "days": days,
-            "total_combos": len(combo_counts),
-            "rows": [
-                {
-                    "city": city_labels[key].most_common(1)[0][0],
-                    "ptype": ptype_labels[key].most_common(1)[0][0],
-                    "demand": count,
-                    "stock": stock.get(key, _SIN_STOCK).stock,
-                    "captar": stock.get(key, _SIN_STOCK).stock < count / 2,
-                    # El slug con el que se conto el stock, para que el link a
-                    # /properties filtre por lo mismo: ese listado usa
-                    # `property_type = :valor` exacto y la etiqueta de la
-                    # demanda no siempre lo es ('duplex' vs 'casa-duplex').
-                    "ptype_slug": stock.get(key, _SIN_STOCK).slug,
-                }
-                for key, count in top
-            ],
-        }
-        logger.info(
-            "Gap analysis loaded: days=%s combos=%s shown=%s captar=%s",
-            days, gap["total_combos"], len(gap["rows"]),
-            sum(1 for r in gap["rows"] if r["captar"]),
-        )
-        return gap
+    # `get_gap_analysis` se fue con el vertical inmobiliario: cruzaba la
+    # demanda de los leads contra el STOCK activo de propiedades por
+    # ciudad+tipo para decir dónde salir a captar. Sin catálogo no hay stock
+    # contra qué cruzar, y la mitad del cálculo era `property_repo`.
 
 
 stats_service = StatsService()

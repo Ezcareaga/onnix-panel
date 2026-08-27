@@ -250,12 +250,8 @@ def get_templates():
     # rutas distintas. Pasarlo por contexto obligaba a que cada una se acordara.
     t.env.globals["badge_map"] = BADGE_MAP
     # Un solo formato de número en todo el panel y el portal (app/utils/money.py).
-    # Las plantillas del panel armaban el path de la foto a mano, dos veces, con
-    # el nombre del portal adentro. Va por el global para que haya un solo
-    # armador y el alias se decida en un lugar.
-    from app.utils.fotos import url_foto
-
-    t.env.globals["url_foto"] = url_foto
+    # `url_foto` se fue con el vertical inmobiliario: armaba el path de la foto
+    # de una propiedad. Si Meta trae adjuntos, el armador nuevo va acá mismo.
     t.env.globals["miles"] = miles
     t.env.globals["precio"] = precio
     t.env.filters["pyt"] = to_pyt

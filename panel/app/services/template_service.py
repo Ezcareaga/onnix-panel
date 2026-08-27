@@ -13,9 +13,7 @@ from app.repositories.bot_setting_repo import BotSettingRepository
 from app.repositories.contact_repo import contact_repo
 from app.repositories.lead_event_repo import lead_event_repo
 from app.repositories.message_repo import message_repo
-from app.repositories.property_repo import property_repo
 from app.services.reply_service import _http_client
-from app.utils.money import precio
 
 logger = logging.getLogger(__name__)
 
@@ -66,26 +64,21 @@ class TemplateService:
         # 4. Capture sent_at BEFORE the Twilio call
         sent_at = datetime.now(timezone.utc)
 
-        # 5a. Resolve property for ContentVariables (explicit > contact.property_id)
-        resolved_property_id = property_id if property_id is not None else contact.property_id
-        prop = None
-        if resolved_property_id is not None and template_key not in (
-            "wa_tpl_send_preferences", "wa_tpl_send_preferences_v4",
-        ):
-            prop = await property_repo.get_by_id(db, resolved_property_id)
-            if prop is None and property_id is not None:
-                raise ValueError("Propiedad no encontrada")
-
+        # 5a. Variables de la plantilla.
+        #
+        # Las que salían de una propiedad (título, ciudad, precio) se fueron con
+        # el vertical inmobiliario. Quedan el nombre del contacto y las tres de
+        # preferencias, que las escribe el agente en el drawer.
+        #
+        # ponytail: este servicio entero se reescribe cuando entren las
+        # plantillas de Meta — allá no hay ContentSid de Twilio, hay nombre de
+        # plantilla + idioma + components. Mientras tanto sigue siendo el
+        # camino que usa el botón del hilo.
         content_variables: dict[str, str] = {"1": contact.name or ""}
         if template_key in ("wa_tpl_send_preferences", "wa_tpl_send_preferences_v4"):
             content_variables["2"] = pref_tipo or ""
             content_variables["3"] = pref_zona or ""
             content_variables["4"] = pref_operacion or ""
-        elif prop is not None:
-            price_str = precio(price_usd=prop.price_usd, vacio="")
-            content_variables["2"] = prop.title or ""
-            content_variables["3"] = prop.city or ""
-            content_variables["4"] = price_str
 
         # 5. Send via Twilio REST API — ContentSid only, NO Body field
         account_sid = bot_settings.TWILIO_ACCOUNT_SID

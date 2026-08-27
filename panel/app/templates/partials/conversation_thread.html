@@ -66,7 +66,7 @@
     {# Per-chat bot toggle #}
     {% if thread.conversation %}
     {% with conv_id=thread.conversation.id, is_bot_active=thread.conversation.is_bot_active %}
-    {% include "partials/conversation_bot_toggle.html" %}
+    {# El switch por conversación se fue con el bot: no hay nada que apagar. #}
     {% endwith %}
     {% endif %}
 </div>

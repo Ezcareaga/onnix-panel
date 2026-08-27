@@ -17,14 +17,25 @@ y sin ninguna referencia al cliente original en el código. Lo que se heredó
 funciona; lo que sigue abierto está en «Lo que falta» más abajo.
 
 Del original **no** se copiaron: los scrapers de portales, los MP4 de
-tutoriales, el dump de producción, `docs/` (salvo
-`docs/audit_classifications.jsonl`, que un test necesita) y los scripts de un
-solo uso atados a la cuenta de Twilio del cliente viejo.
+tutoriales, el dump de producción, `docs/` y los scripts de un solo uso atados
+a la cuenta de Twilio del cliente viejo.
 
-**El vertical inmobiliario vino entero** — propiedades, portal público,
-`landing/`, la tool `search_properties`. Si Onnix no lo necesita, se borra;
-no hay nada más que dependa de él que las rutas de `panel/app/routes/properties.py`
-y `panel/app/routes/public.py`.
+**El vertical inmobiliario ya no está.** Vino entero en el fork y se borró el
+2026-08-27 por decisión de Ez: Onnix no vende propiedades. Se fueron el
+catálogo, el portal público, la landing, los scrapers, InfoCasas, la búsqueda
+híbrida y todo lo que colgaba de ellos — routes, services, repos, modelos,
+plantillas y 76 archivos de test.
+
+Lo que quedó en la base son las tablas (`properties`, `property_types`,
+`infocasas_properties`, `infocasas_inquiry_history`) y algunas columnas
+(`contacts.property_id`, `contacts.infocasas_ref`, `messages.properties_shown`,
+`visits.property_id`). **Están vacías y nadie las lee.** No se borraron porque
+media docena de migraciones las crean y modifican, y sacarlas del baseline
+rompe la cadena — el mismo problema que ya costó arreglar en 004, 005, 006,
+019, 033 y 037.
+
+**ponytail:** cuando el producto se estabilice, la salida es aplastar la cadena
+entera en un baseline nuevo sin nada de esto, no ir migración por migración.
 
 ## El bot que ya no está
 
@@ -46,9 +57,9 @@ Lo que quedó de `app/bot/` NO le habla a nadie:
 | `channels/` | transporte de salida — lo usa el envío manual del panel |
 | `webhooks/` | entrada de mensajes |
 | `panel/app/bot/core/conversation.py` | `persist_inbound` + resolver contacto/conversación |
-| `search/` | búsqueda del panel de propiedades (SQL + pgvector + RRF) |
-| `panel/app/bot/ai/gemini_client.py` | embeddings de esa búsqueda |
-| `panel/app/bot/ai/claude_client.py` + `property_chatbot.py` | traduce la búsqueda en lenguaje natural **del panel** a filtros. Es una herramienta del agente, no un interlocutor del cliente. |
+
+`app/bot/search/` y los dos clientes de LLM se fueron después, con el vertical
+inmobiliario: existían para buscar en el catálogo.
 
 `BOT_ENABLED` quedó sin lectores y se sacó de los compose: no apagaba nada.
 
@@ -68,18 +79,6 @@ Definidas en los módulos de tool-use:
 - **`busqueda`** (default): las 6.
 - **`recepcionista`**: las 6 menos `search_properties` — ese bot califica leads,
   no busca.
-
-## La búsqueda del panel sigue siendo híbrida
-
-`app/bot/search/` sobrevivió al bot porque lo usa el panel de propiedades vía
-`panel/app/services/panel_hybrid_search.py`. Por dentro:
-
-1. `sql_filters.py` arma los filtros duros (operación, precio, dormitorios…).
-2. `vector_search.py` embebe la consulta con Gemini y busca por distancia
-   coseno contra el índice HNSW de pgvector sobre `description_embedding`.
-3. `hybrid_search.py` fusiona las dos listas con **Reciprocal Rank Fusion**
-   (Cormack, Clarke & Butt 2009).
-4. `relaxation.py` afloja restricciones cuando no hay resultados.
 
 ## Lo que falta
 
@@ -110,9 +109,10 @@ Definidas en los módulos de tool-use:
    http://localhost:8010`); Meta exige HTTPS público.
 4. **Limpieza de UI del bot**: la pantalla «Salud del Bot», los toggles de bot
    en Configuración y las métricas de IA siguen ahí y ya no miden nada.
-5. **El vertical inmobiliario** (propiedades, portal público, `landing/`,
-   `app/bot/search/`): sin bot, ¿Onnix lo usa? Si no, se borra y es el chunk
-   más grande que queda. Decisión de Ez.
+5. **Residuo cosmético del bot**: el estado `bot_replied` de `contacts` sigue
+   apareciendo como «Bot respondió» en el funnel y en los filtros de leads, y
+   un hilo puede decir «Bot en pausa». Son valores de la columna `status`, así
+   que renombrarlos es una migración con datos, no un cambio de plantilla.
 
 ## Marca
 

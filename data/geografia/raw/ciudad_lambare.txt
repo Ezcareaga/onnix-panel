@@ -1,8 +1,0 @@
-Fuente: https://es.wikipedia.org/wiki/Lambaré_(Paraguay)
-
-Párrafo relevante:
-"limita al sudoeste con el río Paraguay que lo separa de la República Argentina, al oeste y norte con la ciudad de Asunción, y al sudeste con la ciudad de Villa Elisa."
-
-Vecinas extraídas (solo Dep. Central):
-- Asunción
-- Villa Elisa

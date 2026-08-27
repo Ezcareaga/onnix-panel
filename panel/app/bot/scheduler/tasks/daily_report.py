@@ -22,7 +22,6 @@ from app.tz import PYT
 from app.models.bot_error import BotError
 from app.models.contact import Contact
 from app.models.message import Message
-from app.models.property import Property
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +155,9 @@ class DailyReportGenerator:
                 for r in error_summary_result.fetchall()
             ]
 
-            # InfoCasas leads (source='infocasas')
+            # Leads de InfoCasas. El scraper se fue con el vertical inmobiliario;
+            # el contador queda porque la columna `source` sigue viva y un
+            # contacto viejo puede tenerla. Hoy da 0 y esta bien que lo diga.
             ic_result = await session.execute(
                 select(func.count()).select_from(Contact).where(
                     Contact.created_at >= cutoff,
@@ -174,14 +175,6 @@ class DailyReportGenerator:
             )
             heartbeat_fails = hb_errors.scalar_one()
 
-            # Active properties
-            props_result = await session.execute(
-                select(func.count()).select_from(Property).where(
-                    Property.is_active == True,  # noqa: E712
-                )
-            )
-            active_properties = props_result.scalar_one()
-
         return {
             "date": datetime.now(PYT).strftime("%Y-%m-%d"),
             "leads_count": leads_count,
@@ -192,7 +185,6 @@ class DailyReportGenerator:
             "infocasas_count": infocasas_count,
             "heartbeat_fails": heartbeat_fails,
             "heartbeat_status": "OK" if heartbeat_fails == 0 else f"FAIL ({heartbeat_fails})",
-            "active_properties": active_properties,
         }
 
     # ------------------------------------------------------------------
@@ -239,7 +231,6 @@ class DailyReportGenerator:
             f"Mensajes: {metrics['messages_count']}",
             f"Errores: {metrics['errors_count']}",
             f"Heartbeat: {metrics['heartbeat_status']}",
-            f"Props activas: {metrics['active_properties']}",
         ]
         return await self._notifier.notify("\n".join(lines))
 
@@ -267,7 +258,7 @@ class DailyReportGenerator:
         return f"""
         <html>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #B8860B;">Onnix SA — Reporte Diario</h2>
+            <h2 style="color: #16181A;">Onnix SA — Reporte Diario</h2>
             <p style="color: #666;">{m['date']}</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
@@ -291,13 +282,9 @@ class DailyReportGenerator:
                     <td style="padding: 8px; border: 1px solid #ddd;">Heartbeat</td>
                     <td style="padding: 8px; border: 1px solid #ddd;">{m['heartbeat_status']}</td>
                 </tr>
-                <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;"><b>Props activas</b></td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{m['active_properties']}</td>
-                </tr>
             </table>
 
-            {"<h3>Leads (ultimas 24h)</h3><table style='width:100%;border-collapse:collapse;'><tr style='background:#B8860B;color:white;'><th style='padding:6px;text-align:left;'>Nombre</th><th style='padding:6px;text-align:left;'>Tel</th><th style='padding:6px;text-align:left;'>Fuente</th></tr>" + leads_rows + "</table>" if leads_rows else ""}
+            {"<h3>Leads (ultimas 24h)</h3><table style='width:100%;border-collapse:collapse;'><tr style='background:#16181A;color:white;'><th style='padding:6px;text-align:left;'>Nombre</th><th style='padding:6px;text-align:left;'>Tel</th><th style='padding:6px;text-align:left;'>Fuente</th></tr>" + leads_rows + "</table>" if leads_rows else ""}
 
             {"<h3>Errores por workflow</h3><table style='width:100%;border-collapse:collapse;'><tr style='background:#cc0000;color:white;'><th style='padding:6px;text-align:left;'>Workflow</th><th style='padding:6px;text-align:left;'>Count</th></tr>" + error_rows + "</table>" if error_rows else ""}
 

@@ -340,7 +340,6 @@ CONTROLES_MEDIDOS = [
     ("partials/dashboard_stats.html", 'href="/contacts?status={{ status_key }}"',
      "tap-44"),
     ("stats.html", 'href="?days={{ d }}"', "tap-44"),
-    ("stats.html", 'title="Ver el stock activo de', "tap-44"),
     ("partials/settings_form.html",
      'aria-label="Alternar bot encendido/apagado"', "tap-44"),
     ("partials/settings_form.html",
@@ -357,21 +356,6 @@ CONTROLES_MEDIDOS = [
     ("contacts.html", 'title="Exportar contactos filtrados a CSV"', "tap-44"),
     ("contacts.html", "page={{ page - 1 }}", "tap-44"),
     ("contacts.html", "page={{ page + 1 }}", "tap-44"),
-    ("properties/index.html", 'aria-label="Quitar filtro {{ chip.label }}"', "tap-44"),
-    ("properties/index.html", 'aria-label="Mostrar filtros"', "tap-44"),
-    # Se identifica por el handler y no por el `aria-label`: M9 lo paso a
-    # `:aria-label` dinamico —tres variantes segun `loading` y `query`— y el
-    # literal viejo dejo de existir. Un handler cambia cuando cambia lo que el
-    # control hace; una etiqueta cambia cuando cambia como se lee.
-    ("properties/index.html", '@click="submit()"', "tap-44"),
-    ("properties/index.html", 'href="/properties"', "tap-44"),
-    ("properties/detail.html", "history.back()", "tap-44"),
-    ("properties/partials/properties_table.html",
-     'aria-label="Copiar link público"', "tap-44"),
-    ("properties/partials/properties_table.html",
-     'aria-label="Ver original"', "tap-44"),
-    ("properties/partials/properties_table.html", "page={{ page - 1 }}", "tap-44"),
-    ("properties/partials/properties_table.html", "page={{ page + 1 }}", "tap-44"),
     # Familia C — los nativos.
     ("contacts.html",
      'aria-label="Buscar contactos por nombre, teléfono o email"', "tap-44-nativo"),
@@ -380,7 +364,6 @@ CONTROLES_MEDIDOS = [
     ("contacts.html", 'aria-label="Filtrar por teléfono"', "tap-44-nativo"),
     ("leads.html", 'aria-label="Buscar por nombre o teléfono"', "tap-44-nativo"),
     ("leads.html", 'aria-label="Filtrar por fuente"', "tap-44-nativo"),
-    ("properties/index.html", 'aria-label="Buscar por título o ID"', "tap-44-nativo"),
     ("login.html", 'name="email"', "tap-44-nativo"),
     ("login.html", 'name="password"', "tap-44-nativo"),
 ]
@@ -408,8 +391,11 @@ def test_el_control_medido_conserva_su_area_tactil(archivo, marca, clase):
 # contar, no de `len(CONTROLES_MEDIDOS)`: una lista no puede detectar que le
 # sacaron un elemento. Solo bajan cuando alguien decide que bajen, y entonces
 # los baja a mano y escribe por qué — igual que el techo de matices saturados.
-PISO_TAP_44 = 44
-PISO_TAP_44_NATIVO = 20
+# Bajaron de 44 y 20: se fueron las plantillas del catálogo, el portal
+# público y las del bot. El piso sigue siendo un piso — si baja sin que se
+# borre una pantalla, es un control que perdió el área táctil.
+PISO_TAP_44 = 29
+PISO_TAP_44_NATIVO = 9
 
 
 def _cuenta_token(token: str) -> int:

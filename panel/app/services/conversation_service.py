@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.conversation_repo import conversation_repo
 from app.repositories.message_repo import message_repo
 from app.repositories.contact_repo import contact_repo
-from app.repositories.property_repo import property_repo
 
 logger = logging.getLogger(__name__)
 
@@ -135,34 +134,12 @@ class ConversationService:
                 conv_channel = str(getattr(conv, 'channel', None) or getattr(conv, 'platform', None) or 'whatsapp')
                 window_expired = (conv_channel == 'whatsapp')
 
-        # Collect all unique property IDs referenced across messages
-        all_property_ids: set[int] = set()
-        for msg in messages:
-            if msg.properties_shown:
-                all_property_ids.update(msg.properties_shown)
-
-        # Fetch property summaries in one bulk query and index by id
-        id_to_property: dict[int, dict] = {}
-        if all_property_ids:
-            summaries = await property_repo.get_summary_by_ids(db, list(all_property_ids))
-            id_to_property = {p["id"]: p for p in summaries}
-            logger.info(
-                "Property summaries loaded: conversation_id=%s, ids=%s, found=%s",
-                conversation_id,
-                len(all_property_ids),
-                len(id_to_property),
-            )
-
-        # Build properties_map: message_id → [property_dict, ...]
-        # Only populated for messages that have properties_shown
+        # Las tarjetas de propiedad del hilo se fueron con el vertical
+        # inmobiliario: las adjuntaba el bot cuando mostraba resultados de
+        # búsqueda (`messages.properties_shown`). La columna sigue en la base
+        # y siempre viene vacía; `properties_map` se devuelve vacío para no
+        # tocar la plantilla del hilo, que ya sabe no renderizar nada.
         properties_map: dict[int, list[dict]] = {}
-        for msg in messages:
-            if msg.properties_shown:
-                properties_map[msg.id] = [
-                    id_to_property[pid]
-                    for pid in msg.properties_shown
-                    if pid in id_to_property
-                ]
 
         return {
             "conversation": conv,

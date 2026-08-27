@@ -37,7 +37,10 @@ def test_todos_los_items_del_menu_anuncian_si_son_el_actual():
     menu = _items_del_menu()
     items = len(_ITEMS.findall(menu))
     marcados = menu.count('aria-current="page"')
-    assert items >= 8, f"solo se encontraron {items} items de menu"
+    # Eran 8 hasta que se fueron Propiedades, Tutoriales y Salud del Bot con el
+    # vertical inmobiliario y el bot. El piso no es decorativo: si el regex se
+    # rompe, el assert de abajo pasa vacio.
+    assert items >= 6, f"solo se encontraron {items} items de menu"
     assert marcados == items, (
         f"{items} items de menu pero {marcados} con aria-current: los que faltan "
         "no le dicen al lector en que pantalla esta el usuario"

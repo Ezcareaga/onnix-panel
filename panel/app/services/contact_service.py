@@ -76,16 +76,12 @@ def clear_count_cache() -> None:
 from app.models.contact import Contact
 from app.models.contact_note import ContactNote
 from app.models.conversation import Conversation
-from app.models.infocasas_property import InfocasasProperty
 from app.models.lead_event import LeadEvent
-from app.models.property import Property
 from app.models.visit import Visit
 from app.repositories.contact_note_repo import contact_note_repo
 from app.repositories.contact_repo import contact_repo
 from app.repositories.conversation_repo import conversation_repo
-from app.repositories.inquiry_history_repo import inquiry_history_repo
 from app.repositories.lead_event_repo import lead_event_repo
-from app.repositories.property_repo import property_repo
 from app.repositories.visit_repo import visit_repo
 from app.utils.pagination import calculate_total_pages
 from app.utils.phone_utils import parse_phone, validate_phone
@@ -216,19 +212,10 @@ class ContactService:
             )
         total_pages = calculate_total_pages(total, per_page)
 
-        prop_ids = [c.property_id for c in contacts if c.property_id]
-        props_map: dict[int, Property] = (
-            await property_repo.get_by_ids(db, prop_ids) if prop_ids else {}
-        )
-
-        ic_refs = [
-            c.infocasas_ref
-            for c in contacts
-            if c.source == "infocasas" and getattr(c, "infocasas_ref", None)
-        ]
-        infocasas_props_map: dict[str, InfocasasProperty] = (
-            await property_repo.get_ic_by_refs(db, ic_refs) if ic_refs else {}
-        )
+        # Los dos mapas de propiedad del listado se fueron con el vertical
+        # inmobiliario. Van vacíos y no None: las plantillas los indexan.
+        props_map: dict = {}
+        infocasas_props_map: dict = {}
 
         return {
             "contacts": contacts,
@@ -285,50 +272,17 @@ class ContactService:
 
         # Resolve viewed properties from detail_view events (Phase 92 — VIEWS-01)
         detail_view_events = await lead_event_repo.get_detail_views(db, contact_id)
-        viewed_property_ids: list[int] = [
-            ev.event_metadata["property_id"]
-            for ev in detail_view_events
-            if isinstance(ev.event_metadata, dict) and "property_id" in ev.event_metadata
-        ]
-        viewed_props_map: dict[int, Property] = (
-            await property_repo.get_by_ids(db, viewed_property_ids)
-            if viewed_property_ids
-            else {}
-        )
+        # "Propiedades vistas" salía de los eventos `detail_view` que emitía el
+        # bot al mostrar una ficha. Sin bot y sin catálogo no hay ninguno.
         viewed_properties: list[dict] = []
-        for ev in detail_view_events:
-            if not isinstance(ev.event_metadata, dict):
-                continue
-            pid = ev.event_metadata.get("property_id")
-            if not pid:
-                continue
-            prop = viewed_props_map.get(pid)
-            if prop is None:
-                continue
-            viewed_properties.append({
-                "id": prop.id,
-                "title": prop.title or "",
-                "city": prop.city or "",
-                "neighborhood": prop.neighborhood or "",
-                "price_usd": prop.price_usd,
-                "price_currency": prop.price_currency or "USD",
-                "url": prop.url or "",
-                "viewed_at": ev.created_at,
-            })
 
-        linked_property: Property | None = None
-        ic_property: InfocasasProperty | None = None
-        if contact.source == "infocasas" and getattr(contact, "infocasas_ref", None):
-            ic_property = await property_repo.get_ic_by_ref(db, contact.infocasas_ref)
-        if not ic_property and contact.property_id:
-            linked_property = await property_repo.get_by_id(db, contact.property_id)
+        linked_property = None
+        ic_property = None
 
         phone_info = parse_phone(contact.phone)
 
-        # Inquiry history for IC contacts
+        # El historial de consultas era de InfoCasas.
         inquiry_history: list = []
-        if contact.source == "infocasas":
-            inquiry_history = await inquiry_history_repo.get_by_contact(db, contact_id)
 
         # M6.2 §5.10 — has_active_visit drives the status-dropdown lockout
         # in the detail page (Plan 114 §5.10/§5.11/§5.12). True iff at least
@@ -486,10 +440,9 @@ class ContactService:
             except ValueError:
                 pass
 
-        if property_id is not None:
-            prop = await property_repo.get_by_id(db, property_id)
-            if not prop or not prop.is_active:
-                raise ValueError(f"Property {property_id} not found or inactive")
+        # `property_id` quedó como parámetro muerto: no hay catálogo contra el
+        # cual validarlo. Se ignora en vez de rechazarlo.
+        property_id = None
 
         contact = await contact_repo.create(
             db,
@@ -581,10 +534,9 @@ class ContactService:
         elif "dormitorios" in prefs and not dormitorios_raw:
             prefs.pop("dormitorios", None)
 
-        if property_id is not None:
-            prop = await property_repo.get_by_id(db, property_id)
-            if not prop or not prop.is_active:
-                raise ValueError(f"Property {property_id} not found or inactive")
+        # `property_id` quedó como parámetro muerto: no hay catálogo contra el
+        # cual validarlo. Se ignora en vez de rechazarlo.
+        property_id = None
 
         fields: dict = {"preferences": prefs}
         if name:

@@ -1,9 +1,0 @@
-Fuente: https://es.wikipedia.org/wiki/San_Antonio_(Paraguay)
-
-Párrafo relevante:
-"Limita al norte con los distritos de Ñemby y Villa Elisa; al sur con Ypané; al este con Ñemby y al oeste con el Río Paraguay."
-
-Vecinas extraídas (solo Dep. Central):
-- Ñemby
-- Villa Elisa
-- Ypané

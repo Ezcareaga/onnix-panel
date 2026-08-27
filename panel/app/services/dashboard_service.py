@@ -14,8 +14,6 @@ from app.tz import PYT
 
 logger = logging.getLogger(__name__)
 
-# Fuentes canónicas de demanda — siempre presentes en by_source (aunque en 0)
-_DEMAND_SOURCES = ("infocasas", "whatsapp", "telegram")
 
 # Meses abreviados ES — labels de la serie mensual (sparkline)
 _MONTH_LABELS_ES = (
@@ -73,109 +71,14 @@ class DashboardService:
             "lead_tab_counts": lead_tab_counts,
         }
 
-    @staticmethod
-    async def get_demand_stats(db: AsyncSession, days: int = 30) -> dict:
-        """Mini-análisis de demanda — qué consulta la gente (ventana de N días).
-
-        Una "consulta" es:
-        - un lead InfoCasas (contacts JOIN infocasas_properties), o
-        - un lead del bot sobre una propiedad (contacts.property_id), o
-        - una búsqueda al bot con filtros (conversations.search_context.filtros).
-
-        Los repos agrupan con unaccent (regla 7); acá solo se cuenta.
-        Caveat documentado: un mismo usuario puede aportar una búsqueda
-        (filtros) y un lead — son eventos de demanda distintos y se
-        cuentan como tales.
-        """
-        rows = await lead_repo.get_demand_rows(db, days=days)
-        rows += await conversation_repo.get_demand_filter_rows(db, days=days)
-
-        by_source: dict[str, int] = {src: 0 for src in _DEMAND_SOURCES}
-        city_counts: Counter = Counter()
-        type_counts: Counter = Counter()
-        city_labels: dict[str, Counter] = defaultdict(Counter)
-        type_labels: dict[str, Counter] = defaultdict(Counter)
-        operations = {"venta": 0, "alquiler": 0}
-        sin_ciudad = 0
-
-        for row in rows:
-            source = row["source"] if row["source"] in by_source else "whatsapp"
-            by_source[source] += 1
-            if row["city_key"]:
-                city_counts[row["city_key"]] += 1
-                city_labels[row["city_key"]][row["city"].strip()] += 1
-            else:
-                sin_ciudad += 1
-            if row["ptype_key"]:
-                type_counts[row["ptype_key"]] += 1
-                type_labels[row["ptype_key"]][row["ptype"].strip()] += 1
-            if row["operation"] in operations:
-                operations[row["operation"]] += 1
-
-        demand = {
-            "days": days,
-            "total": len(rows),
-            "by_source": by_source,
-            "top_cities": _top_items(city_counts, city_labels),
-            "top_types": _top_items(type_counts, type_labels),
-            "operations": operations,
-            "sin_ciudad": sin_ciudad,
-            "monthly": await DashboardService.get_demand_monthly_series(db),
-        }
-        logger.info(
-            "Demand stats loaded: days=%s total=%s by_source=%s",
-            days, demand["total"], by_source,
-        )
-        return demand
-
-    @staticmethod
-    async def get_demand_monthly_series(
-        db: AsyncSession, months: int = 6,
-    ) -> list[dict]:
-        """Serie mensual de demanda — [{label, count, pct}] cronológica.
-
-        Misma definición de "consulta" que get_demand_stats (leads IC +
-        leads bot con property_id + búsquedas con filtros), agrupada por
-        mes calendario PARAGUAYO. Siempre devuelve ``months`` buckets — meses
-        sin datos van en 0. ``pct`` es relativo al máximo de la serie
-        (alimenta la altura del sparkline; 0 si la serie está vacía).
-        """
-        rows = await lead_repo.get_demand_monthly_counts(db, months=months)
-        rows += await conversation_repo.get_demand_filter_monthly_counts(
-            db, months=months,
-        )
-        counts: Counter = Counter()
-        for row in rows:
-            counts[(row["month"].year, row["month"].month)] += row["n"]
-
-        # El mes en curso es el paraguayo, igual que los buckets del repo:
-        # las tres primeras horas UTC de cada 1° de mes son todavía el mes
-        # anterior acá, y la serie encabezaba un mes que no había empezado.
-        now = datetime.now(PYT)
-        keys: list[tuple[int, int]] = []
-        year, month = now.year, now.month
-        for _ in range(months):
-            keys.append((year, month))
-            month -= 1
-            if month == 0:
-                month, year = 12, year - 1
-        keys.reverse()
-
-        max_count = max((counts[key] for key in keys), default=0)
-        series = [
-            {
-                "label": _MONTH_LABELS_ES[m - 1],
-                "count": counts[(y, m)],
-                "pct": round(counts[(y, m)] / max_count * 100)
-                if max_count > 0 else 0,
-            }
-            for y, m in keys
-        ]
-        logger.info(
-            "Demand monthly series loaded: months=%s total=%s",
-            months, sum(item["count"] for item in series),
-        )
-        return series
+    # `get_demand_stats` y `get_demand_monthly_series` se fueron con el vertical
+    # inmobiliario. Contaban "consultas" de tres fuentes que ya no existen: un
+    # lead de InfoCasas, un lead del bot sobre una propiedad, y una búsqueda del
+    # bot con filtros. Las tres eran del catálogo, y agrupaban por ciudad y por
+    # tipo de propiedad.
+    #
+    # Si el panel vuelve a querer un "qué consulta la gente", va a ser otra cosa:
+    # sobre los mensajes de los tres canales, no sobre un catálogo.
 
 
 dashboard_service = DashboardService()

@@ -37,37 +37,12 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Las fotos se montan POR ALIAS, nunca el árbol entero.
-#
-# Montar `/images` sobre `/app/images` dejaba servible `/images/remax/...` — y
-# no sólo en staging: en producción la request que nginx no matchea cae al
-# `location /`, llega al proxy y la resuelve este mount. Sacar el `location`
-# general de nginx no alcanzaba: la puerta de atrás estaba acá.
-#
-# El mapa vive en `app/utils/fotos.py`, que es el mismo que arma las URLs.
-if os.path.isdir("/app/images"):
-    from app.utils.fotos import ALIAS_POR_FUENTE
-
-    for _fuente, _alias in ALIAS_POR_FUENTE.items():
-        _dir = f"/app/images/{_fuente}"
-        if os.path.isdir(_dir):
-            app.mount(
-                f"/images/{_alias}",
-                StaticFiles(directory=_dir),
-                name=f"images-{_alias}",
-            )
-
-# Los MP4 de los tutoriales NO se montan con StaticFiles.
-#
-# Estuvieron montados en `/videos` un rato, y el mount es exactamente el mismo
-# error que el `location /images/` general que el comentario de arriba explica,
-# en otra capa: un mount de StaticFiles queda FUERA de `get_current_user`, así
-# que `/tutoriales` pedía sesión y el MP4 lo bajaba cualquiera con la URL. Con
-# un tutorial restringido a admin —el de usuarios— eso deja de ser una molestia
-# y pasa a ser el agujero.
-#
-# Los sirve `GET /videos/{nombre}` en `app/routes/tutoriales.py`, que pide
-# sesión, chequea el rol y recién ahí mira el disco.
+# El mount de fotos y el de los MP4 de tutoriales se fueron con el vertical
+# inmobiliario. Los dos existían por la misma razón —servir archivos del disco—
+# y los dos habían sido un agujero: un `StaticFiles` queda FUERA de
+# `get_current_user`, así que la página pedía sesión y el archivo lo bajaba
+# cualquiera con la URL. Si alguna vez hay que servir adjuntos de los mensajes
+# de Meta, va por una ruta con sesión, nunca por un mount.
 
 from app.routes.auth import router as auth_router
 from app.routes.dashboard import router as dashboard_router
@@ -78,14 +53,9 @@ from app.routes.contacts import router as contacts_router
 from app.routes.visits import router as visits_router
 from app.routes.settings import router as settings_router
 from app.routes.users import router as users_router
-from app.routes.api import router as api_router
 from app.routes.events import router as events_router
-from app.routes.bot_health import router as bot_health_router
-from app.routes.public import router as public_router
-from app.routes.properties import router as properties_router
 from app.routes.admin_audit import router as admin_audit_router
 from app.routes.me import router as me_router
-from app.routes.tutoriales import router as tutoriales_router
 from app.bot.webhooks import webhook_router
 from starlette.requests import Request
 from starlette.responses import Response
@@ -102,14 +72,9 @@ app.include_router(contacts_router)
 app.include_router(visits_router)
 app.include_router(settings_router)
 app.include_router(users_router)
-app.include_router(public_router)
 app.include_router(events_router)
-app.include_router(bot_health_router)
-app.include_router(properties_router)
 app.include_router(admin_audit_router)
 app.include_router(me_router)
-app.include_router(tutoriales_router)
-app.include_router(api_router, prefix="/api")
 app.include_router(webhook_router)
 
 _CSP_HEADER_VALUE = (
@@ -137,7 +102,7 @@ async def security_headers(request: Request, call_next) -> Response:
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Content-Security-Policy"] = _CSP_HEADER_VALUE
     # Rutas dual full/partial (dashboard, leads, conversations, stats,
-    # properties, bot_health, admin_audit) sirven contenido distinto en la
+    # admin_audit) sirven contenido distinto en la
     # MISMA URL según el header HX-Request. Sin Vary, el browser cachea el
     # partial para la URL y el botón Atrás renderiza el partial sin layout.
     existing_vary = response.headers.get("Vary")

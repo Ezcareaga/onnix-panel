@@ -6,5 +6,3 @@ from app.models.message import Message
 from app.models.bot_setting import BotSetting
 from app.models.lead_event import LeadEvent
 from app.models.bot_error import BotError
-from app.models.property_type import PropertyType
-from app.models.inquiry_history import InquiryHistory

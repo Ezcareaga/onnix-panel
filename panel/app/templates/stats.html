@@ -16,76 +16,10 @@
 
 {% block content %}
 {% from "partials/empty_state.html" import vacio %}
-<!-- ============ DEMANDA (selector de período) — partial compartido con dashboard ============ -->
-{% with demand_layout_class = "grid grid-cols-1 lg:grid-cols-2 gap-5 items-start mb-6" %}
-{% include "partials/demand_section.html" %}
-{% endwith %}
-
-<!-- ============ GAP OFERTA/DEMANDA — qué piden vs qué tenemos ============ -->
-<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 mb-6" data-gap-section>
-    <div class="flex items-baseline justify-between flex-wrap gap-x-4 gap-y-1 mb-1">
-        <h3 class="text-sm font-semibold text-gray-800">Qué piden vs qué tenemos
-            <span class="font-normal text-onnix-ink-400">· últimos {{ days }} días</span>
-        </h3>
-        {% if gap.total_combos > gap.rows|length %}
-        <span class="text-[11px] text-onnix-ink-400">top {{ gap.rows|length }} de {{ gap.total_combos }} combinaciones</span>
-        {% endif %}
-    </div>
-    <p class="text-xs text-onnix-ink-400 mb-4">Demanda = consultas (InfoCasas + bot) con ciudad y tipo informados.
-        Stock = propiedades activas; tipos matcheados por aproximación (p.ej. «dúplex» ↔ «casa-duplex»).</p>
-
-    {% if gap.rows %}
-    {# py-1: el contenedor de scroll recorta en su caja de padding, y el area
-       tactil de «Captar» sobresale 10px del chip. Sin holgura, el ::after de
-       la ultima fila queda al ras del borde de recorte. #}
-    <div class="overflow-x-auto py-1">
-    <table class="w-full text-sm">
-        <thead>
-            <tr class="text-left text-[11px] uppercase tracking-wider text-onnix-ink-400 border-b border-gray-100">
-                <th class="py-2 pr-4 font-medium">Ciudad</th>
-                <th class="py-2 pr-4 font-medium">Tipo</th>
-                <th class="py-2 pr-4 font-medium text-right">Demanda</th>
-                <th class="py-2 pr-4 font-medium text-right">Stock activo</th>
-                <th class="py-2 font-medium">Señal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in gap.rows %}
-            <tr class="border-b border-gray-50 last:border-0" data-gap-row>
-                <td class="py-2.5 pr-4 text-gray-800">{{ row.city }}</td>
-                <td class="py-2.5 pr-4 text-gray-600">{{ row.ptype | capitalize }}</td>
-                <td class="py-2.5 pr-4 text-right font-semibold text-gray-900 num-format">{{ row.demand }}</td>
-                <td class="py-2.5 pr-4 text-right num-format {% if row.stock == 0 %}text-red-600 font-semibold{% else %}text-gray-700{% endif %}">{{ row.stock }}</td>
-                <td class="py-2.5">
-                    {% if row.captar %}
-                    {# «Captar» era la unica celda de la tabla que nombraba un
-                       trabajo y no llevaba a hacerlo. Va con el slug con el que
-                       se conto el stock, no con la etiqueta de la demanda: el
-                       listado filtra `property_type = :valor` exacto y
-                       'duplex' no es 'casa-duplex'. Sin stock no hay slug y
-                       queda la ciudad, que sigue siendo el lugar donde mirar. #}
-                    <a href="/properties?city={{ row.city | urlencode }}{% if row.ptype_slug %}&amp;property_type={{ row.ptype_slug | urlencode }}{% endif %}"
-                       title="Ver el stock activo de {{ row.ptype | lower }} en {{ row.city }}"
-                       class="tap-44 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-800 hover:bg-orange-100 transition-colors">
-                        Captar
-                        <span aria-hidden="true">&rarr;</span>
-                    </a>
-                    {% else %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] text-onnix-ink-400 bg-gray-50">Cubierto</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    </div>
-    <p class="text-[11px] text-onnix-ink-400 mt-3">«Captar» = stock activo menor a la mitad de la demanda del período.</p>
-    {% else %}
-    {{ vacio("Sin consultas para comparar",
-             "Ninguna consulta de los últimos " ~ days ~ " días trae ciudad y tipo informados, que es lo que esta tabla cruza contra el stock.",
-             superficie=false) }}
-    {% endif %}
-</div>
+{# La sección de demanda y la tabla de brecha oferta/demanda se fueron con el
+   vertical inmobiliario: contaban consultas por ciudad y tipo de propiedad y
+   las cruzaban contra el stock activo del catálogo. Sin catálogo no hay nada
+   que cruzar. Lo que queda son los contadores de mensajes y errores. #}
 
 <!-- ============ COUNTERS LEGACY (auto-refresh 60s; series diarias cap 90d) ============ -->
 <div id="stats-data"

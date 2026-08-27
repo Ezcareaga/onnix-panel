@@ -21,8 +21,6 @@ from app.bot.scheduler.tasks.cold_lead_check import run_cold_lead_check
 from app.bot.scheduler.tasks.daily_report import run_daily_report
 from app.bot.scheduler.tasks.heartbeat import run_heartbeat
 from app.bot.scheduler.tasks.cleanup_inactive_refs import run_cleanup_inactive_refs
-from app.bot.scheduler.tasks.infocasas_poll import run_infocasas_poll
-from app.bot.scheduler.tasks.verification_scraper import run_verification_scraper
 
 logger = logging.getLogger(__name__)
 
@@ -95,16 +93,6 @@ async def scheduler_lifespan(app: FastAPI):
             else:
                 logger.info("Task skipped (disabled): heartbeat")
 
-            # --- Register infocasas_poll (every 5 min) ---
-            if await settings_mgr.is_task_enabled("infocasas_poll"):
-                scheduler.add_interval_task(
-                    "infocasas_poll",
-                    run_infocasas_poll,
-                    minutes=5,
-                )
-                logger.info("Task registered: infocasas_poll (interval 5m)")
-            else:
-                logger.info("Task skipped (disabled): infocasas_poll")
 
             # followup_sender se fue con el bot: mandaba plantillas de
             # seguimiento solo, a las 10:00. Onnix manda las plantillas a mano
@@ -126,17 +114,6 @@ async def scheduler_lifespan(app: FastAPI):
             else:
                 logger.info("Task skipped (disabled): cleanup_inactive_refs")
 
-            # --- Register verification_scraper (12:00 PYT) ---
-            if await settings_mgr.is_task_enabled("verification_scraper"):
-                scheduler.add_cron_task(
-                    "verification_scraper",
-                    run_verification_scraper,
-                    hour=12,
-                    minute=0,
-                )
-                logger.info("Task registered: verification_scraper (cron 12:00 PYT)")
-            else:
-                logger.info("Task skipped (disabled): verification_scraper")
 
             scheduler.start()
             app.state.scheduler = scheduler
