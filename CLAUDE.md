@@ -54,14 +54,26 @@ Lo que quedó de `app/bot/` NO le habla a nadie:
 
 | Módulo | Para qué sigue |
 |---|---|
-| `channels/` | transporte de salida — lo usa el envío manual del panel |
-| `webhooks/` | entrada de mensajes |
+| `channels/` | transporte de salida — hoy solo Twilio, lo usa el envío manual del panel |
+| `webhooks/` | entrada de mensajes: Twilio en `whatsapp.py`, Meta en `meta.py` |
 | `panel/app/bot/core/conversation.py` | `persist_inbound` + resolver contacto/conversación |
 
 `app/bot/search/` y los dos clientes de LLM se fueron después, con el vertical
 inmobiliario: existían para buscar en el catálogo.
 
 `BOT_ENABLED` quedó sin lectores y se sacó de los compose: no apagaba nada.
+
+El 2026-09-09 se fue el resto: la pantalla «Salud del Bot» y Stats, la pestaña
+«Configuración del Bot» con sus cinco toggles y `settings_service` entero, el
+switch por conversación, el toggle global auto/manual, el auto-apagado por
+errores y `bot_gate.py`. Y **Telegram entero**, que además de canal era el
+transporte de todos los avisos de ops — se cortó aviso por aviso mirando qué
+quedaba de valor sin el mensajero: `heartbeat` murió (no le quedaba salida),
+`daily_report` y `cold_lead_check` siguen sin su mitad de Telegram, y el
+bloqueo por intentos fallidos ahora se lee en Configuración > Accesos.
+
+`conversations.is_bot_active` sigue en la base y nadie la lee, igual que
+`contacts.property_id`: sacar una columna del baseline rompe la cadena.
 
 Definidas en los módulos de tool-use:
 
@@ -82,18 +94,24 @@ Definidas en los módulos de tool-use:
 
 ## Lo que falta
 
-1. **Los tres canales, directo a Meta.** Hoy hay WhatsApp por **Twilio** y
-   Telegram. Van los tres por la Graph API de Meta, que comparten el mismo
-   handshake (`hub.mode` / `hub.verify_token` / `hub.challenge`), la misma
-   firma `X-Hub-Signature-256` con el app secret, y el mismo token de System
-   User. Lo único que cambia es el `object` del payload:
-   `whatsapp_business_account`, `page` (Messenger) o `instagram`.
-   Por eso va **un solo** `/webhooks/meta` que despacha por `object`, y no tres.
-   La abstracción ya existe: `panel/app/bot/channels/base.py` define
-   `BaseSender`, `panel/app/bot/webhooks/router.py` compone los sub-routers.
-   Falta además una migración que extienda el CHECK de `conversations.channel`
-   (hoy `whatsapp | web | manual | telegram`, fijado en
-   `panel/alembic/versions/003_add_telegram_channel.py`).
+1. **La SALIDA por Meta.** La entrada ya está: `panel/app/bot/webhooks/meta.py`
+   es **un solo** `/webhooks/meta` que valida el handshake
+   (`hub.mode` / `hub.verify_token` / `hub.challenge`) y la firma
+   `X-Hub-Signature-256` sobre el cuerpo crudo, y despacha por el `object` del
+   payload: `instagram` o `page` (Messenger). El mensaje se persiste y el SSE
+   lo empuja a la bandeja.
+
+   Lo que NO existe todavía es el envío. Hoy contestar un hilo de Instagram o
+   Messenger levanta un error explícito en `reply_service` —el corte está
+   ARRIBA de la validación de teléfono a propósito, porque estos contactos no
+   traen número— para que una respuesta escrita en un hilo de Instagram no
+   termine saliendo por WhatsApp. Cuando se implemente, el sender va detrás de
+   `BaseSender` (`panel/app/bot/channels/base.py`) y el `if` vuelve a
+   `reply_service`, no a la ruta.
+
+   **WhatsApp sigue por Twilio.** Cuando migre, entra por el mismo `_DESPACHO`
+   de `meta.py` con `whatsapp_business_account` y no por un endpoint nuevo.
+
 2. **Panel de plantillas.** Hoy las plantillas son una lista de claves
    **hardcodeada en Python** (`panel/app/schemas/template.py`), cada una
    apuntando a un ContentSid de Twilio guardado en `bot_settings`. Crear una
@@ -107,12 +125,14 @@ Definidas en los módulos de tool-use:
    levantar nada**, no están verificados contra un servidor real. Para probar
    webhooks en la laptop va un túnel (`cloudflared tunnel --url
    http://localhost:8010`); Meta exige HTTPS público.
-4. **Limpieza de UI del bot**: la pantalla «Salud del Bot», los toggles de bot
-   en Configuración y las métricas de IA siguen ahí y ya no miden nada.
-5. **Residuo cosmético del bot**: el estado `bot_replied` de `contacts` sigue
-   apareciendo como «Bot respondió» en el funnel y en los filtros de leads, y
-   un hilo puede decir «Bot en pausa». Son valores de la columna `status`, así
-   que renombrarlos es una migración con datos, no un cambio de plantilla.
+4. **Residuo del bot en los DATOS.** El estado `bot_replied` de `contacts` sigue
+   apareciendo como «Bot respondió» en el funnel y en los filtros de leads. Es
+   un valor de la columna `status` con un CHECK constraint encima, así que
+   renombrarlo es una migración **con datos**, no un cambio de plantilla — por
+   eso quedó afuera de la limpieza del 2026-09-09, que sí se llevó toda la UI.
+5. **El nombre de los contactos de Meta.** El webhook no manda el nombre: hay
+   que pedirlo a la Graph API. Hasta entonces el hilo se muestra como
+   «Desconocido» y una persona le pone nombre desde el panel.
 
 ## Marca
 
@@ -186,7 +206,18 @@ Staging hereda el `.env` de producción. Sin overrides usa credenciales reales y
 
 - `pytest` para TODA lógica nueva. Test primero.
 - **VERDE = pytest corrido de verdad, con la salida a la vista.**
-- La base de test se arma con `scripts/make_test_db.sh` (`pg_dump --schema-only`
+- La suite corre desde el HOST, no adentro del contenedor: `conftest.py` usa
+`docker exec onnix-postgres psql`. Con el compose local va:
+
+```
+cd panel && export POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5436
+.venv/bin/python -m pytest -q
+```
+
+El `5436` es el mapeo al host de `docker-compose.local.yml` — adentro de la red
+de compose el puerto es el de siempre.
+
+La base de test se arma con `scripts/make_test_db.sh` (`pg_dump --schema-only`
   + `scripts/seed_test.sql`). La cadena de Alembic **no** crea la base desde
   cero: `scripts/schema.sql` ya trae el estado post-004 adentro.
 
@@ -228,10 +259,28 @@ assertar.
 
 `contacts`: `new → bot_replied → agent_replied → interested → closed`, más
 `no_response | discarded | deleted | visit_scheduled`. `contacted` y
-`negotiation` están **prohibidos por CHECK constraint**. Alembic va hasta `046`.
+`negotiation` están **prohibidos por CHECK constraint**. Alembic va hasta `047`.
+
+`conversations.channel`: `whatsapp | web | manual | instagram | messenger`, fijado
+en `panel/alembic/versions/047_meta_channels.py`. El vocabulario del panel vive
+en `CANALES` (`panel/app/constants.py`) y son los tres que se pueden filtrar —
+`web` y `manual` existen en la base pero no son canales de entrada. **Un canal
+nuevo entra por los dos lados o la fila no entra.**
 
 ## Trampas conocidas
 
+- **La cookie `Secure` no viaja por http, y Chrome miente sobre eso.** Safari y
+  Firefox descartan una cookie `Secure` servida por http —también en
+  localhost—; Chrome la acepta. Sin la cookie `csrf_token` el doble-submit no
+  tiene contra qué comparar y **todo POST muere en 403**, login incluido, con
+  «La sesión expiró o el formulario no es válido». Por eso el flag sale de
+  `COOKIE_SECURE` (default `true`) y no de un `if pytest`: esa rama dejaba sin
+  cubrir exactamente un entorno, http fuera de pytest, o sea la laptop.
+- **`/webhooks/meta` es plural y la exención de CSRF era singular.** El
+  middleware eximía `/webhook/`, así que el POST de Meta moría en 403 ANTES de
+  llegar a verificar su firma. La lista está en `_PREFIJOS_EXENTOS`
+  (`panel/app/utils/csrf.py`) con los prefijos enteros: un
+  `startswith("/webhook")` pelado también eximiría `/webhookcualquiera`.
 - **`TWILIO_WHATSAPP_NUMBER` va CON el prefijo `whatsapp:`.** Un `+595…` pelado
   pisa el default correcto y Twilio rechaza **todo** mensaje saliente, en
   silencio.
