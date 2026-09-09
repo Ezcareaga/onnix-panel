@@ -84,30 +84,34 @@ class ReplyService:
         if not conv:
             raise ValueError("Conversacion no encontrada")
 
-        # 2. Load contact and validate
-        contact = await contact_repo.get_by_id(db, conv.contact_id)
-        if not contact or not contact.phone:
-            raise ValueError("Contacto sin telefono")
-        if contact.status == "discarded" or contact.baja_at is not None:
-            raise ValueError("Contacto opt-out / descartado - no se puede contactar")
-
-        # 3. Determine channel first (needed for window check)
+        # 2. El canal primero, porque decide si hay algo que validar.
         channel = conv.channel or conv.platform or "whatsapp"
 
-        # 4. Check 24h WhatsApp session window — BLOCK if expired (WhatsApp only)
-        warning = None
         # Instagram y Messenger entran por `/webhooks/meta` pero todavia no
         # tienen salida. Sin este corte la respuesta caeria en el envio por
-        # Twilio de abajo y saldria por WHATSAPP al telefono del contacto: un
-        # mensaje escrito para un hilo de Instagram, entregado por otro canal
-        # y a un numero que el cliente quiza nunca dio. Falla ruidoso y a
-        # tiempo en vez de mandar mal.
+        # Twilio de mas abajo y saldria por WHATSAPP al telefono del contacto:
+        # un mensaje escrito para un hilo de Instagram, entregado por otro
+        # canal y a un numero que el cliente quiza nunca dio.
+        #
+        # Va ARRIBA de la validacion de telefono a proposito. Un contacto de
+        # Instagram normalmente no tiene telefono —Meta no lo manda—, asi que
+        # abajo lo frenaba «Contacto sin telefono», que es cierto y no explica
+        # nada: el asesor leia que falta un dato, no que el canal no envia.
         if channel in _CANALES_SIN_SALIDA:
             raise ValueError(
                 f"Todavia no se puede responder por {channel.capitalize()} desde el "
                 "panel: el canal recibe mensajes pero no los envia."
             )
 
+        # 3. Load contact and validate
+        contact = await contact_repo.get_by_id(db, conv.contact_id)
+        if not contact or not contact.phone:
+            raise ValueError("Contacto sin telefono")
+        if contact.status == "discarded" or contact.baja_at is not None:
+            raise ValueError("Contacto opt-out / descartado - no se puede contactar")
+
+        # 4. Check 24h WhatsApp session window — BLOCK if expired (WhatsApp only)
+        warning = None
         if channel == "whatsapp":
             # Always use max of cached field and actual messages — field may be stale (N8N era)
             last_inbound_ts = await message_repo.get_last_inbound_at(db, conv.contact_id)

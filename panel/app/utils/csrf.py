@@ -19,6 +19,9 @@ import secrets
 # HTTP methods that do NOT mutate state — safe to skip CSRF validation.
 _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 
+# Prefijos de ruta exentos de CSRF. Ver `csrf_token_valid`.
+_PREFIJOS_EXENTOS: tuple[str, ...] = ("/webhook/", "/webhooks/")
+
 
 def generate_csrf_token() -> str:
     """Return a URL-safe random token suitable for use as a CSRF cookie value.
@@ -40,7 +43,8 @@ def csrf_token_valid(
 
     Returns True (request is safe / passes CSRF check) when:
       - Method is safe (GET, HEAD, OPTIONS, TRACE), OR
-      - Path starts with /webhook/ (exempt — they use Twilio HMAC auth), OR
+      - Path starts with /webhook/ o /webhooks/ (exentos — se autentican
+        con su propia firma), OR
       - cookie_token is non-empty AND equals either header_token or form_token
         (checked via secrets.compare_digest for constant-time safety).
 
@@ -60,8 +64,15 @@ def csrf_token_valid(
     if method.upper() in _SAFE_METHODS:
         return True
 
-    # Webhooks are exempt — they validate via Twilio HMAC or similar.
-    if path.startswith("/webhook/"):
+    # Webhooks are exempt — no traen sesion ni cookie: se autentican con su
+    # propia firma (HMAC de Twilio, X-Hub-Signature-256 de Meta).
+    #
+    # Son DOS prefijos y no uno: los de Twilio cuelgan de `/webhook/` y el de
+    # Meta de `/webhooks/meta`. Con solo `/webhook/`, el POST de Meta no
+    # matchea —`/webhooks/` no empieza con `/webhook/`— y muere en el 403 de
+    # CSRF antes de llegar a verificar su firma. Se listan enteros a proposito:
+    # un `startswith("/webhook")` pelado tambien eximiria `/webhookcualquiera`.
+    if path.startswith(_PREFIJOS_EXENTOS):
         return True
 
     # Normalise: treat None as empty string.

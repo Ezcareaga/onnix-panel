@@ -492,11 +492,14 @@ class TestSendReply:
         from app.models.conversation import Conversation
         from datetime import datetime, timezone
 
-        telefono = "+5959818880" + ("13" if canal == "instagram" else "14")
+        # SIN telefono, que es como llegan de verdad: Meta manda un id opaco
+        # y nunca un numero. Antes el guard estaba debajo de la validacion de
+        # telefono y este caso moria con «Contacto sin telefono», un mensaje
+        # cierto que no explica nada.
         c = Contact(
             name=f"Meta {canal}",
-            phone=telefono,
-            phone_normalized=telefono,
+            phone=None,
+            phone_normalized=None,
             source=canal,
             status="new",
             last_user_message_at=datetime.now(timezone.utc),

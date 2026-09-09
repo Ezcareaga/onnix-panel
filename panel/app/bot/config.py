@@ -37,6 +37,14 @@ class BotSettings(Settings):
         "TWILIO_STATUS_CALLBACK_URL", ""
     )
 
+    # --- Meta (Instagram + Messenger) ---
+    # `META_APP_SECRET` firma cada webhook entrante (HMAC-SHA256 sobre el cuerpo
+    # crudo) y es fail-closed en produccion, igual que el de Twilio.
+    # `META_VERIFY_TOKEN` es el string que se compara contra `hub.verify_token`
+    # en el handshake; lo elige uno y se copia en el App Dashboard.
+    META_APP_SECRET: str = os.environ.get("META_APP_SECRET", "")
+    META_VERIFY_TOKEN: str = os.environ.get("META_VERIFY_TOKEN", "")
+
     # --- Geographic data ---
     GEO_DATA_PATH: str = os.environ.get(
         "GEO_DATA_PATH", "/app/data/geografia"

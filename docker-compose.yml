@@ -119,6 +119,12 @@ services:
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
       - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
       - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER}
+      # Meta: firma y handshake del webhook unico de Instagram + Messenger.
+      # Van explicitas y no solo por env_file para que `test_env_example.py`
+      # las vea: ese test compara .env.example contra ESTE archivo, que es el
+      # que rompe el arranque cuando falta algo.
+      - META_APP_SECRET=${META_APP_SECRET}
+      - META_VERIFY_TOKEN=${META_VERIFY_TOKEN}
       # Producción: activa fail-closed de verificación de firma de webhooks (E3).
       # Staging usa ENVIRONMENT=development en docker-compose.dev.yml.
       # NOTA: TRUST_PROXY_HEADERS (C1, IP real tras Cloudflare) NO se setea aquí a

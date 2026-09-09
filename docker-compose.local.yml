@@ -64,6 +64,12 @@ services:
       # Los guardas de salida. Con estos en false nada de lo que corre local
       # puede escribirle a una persona real.
       - WA_SEND_ENABLED=false
+      # Meta: valores de juguete, NO los de la app real. Con el app secret de
+      # produccion puesto, esta base aceptaria webhooks de gente de verdad.
+      # Con estos, el handshake y la firma se pueden probar de punta a punta
+      # contra un tunel sin tocar nada real.
+      - META_APP_SECRET=local-app-secret-de-juguete
+      - META_VERIFY_TOKEN=local-verify-token-de-juguete
       - INFOCASAS_POLL_ENABLED=false
     volumes:
       - ./data/geografia:/app/data/geografia:ro

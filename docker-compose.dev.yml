@@ -29,6 +29,11 @@ services:
       - INFOCASAS_POLL_ENABLED=false
       # Guard en WhatsAppSender.send() — staging NUNCA envía WA real (incidente 2026-04-04 class)
       - WA_SEND_ENABLED=false
+      # Meta: vacias a proposito. Con el app secret de produccion puesto,
+      # este entorno ACEPTARIA webhooks reales y guardaria conversaciones
+      # de gente de verdad en su base. Vacio = el webhook los rechaza.
+      - META_APP_SECRET=
+      - META_VERIFY_TOKEN=
       - TWILIO_STATUS_CALLBACK_URL=https://dev.onnix.com.py/webhook/whatsapp/status
     volumes:
       - ./data/geografia:/app/data/geografia:ro
