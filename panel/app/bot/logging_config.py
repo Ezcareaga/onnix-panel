@@ -7,8 +7,6 @@ Logger namespaces (shown in log output):
     bot.webhook     — inbound requests, webhook parsing
     bot.middleware   — rate limit, idempotency, cooldown, error handler
     bot.orchestrator — message flow, contact/conversation resolution
-    bot.ai           — LLM calls (Claude, Gemini), circuit breaker
-    bot.search       — property search, filters, vector, relaxation
     bot.sender       — outbound messages (Twilio, Telegram API)
     bot.scheduler    — cron tasks, heartbeat, cold lead check
     bot.db           — slow queries (>1s), connection errors
@@ -27,8 +25,6 @@ _MODULE_ALIASES: dict[str, str] = {
     "app.bot.middleware.injection_guard": "bot.guard",
     "app.bot.middleware": "bot.middleware",
     "app.bot.core.conversation": "bot.orchestrator",
-    "app.bot.ai": "bot.ai",
-    "app.bot.search": "bot.search",
     "app.bot.channels": "bot.sender",
     "app.bot.scheduler": "bot.scheduler",
     "app.bot.db": "bot.db",
