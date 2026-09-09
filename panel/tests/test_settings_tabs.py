@@ -1,9 +1,11 @@
-"""Tests for /settings 4-tab shell (items 3-6).
+"""Tests for /settings 3-tab shell.
+
+La pestaña «Configuración del Bot» se fue con el bot: no quedaba nada que
+configurar, solo cinco interruptores de un motor que ya no corre.
 
 Verifies:
-  - Tab shell renders with all four tab buttons (admin)
+  - Tab shell renders with all three tab buttons (admin)
   - Tab keys appear in URL param pattern
-  - Bot tab: contains settings_form content
   - Accesos tab: contains auth-audit filter form (admin only)
   - Usuarios tab: contains users table + "Crear usuario" button (admin only)
   - Mi Cuenta tab: contains password change form (all roles)
@@ -13,11 +15,11 @@ import pytest
 
 
 class TestSettingsTabShell:
-    async def test_admin_sees_all_four_tabs(self, admin_client):
+    async def test_admin_sees_all_three_tabs(self, admin_client):
         resp = await admin_client.get("/settings")
         assert resp.status_code == 200
         body = resp.text
-        assert "Configuración del Bot" in body
+        assert "Configuración del Bot" not in body
         assert "Accesos" in body
         assert "Usuarios" in body
         assert "Mi Cuenta" in body
@@ -25,15 +27,16 @@ class TestSettingsTabShell:
     async def test_tab_keys_present_in_template(self, admin_client):
         resp = await admin_client.get("/settings")
         body = resp.text
-        for tab_key in ("bot", "accesos", "usuarios", "mi-cuenta"):
+        for tab_key in ("accesos", "usuarios", "mi-cuenta"):
             assert tab_key in body, f"tab key '{tab_key}' not found in settings template"
 
-    async def test_bot_tab_contains_settings_form(self, admin_client):
+    async def test_no_queda_rastro_del_tab_del_bot(self, admin_client):
+        """Ni el boton, ni el contenido, ni la ruta que lo respaldaba."""
         resp = await admin_client.get("/settings")
         body = resp.text
-        # settings_form.html has bot toggle
-        assert "bot-toggle" in body
-        assert "Estado del Bot" in body
+        assert "bot-toggle" not in body
+        assert "Estado del Bot" not in body
+        assert "bot-default-mode" not in body
 
     async def test_accesos_tab_contains_audit_filter_form(self, admin_client):
         resp = await admin_client.get("/settings?tab=accesos")
@@ -152,40 +155,32 @@ class TestAgentSettingsAccess:
         assert "/me/password" in body
 
     async def test_agent_cannot_see_admin_tabs_in_settings(self, agent_client):
-        """Agent ve Mi Cuenta tab pero NO ve Configuración del Bot / Accesos / Usuarios en el tab-bar."""
+        """Agent ve Mi Cuenta tab pero NO ve Accesos / Usuarios en el tab-bar."""
         resp = await agent_client.get("/settings")
         assert resp.status_code == 200
         body = resp.text
         assert "Mi Cuenta" in body
         # Admin-only tab labels must not appear as tab buttons for agents
-        assert "Configuración del Bot" not in body
         assert "Accesos" not in body
         assert "Usuarios" not in body
 
     async def test_admin_still_sees_all_tabs(self, admin_client):
-        """Admin ve los 4 tabs en el tab-bar."""
+        """Admin ve los 3 tabs en el tab-bar."""
         resp = await admin_client.get("/settings")
         assert resp.status_code == 200
         body = resp.text
-        assert "Configuración del Bot" in body
         assert "Accesos" in body
         assert "Usuarios" in body
         assert "Mi Cuenta" in body
 
-    async def test_settings_post_toggles_still_admin_only(self, agent_client):
-        """POST /settings/bot-toggle como agente → 403."""
-        resp = await agent_client.post("/settings/bot-toggle")
-        assert resp.status_code == 403
 
+class TestElTabDelBotNoVuelve:
+    """El guard de rol del tab `bot` se volvio innecesario: no hay tab.
 
-class TestBotTabContentIsAdminOnly:
-    """A3 — el tab `bot` no tenia el guard `{% if user.role == 'admin' %}`.
-
-    El tab-bar sí lo ocultaba, pero el `<div>` con settings_form.html se
-    renderizaba igual: cualquier asesor recibia los cinco toggles y la tabla
-    de settings en el HTML, y los veia entrando por /settings?tab=bot. Los
-    POST estan protegidos con require_admin, asi que no podia cambiar nada,
-    pero leia la configuracion del bot entera.
+    Antes el `<div>` con settings_form.html se renderizaba sin
+    `{% if user.role == 'admin' %}`, asi que cualquier asesor recibia los
+    cinco toggles en el HTML entrando por /settings?tab=bot. Ahora la
+    respuesta correcta para los tres roles es la misma: nada.
     """
 
     _MARCAS = (
@@ -197,21 +192,14 @@ class TestBotTabContentIsAdminOnly:
     )
 
     @pytest.mark.parametrize("marca", _MARCAS)
-    async def test_agent_no_recibe_el_form_del_bot(self, agent_client, marca):
-        resp = await agent_client.get("/settings?tab=bot")
-        assert resp.status_code == 200
-        assert marca not in resp.text, (
-            f"{marca!r} llega al HTML de un asesor: el tab bot se renderiza sin guard"
-        )
-
-    @pytest.mark.parametrize("marca", _MARCAS)
-    async def test_user_no_recibe_el_form_del_bot(self, user_client, marca):
-        resp = await user_client.get("/settings?tab=bot")
-        assert resp.status_code == 200
-        assert marca not in resp.text
-
-    async def test_admin_si_recibe_el_form_del_bot(self, admin_client):
-        resp = await admin_client.get("/settings?tab=bot")
-        assert resp.status_code == 200
-        for marca in self._MARCAS:
-            assert marca in resp.text, f"{marca!r} desaparecio para la admin"
+    async def test_ningun_rol_recibe_el_form_del_bot(
+        self, admin_client, agent_client, user_client, marca,
+    ):
+        for nombre, cliente in (
+            ("admin", admin_client), ("agent", agent_client), ("user", user_client),
+        ):
+            resp = await cliente.get("/settings?tab=bot")
+            assert resp.status_code == 200
+            assert marca not in resp.text, (
+                f"{marca!r} volvio al HTML de {nombre}"
+            )

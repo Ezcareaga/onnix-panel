@@ -1,8 +1,9 @@
-"""El dashboard y los stats son de la administradora, no del asesor.
+"""El dashboard es de la administradora, no del asesor.
 
 Decision de Ez del 2026-08-23. El asesor trabaja su cola —Conversaciones,
-Leads, Propiedades, Contactos— y los numeros del negocio no le dicen nada que
-pueda accionar.
+Leads, Base de Clientes— y los numeros del negocio no le dicen nada que
+pueda accionar. `/stats` y `/stats/health` estaban en esta lista y se fueron
+con la pantalla; queda el dashboard, que es el mismo criterio.
 
 **Lo que hace que esto sea mas que esconder un link:** el login mandaba a TODOS
 a `/dashboard`. Cerrar la ruta sin tocar el redirect le pone un 403 al asesor
@@ -17,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-RUTAS_SOLO_ADMIN = ["/dashboard", "/stats", "/stats/health"]
+RUTAS_SOLO_ADMIN = ["/dashboard"]
 
 
 class TestLasRutasEstanCerradas:

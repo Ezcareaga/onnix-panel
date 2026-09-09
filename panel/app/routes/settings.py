@@ -2,13 +2,12 @@ import logging
 from datetime import date, datetime, time, timedelta, timezone
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Request, Depends, Form, Query
+from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.dependencies import require_admin, get_current_user
-from app.services.settings_service import settings_service
+from app.dependencies import get_current_user
 from app.services.user_management_service import user_management_service
 from app.services import lockout_service
 from app.models.user import User
@@ -177,11 +176,8 @@ async def settings_page(
     if user_active == "0":
         show_active = None  # show all (active + inactive)
 
-    # Admin-only context: skip expensive queries for non-admin users. La
-    # configuracion del bot tambien sale de aca: el template la muestra solo
-    # para admin, y armarla igual la mandaba al HTML de cualquier rol.
+    # Admin-only context: skip expensive queries for non-admin users.
     if user.role == "admin":
-        data = await settings_service.get_all_settings(db)
         audit_ctx = await _get_audit_context(db, email, ip, date_from, date_to, page)
         users_list = await _get_users(db, search=user_search, role=user_role, active=show_active)
         user_filters = {
@@ -190,7 +186,6 @@ async def settings_page(
             "active": show_active is not None,
         }
     else:
-        data = {}
         audit_ctx = {
             "rows": [], "total": 0, "page": 1, "per_page": _AUDIT_PER_PAGE,
             "filters": {"email": None, "ip": None, "date_from": None, "date_to": None},
@@ -204,7 +199,6 @@ async def settings_page(
     context = {
         "request": request,
         "user": user,
-        **data,
         **audit_ctx,
         # Pass users list for usuarios tab
         "users": users_list,
@@ -214,144 +208,3 @@ async def settings_page(
         "audit_base_url": "/settings",
     }
     return templates.TemplateResponse("settings.html", context)
-
-@router.post("/settings/bot-toggle")
-async def bot_toggle(request: Request, user: User = Depends(require_admin),
-                     db: AsyncSession = Depends(get_db)):
-    new_state = await settings_service.toggle_bot(db, user.id)
-    logger.info("Setting updated: key=bot_enabled value=%s user=%s", new_state, user.email)
-    try:
-        from app.services.event_bus import event_bus as _event_bus
-        await _event_bus.publish("settings.changed", {
-            "key": "bot_enabled",
-            "value": str(new_state).lower(),
-            "user_id": user.id,
-            "user_name": user.name or user.email,
-        })
-    except Exception:
-        pass
-    data = await settings_service.get_all_settings(db)
-    data["bot_enabled"] = new_state  # use fresh toggle state
-    return templates.TemplateResponse("partials/settings_form.html", {
-        "request": request, "user": user, **data,
-    })
-
-@router.post("/settings/bot-default-mode")
-async def set_bot_default_mode(request: Request, mode: str = Form(...),
-                               user: User = Depends(require_admin),
-                               db: AsyncSession = Depends(get_db)):
-    try:
-        new_mode = await settings_service.set_bot_default_mode(db, mode, user.id)
-    except ValueError as exc:
-        return HTMLResponse(
-            f'<div class="text-red-600 text-sm">{exc}</div>',
-            status_code=422,
-        )
-    logger.info("Setting updated: key=bot_default_mode value=%s user=%s", new_mode, user.email)
-    try:
-        from app.services.event_bus import event_bus as _event_bus
-        await _event_bus.publish("settings.changed", {
-            "key": "bot_default_mode",
-            "value": new_mode,
-            "user_id": user.id,
-            "user_name": user.name or user.email,
-        })
-    except Exception:
-        pass
-    data = await settings_service.get_all_settings(db)
-    return templates.TemplateResponse("partials/settings_form.html", {
-        "request": request, "user": user, **data,
-    })
-
-@router.post("/settings/ic-autoreply-toggle")
-async def ic_autoreply_toggle(request: Request, user: User = Depends(require_admin),
-                              db: AsyncSession = Depends(get_db)):
-    new_state = await settings_service.toggle_ic_autoreply(db, user.id)
-    logger.info("Setting updated: key=ic_autoreply_enabled value=%s user=%s", new_state, user.email)
-    try:
-        from app.services.event_bus import event_bus as _event_bus
-        await _event_bus.publish("settings.changed", {
-            "key": "ic_autoreply_enabled",
-            "value": str(new_state).lower(),
-            "user_id": user.id,
-            "user_name": user.name or user.email,
-        })
-    except Exception:
-        pass
-    data = await settings_service.get_all_settings(db)
-    data["ic_autoreply_enabled"] = new_state
-    return templates.TemplateResponse("partials/settings_form.html", {
-        "request": request, "user": user, **data,
-    })
-
-@router.post("/settings/followup-toggle")
-async def followup_toggle(request: Request, user: User = Depends(require_admin),
-                          db: AsyncSession = Depends(get_db)):
-    new_state = await settings_service.toggle_followup_sender(db, user.id)
-    logger.info("Setting updated: key=scheduler_followup_sender_enabled value=%s user=%s", new_state, user.email)
-    try:
-        from app.services.event_bus import event_bus as _event_bus
-        await _event_bus.publish("settings.changed", {
-            "key": "followup_enabled",
-            "value": str(new_state).lower(),
-            "user_id": user.id,
-            "user_name": user.name or user.email,
-        })
-    except Exception:
-        pass
-    data = await settings_service.get_all_settings(db)
-    data["followup_enabled"] = new_state
-    return templates.TemplateResponse("partials/settings_form.html", {
-        "request": request, "user": user, **data,
-    })
-
-@router.post("/settings/ic-reenviados-toggle")
-async def ic_reenviados_toggle(request: Request, user: User = Depends(require_admin),
-                               db: AsyncSession = Depends(get_db)):
-    new_state = await settings_service.toggle_ic_reenviados(db, user.id)
-    logger.info("Setting updated: key=ic_autoreply_reenviados_enabled value=%s user=%s", new_state, user.email)
-    try:
-        from app.services.event_bus import event_bus as _event_bus
-        await _event_bus.publish("settings.changed", {
-            "key": "ic_reenviados_enabled",
-            "value": str(new_state).lower(),
-            "user_id": user.id,
-            "user_name": user.name or user.email,
-        })
-    except Exception:
-        pass
-    data = await settings_service.get_all_settings(db)
-    data["ic_reenviados_enabled"] = new_state
-    return templates.TemplateResponse("partials/settings_form.html", {
-        "request": request, "user": user, **data,
-    })
-
-@router.post("/settings/update")
-async def update_setting(request: Request,
-                         key: str = Form(""),
-                         value: str = Form(""),
-                         user: User = Depends(require_admin),
-                         db: AsyncSession = Depends(get_db)):
-    if key and value is not None:
-        try:
-            await settings_service.update_setting(db, key, value, user.id)
-            logger.info("Setting updated: key=%s user=%s", key, user.email)
-        except ValueError as exc:
-            return HTMLResponse(
-                f'<div class="text-red-600 text-sm">{exc}</div>',
-                status_code=422,
-            )
-        try:
-            from app.services.event_bus import event_bus as _event_bus
-            await _event_bus.publish("settings.changed", {
-                "key": key,
-                "value": value,
-                "user_id": user.id,
-                "user_name": user.name or user.email,
-            })
-        except Exception:
-            pass
-    data = await settings_service.get_all_settings(db)
-    return templates.TemplateResponse("partials/settings_form.html", {
-        "request": request, "user": user, **data,
-    })

@@ -102,8 +102,9 @@ def test_todo_el_texto_del_menu_llega_al_piso():
 def test_los_items_llegan_a_44px():
     """py-3 (12px arriba y abajo) sobre una linea de text-sm (20px) = 44px."""
     assert "py-2.5" not in _SIDEBAR, "los items del menu volvieron a 40px"
-    # 9 desde que el menu lista Tutoriales (era 8).
-    assert _SIDEBAR.count("px-4 py-3 text-gray-400") == 6
+    # 5: Dashboard, Conversaciones, Leads, Base de Clientes, Configuración.
+    # El numero es exacto a proposito — un `>=` no ve una eliminacion.
+    assert _SIDEBAR.count("px-4 py-3 text-gray-400") == 5
 
 
 def test_el_boton_de_cerrar_no_queda_debajo_de_la_topbar():
@@ -114,5 +115,5 @@ def test_el_boton_de_cerrar_no_queda_debajo_de_la_topbar():
 
 def test_el_menu_anuncia_donde_estas():
     """No se pierde lo que ya arreglo 93acceb."""
-    # 9 desde que el menu lista Tutoriales (era 8).
-    assert _SIDEBAR.count('aria-current="page"') == 6
+    # 5, uno por item del menu. Ver el comentario de arriba.
+    assert _SIDEBAR.count('aria-current="page"') == 5

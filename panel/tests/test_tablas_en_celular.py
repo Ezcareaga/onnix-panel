@@ -112,7 +112,6 @@ _TABLAS_REACOMODADAS = [
     ("contacts.html", "contacts.html"),
     ("settings.html", "partials/user_row.html"),
     ("partials/auth_audit_table.html", "partials/auth_audit_table.html"),
-    ("partials/settings_form.html", "partials/settings_form.html"),
 ]
 
 

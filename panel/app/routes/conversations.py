@@ -11,7 +11,6 @@ from app.dependencies import get_current_user
 from app.services.authz_service import ensure_contact_access, ensure_conversation_access
 from app.services.conversation_service import conversation_service
 from app.services.reply_service import reply_service
-from app.services.settings_service import settings_service
 from app.services.template_service import template_service
 from app.schemas.template import SendTemplateRequest
 from app.models.user import User
@@ -36,15 +35,12 @@ async def conversations_page(request: Request, stuck: str | None = None,
     conversations = await conversation_service.get_conversations(
         db, agent_filter=agent_filter, stuck=solo_trabadas,
     )
-    settings = await settings_service.get_all_settings(db)
-    whatsapp_mode = settings["whatsapp_mode"]
     context = {
         "request": request,
         "user": user,
         "conversations": conversations,
         "selected_id": None,
         "thread": None,
-        "whatsapp_mode": whatsapp_mode,
         "phone_prefixes": PREFIXES,
         "channel": "",
         "stuck": solo_trabadas,
@@ -203,8 +199,6 @@ async def conversation_detail(conv_id: int, request: Request,
     agent_filter = user.id if user.role == "agent" else None
     conversations = await conversation_service.get_conversations(db, agent_filter=agent_filter)
     thread = await conversation_service.get_thread(db, conv_id)
-    settings = await settings_service.get_all_settings(db)
-    whatsapp_mode = settings["whatsapp_mode"]
 
     context = {
         "request": request,
@@ -212,7 +206,6 @@ async def conversation_detail(conv_id: int, request: Request,
         "conversations": conversations,
         "selected_id": conv_id,
         "thread": thread,
-        "whatsapp_mode": whatsapp_mode,
         "phone_prefixes": PREFIXES,
         "channel": "",
         "q": "",
@@ -227,57 +220,6 @@ async def conversation_detail(conv_id: int, request: Request,
         })
 
     return templates.TemplateResponse("conversations.html", context)
-
-
-@router.post("/conversations/wa-mode-toggle", response_class=HTMLResponse)
-async def conversations_wa_mode_toggle(request: Request,
-                                        user: User = Depends(get_current_user),
-                                        db: AsyncSession = Depends(get_db)):
-    new_mode = await settings_service.toggle_whatsapp_mode(db, user.id)
-    is_auto = new_mode == "auto"
-    return templates.TemplateResponse("partials/wa_mode_toggle.html", {
-        "request": request, "is_auto": is_auto,
-    })
-
-@router.post("/conversations/{conv_id}/bot-toggle", response_class=HTMLResponse)
-async def conversation_bot_toggle(
-    conv_id: int,
-    request: Request,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Toggle is_bot_active for a conversation and log an audit event."""
-    # feat(authz): agent ownership check (ROLE-agent-write)
-    await ensure_conversation_access(db, user, conv_id)
-    result = await conversation_service.toggle_bot_active(db, conv_id)
-    if result is None:
-        return HTMLResponse(status_code=404)
-    new_val, contact_id = result
-    await lead_event_repo.create(
-        db=db,
-        contact_id=contact_id,
-        event_type="bot_toggle",
-        old_status=None,
-        new_status=None,
-        triggered_by=f"user:{user.id}",
-        metadata={"conversation_id": conv_id, "is_bot_active": new_val},
-    )
-    await db.commit()
-    try:
-        from app.services.event_bus import event_bus as _event_bus
-        await _event_bus.publish("conversation.bot_toggled", {
-            "conversation_id": conv_id,
-            "is_bot_active": new_val,
-            "user_id": user.id,
-            "user_name": user.name or user.email,
-        })
-        await _event_bus.publish("conversation_update", {"conversation_id": conv_id})
-    except Exception:
-        pass  # SSE is best-effort
-    return templates.TemplateResponse(
-        "partials/conversation_bot_toggle.html",
-        {"request": request, "conv_id": conv_id, "is_bot_active": new_val},
-    )
 
 
 @router.get("/conversations/{conv_id}/messages", response_class=HTMLResponse)

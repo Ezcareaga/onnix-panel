@@ -38,12 +38,10 @@ _COMENT_HTML = re.compile(r"<!--.*?-->", re.S)
 _CON_ESTADO_VACIO = [
     "contacts.html",
     "contacts_detail.html",
-    "stats.html",
     "partials/leads_table.html",
     "partials/visits_block.html",
     "partials/crm_followup.html",
     "partials/conversation_list.html",
-    "properties/partials/properties_table.html",
 ]
 
 

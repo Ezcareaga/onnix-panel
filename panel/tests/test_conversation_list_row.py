@@ -92,12 +92,15 @@ def test_el_estado_del_bot_no_es_un_punto_de_color(bot_activo):
         assert clase not in fila, f"volvió el punto {clase} del bot"
 
 
-def test_el_bot_pausado_se_dice_en_palabras_y_solo_cuando_pasa():
-    """El estado normal no necesita anunciarse; la excepción sí."""
-    assert "Bot en pausa" in _fila(_render(bot_activo=False))
-    assert "Bot en pausa" not in _fila(_render(bot_activo=True)), (
-        "el bot andando no tiene por qué ocupar lugar en la fila"
-    )
+@pytest.mark.parametrize("bot_activo", [True, False])
+def test_la_fila_ya_no_habla_del_bot(bot_activo):
+    """Decía «Bot en pausa» cuando `is_bot_active` era False.
+
+    No hay bot: contesta una persona, siempre. La columna sigue en la base
+    pero la fila no la lee, asi que el texto no puede aparecer con ninguno
+    de los dos valores.
+    """
+    assert "Bot en pausa" not in _fila(_render(bot_activo=bot_activo))
 
 
 # ── lo que se queda ──────────────────────────────────────────────────────────

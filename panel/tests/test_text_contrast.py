@@ -43,7 +43,10 @@ def _plantillas_claras() -> list[Path]:
 
 
 def test_hay_plantillas_para_chequear():
-    assert len(_plantillas_claras()) >= 40
+    # Bajo de 40 a 39 al irse `stats.html`, `partials/stats_counters.html` y
+    # `partials/settings_form.html`. El piso existe para que un regex roto no
+    # deje el barrido vacio, no para contar pantallas.
+    assert len(_plantillas_claras()) >= 39
 
 
 @pytest.mark.parametrize("path", _plantillas_claras(), ids=lambda p: p.name)

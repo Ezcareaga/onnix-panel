@@ -63,12 +63,6 @@
     </a>
     {% endif %}
 
-    {# Per-chat bot toggle #}
-    {% if thread.conversation %}
-    {% with conv_id=thread.conversation.id, is_bot_active=thread.conversation.is_bot_active %}
-    {# El switch por conversación se fue con el bot: no hay nada que apagar. #}
-    {% endwith %}
-    {% endif %}
 </div>
 
 {# Collapsible activity panel — loaded on demand via HTMX #}

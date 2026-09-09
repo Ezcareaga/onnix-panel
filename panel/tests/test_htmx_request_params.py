@@ -1,8 +1,9 @@
 """Carril A4 — parametros que los `hx-*` pierden en el camino.
 
-Tres bugs distintos con la misma forma: el atributo HTMX no arrastra algo
+Dos bugs distintos con la misma forma: el atributo HTMX no arrastra algo
 que el route necesita, asi que el server lo defaultea y la pantalla cambia
-sola debajo del usuario.
+sola debajo del usuario. El tercero era del poll de «Salud del Bot», que se
+fue con el bot.
 """
 from __future__ import annotations
 
@@ -12,38 +13,6 @@ import re
 import pytest
 
 from app.tz import get_templates
-
-
-class TestBotHealthPollKeepsDays:
-    """El poll de 30 s no mandaba `days`, y el route lo defaultea a 7.
-
-    Estando en Detalle con 90 dias, a los 30 segundos la vista volvia sola
-    a 7 sin que nadie tocara nada.
-    """
-
-    @pytest.mark.parametrize("days", [30, 90])
-    async def test_el_poll_arrastra_days(self, admin_client, days):
-        resp = await admin_client.get(f"/stats/health?tab=detalle&days={days}")
-        assert resp.status_code == 200
-        html = resp.text
-
-        start = html.find('id="health-root"')
-        assert start != -1, "no se encontro el contenedor del poll"
-        end = html.find(">", start)
-        bloque = html[start:end]
-
-        assert f"days={days}" in bloque, (
-            f"el hx-get del poll no manda days={days}: a los 30 s vuelve a 7"
-        )
-
-    @pytest.mark.parametrize("days", [30, 90])
-    async def test_el_boton_de_refrescar_arrastra_days(self, admin_client, days):
-        resp = await admin_client.get(f"/stats/health?tab=detalle&days={days}")
-        html = resp.text
-        # El boton "Actualizar" del encabezado del Resumen.
-        assert f'hx-get="/stats/health?days={days}"' in html, (
-            "el boton de refrescar manual tampoco arrastra days"
-        )
 
 
 class TestConversationsKeepChannelFilter:

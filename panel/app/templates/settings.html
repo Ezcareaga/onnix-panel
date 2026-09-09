@@ -5,7 +5,7 @@
 {% block content %}
 {# Tab shell — Alpine.js reads ?tab= from URL on init; SSE reload preserves it via location.reload() #}
 <div x-data="{
-    activeTab: (new URLSearchParams(window.location.search).get('tab')) || '{% if user.role == "admin" %}bot{% else %}mi-cuenta{% endif %}',
+    activeTab: (new URLSearchParams(window.location.search).get('tab')) || '{% if user.role == "admin" %}accesos{% else %}mi-cuenta{% endif %}',
     setTab(tab) {
         this.activeTab = tab;
         const url = new URL(window.location);
@@ -17,7 +17,6 @@
     <!-- Tab Bar -->
     <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
         {% set tabs = [
-            ('bot',       'Configuración del Bot'),
             ('accesos',   'Accesos'),
             ('usuarios',  'Usuarios'),
             ('mi-cuenta', 'Mi Cuenta'),
@@ -34,15 +33,6 @@
             {% endif %}
         {% endfor %}
     </div>
-
-    <!-- ── Tab: bot ─────────────────────────────────────────────────── -->
-    {% if user.role == 'admin' %}
-    <div x-show="activeTab === 'bot'" x-cloak>
-        <div id="settings-content" aria-live="polite">
-            {% include "partials/settings_form.html" %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- ── Tab: accesos ─────────────────────────────────────────────── -->
     {% if user.role == 'admin' %}
@@ -199,7 +189,7 @@
                                value="{{ user.display_name or '' }}"
                                placeholder="Ej: la administradora V."
                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-onnix-accent transition-colors">
-                        <p class="text-xs text-onnix-ink-400 mt-1">Usado en el bot y el link de WhatsApp. Dejar vacío para usar el nombre de cuenta.</p>
+                        <p class="text-xs text-onnix-ink-400 mt-1">Usado en el link de WhatsApp. Dejar vacío para usar el nombre de cuenta.</p>
                     </div>
                     <div>
                         <label for="perfil-phone" class="block text-xs text-gray-500 mb-1">Teléfono</label>

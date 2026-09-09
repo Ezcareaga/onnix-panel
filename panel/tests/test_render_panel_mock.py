@@ -48,11 +48,8 @@ PANTALLAS_ESPERADAS = [
     "dashboard",
     "conversaciones",
     "leads",
-    "propiedades-listado",
-    "propiedades-ficha",
     "contactos-listado",
     "contactos-detalle",
-    "stats",
     "settings",
 ]
 

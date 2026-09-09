@@ -799,25 +799,11 @@ def pantallas() -> list[Pantalla]:
             ),
         ),
         Pantalla(
-            "stats", "stats.html", "/stats", "Estadísticas",
-            "Qué piden los clientes contra qué tenemos en stock, y la "
-            "evolución de leads, mensajes y errores por día. Sólo lo ve un "
-            "administrador.",
-            _chrome("/stats", stats=STATS, demand=DEMAND_90, gap=GAP, days=90),
-        ),
-        Pantalla(
             "settings", "settings.html", "/settings", "Configuración",
-            "Los interruptores del bot, los accesos al panel, el alta de "
-            "asesores y los datos de la propia cuenta.",
+            "Los accesos al panel, el alta de asesores y los datos de la "
+            "propia cuenta.",
             _chrome(
                 "/settings",
-                settings=BOT_SETTINGS,
-                bot_enabled=True,
-                whatsapp_mode="auto",
-                ic_autoreply_enabled=False,
-                followup_enabled=True,
-                ic_reenviados_enabled=True,
-                bot_default_mode="recepcionista",
                 rows=AUTH_ROWS,
                 total=len(AUTH_ROWS),
                 page=1,

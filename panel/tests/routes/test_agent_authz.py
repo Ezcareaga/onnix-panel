@@ -432,32 +432,6 @@ class TestConversationReply:
 # 9. POST /conversations/{id}/bot-toggle
 # ===========================================================================
 
-class TestConversationBotToggle:
-    async def test_agent_non_owner_cannot_toggle_bot(
-        self, agent_y_client, assigned_contact,
-    ):
-        conv_id = assigned_contact["conv"].id
-        resp = await agent_y_client.post(f"/conversations/{conv_id}/bot-toggle")
-        assert resp.status_code == 403
-
-    async def test_agent_owner_can_toggle_bot(
-        self, agent_x_client, assigned_contact,
-    ):
-        conv_id = assigned_contact["conv"].id
-        resp = await agent_x_client.post(f"/conversations/{conv_id}/bot-toggle")
-        assert resp.status_code != 403
-
-    async def test_admin_can_toggle_bot(
-        self, admin_client, assigned_contact,
-    ):
-        conv_id = assigned_contact["conv"].id
-        resp = await admin_client.post(f"/conversations/{conv_id}/bot-toggle")
-        assert resp.status_code != 403
-
-
-# ===========================================================================
-# 10. GET /conversations/{id}/messages
-# ===========================================================================
 
 class TestConversationMessages:
     async def test_agent_non_owner_cannot_read_messages(

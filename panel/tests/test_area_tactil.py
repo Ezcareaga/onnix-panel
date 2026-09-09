@@ -266,30 +266,6 @@ def test_la_utility_de_nativos_sale_del_token():
         "el alto minimo no sale de `--tap`: un 44 escrito a mano se "
         "desincroniza del token, que es lo que ya paso con los contrastes"
     )
-
-
-def test_el_grupo_del_modo_del_bot_no_recorta_el_area_de_sus_botones():
-    """El segmentado «Recepcionista / Búsqueda» redondeaba sus puntas con un
-    `overflow: hidden` en el grupo, a menos de 22px de los dos botones: el
-    `::after` de cada uno quedaba recortado y la utility, puesta y sin efecto.
-    El recorte se fue y el redondeo lo hace `.bot-mode-seg` en el CSS."""
-    ruta = _TEMPLATES / "partials" / "settings_form.html"
-    texto = _sin_comentarios(ruta.read_text(encoding="utf-8"))
-    m = re.search(r'<div[^>]*\bclass="([^"]*bot-mode-seg[^"]*)"', texto)
-    assert m, "el grupo del modo del bot perdio la clase `bot-mode-seg`"
-    clases = set(m.group(1).split())
-    assert "overflow-hidden" not in clases, (
-        "volvio el `overflow-hidden` al grupo: recorta el area tactil de los "
-        "dos botones de adentro"
-    )
-    css = _CSS_COMMENT.sub(" ", _CSS.read_text(encoding="utf-8"))
-    assert ".bot-mode-seg > :first-child" in css, (
-        "sin la regla del CSS el grupo pierde las puntas redondeadas — "
-        "`rounded-l-lg` no esta compilada en `tailwind.css`, que es un "
-        "artefacto commiteado"
-    )
-
-
 def test_los_checkbox_de_contactos_tienen_un_label_como_target():
     """El `input[type=checkbox]` de 13x13 es el peor control del panel y el
     único que no se arregla con alto: agrandar el dibujo de 13 a 44 sería otro
@@ -339,17 +315,6 @@ CONTROLES_MEDIDOS = [
     ("conversations.html", 'aria-label="Nuevo mensaje de WhatsApp"', "tap-44"),
     ("partials/dashboard_stats.html", 'href="/contacts?status={{ status_key }}"',
      "tap-44"),
-    ("stats.html", 'href="?days={{ d }}"', "tap-44"),
-    ("partials/settings_form.html",
-     'aria-label="Alternar bot encendido/apagado"', "tap-44"),
-    ("partials/settings_form.html",
-     'aria-label="Alternar auto-reply leads InfoCasas"', "tap-44"),
-    ("partials/settings_form.html",
-     'aria-label="Alternar envío automático de seguimiento"', "tap-44"),
-    ("partials/settings_form.html",
-     'aria-label="Alternar auto-reply IC reenviados"', "tap-44"),
-    ("partials/settings_form.html", '"mode": "recepcionista"', "tap-44"),
-    ("partials/settings_form.html", '"mode": "busqueda"', "tap-44"),
     ("leads.html", 'title="Exportar los leads a Excel"', "tap-44"),
     ("leads.html", "page={{ page - 1 }}", "tap-44"),
     ("leads.html", "page={{ page + 1 }}", "tap-44"),
@@ -392,9 +357,11 @@ def test_el_control_medido_conserva_su_area_tactil(archivo, marca, clase):
 # sacaron un elemento. Solo bajan cuando alguien decide que bajen, y entonces
 # los baja a mano y escribe por qué — igual que el techo de matices saturados.
 # Bajaron de 44 y 20: se fueron las plantillas del catálogo, el portal
-# público y las del bot. El piso sigue siendo un piso — si baja sin que se
-# borre una pantalla, es un control que perdió el área táctil.
-PISO_TAP_44 = 29
+# público y las del bot. De 29 a 22 al irse `stats.html` y la pestaña de
+# configuración del bot (`settings_form.html`, cinco toggles y el segmentado).
+# El piso sigue siendo un piso — si baja sin que se borre una pantalla, es un
+# control que perdió el área táctil.
+PISO_TAP_44 = 22
 PISO_TAP_44_NATIVO = 9
 
 

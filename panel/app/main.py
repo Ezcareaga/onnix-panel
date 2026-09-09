@@ -47,7 +47,6 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 from app.routes.auth import router as auth_router
 from app.routes.dashboard import router as dashboard_router
 from app.routes.leads import router as leads_router
-from app.routes.stats import router as stats_router
 from app.routes.conversations import router as conversations_router
 from app.routes.contacts import router as contacts_router
 from app.routes.visits import router as visits_router
@@ -66,7 +65,6 @@ _templates = get_templates()
 app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(leads_router)
-app.include_router(stats_router)
 app.include_router(conversations_router)
 app.include_router(contacts_router)
 app.include_router(visits_router)
@@ -101,7 +99,7 @@ async def security_headers(request: Request, call_next) -> Response:
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Content-Security-Policy"] = _CSP_HEADER_VALUE
-    # Rutas dual full/partial (dashboard, leads, conversations, stats,
+    # Rutas dual full/partial (dashboard, leads, conversations,
     # admin_audit) sirven contenido distinto en la
     # MISMA URL según el header HX-Request. Sin Vary, el browser cachea el
     # partial para la URL y el botón Atrás renderiza el partial sin layout.

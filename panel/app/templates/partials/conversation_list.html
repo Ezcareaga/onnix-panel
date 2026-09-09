@@ -119,9 +119,6 @@
         <p class="text-xs truncate {% if item.needs_reply %}text-onnix-ink-900 font-medium{% else %}text-onnix-ink-400{% endif %}">
             {{ item.last_message_preview | strip_markdown if item.last_message_preview else '' }}
         </p>
-        {% if not item.conversation.is_bot_active %}
-        <span class="text-xs text-onnix-ink-600 shrink-0">Bot en pausa</span>
-        {% endif %}
     </div>
 </a>
 {% endfor %}
