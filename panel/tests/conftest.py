@@ -42,9 +42,12 @@ os.environ.setdefault("PANEL_SECRET_KEY", "test-secret-key-for-pytest-only")
 # Must be set BEFORE app imports because bot_settings reads env at class definition time.
 os.environ["TELEGRAM_EZ_CHAT_ID"] = ""
 os.environ["FOLLOWUP_SENDER_ENABLED"] = "false"
+# La suite habla http (base_url="http://test"), asi que las cookies no pueden
+# ir marcadas `Secure` — el cliente las descartaria y ~400 tests darian 303.
+# Es la MISMA variable que usa la laptop, no una rama de pytest: el bug del 403
+# de CSRF en local existio justamente porque este caso vivia en un `if pytest`.
+os.environ.setdefault("COOKIE_SECURE", "false")
 # Signal to app modules imported below that we are in a pytest session.
-# Used by main.py to set https_only=False on SessionMiddleware so that
-# test HTTP clients (base_url="http://test") can receive session cookies.
 os.environ.setdefault("PYTEST_CURRENT_TEST", "collecting")
 
 # Ensure panel/ is on sys.path so 'from app.X import ...' works

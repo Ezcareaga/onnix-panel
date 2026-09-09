@@ -23,6 +23,24 @@ class Settings:
         )
 
     @property
+    def cookie_secure(self) -> bool:
+        """Marca `Secure` en las cookies de sesion y de CSRF.
+
+        Default true: produccion y staging van detras de nginx con TLS. Se
+        apaga SOLO para servir por http —la laptop—, donde Safari y Firefox
+        descartan una cookie `Secure` y el login muere con el 403 de CSRF.
+
+        Sin rama escondida para pytest: la suite apaga la variable en
+        `tests/conftest.py` como cualquier otro entorno http. Una rama que solo
+        existe bajo pytest es justamente lo que dejo pasar ese 403 en la
+        laptop — el unico entorno http que nadie testeaba.
+
+        Lee el entorno en cada acceso (como `is_production`) y no en la
+        definicion de la clase, para que se pueda testear sin reimportar.
+        """
+        return os.environ.get("COOKIE_SECURE", "true").lower() in ("1", "true", "yes")
+
+    @property
     def is_production(self) -> bool:
         """True only when ENVIRONMENT=='production' AND not running under pytest.
 

@@ -32,7 +32,7 @@ app.add_middleware(
     session_cookie="onnix_session",
     max_age=86400,
     same_site="lax",
-    https_only=os.getenv("PYTEST_CURRENT_TEST") is None,
+    https_only=settings.cookie_secure,
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -311,7 +311,7 @@ class CsrfMiddleware:
 
         # --- 4. Wrap send to inject Set-Cookie if we issued a new token ---
         if issued_new:
-            secure_flag = os.getenv("PYTEST_CURRENT_TEST") is None
+            secure_flag = settings.cookie_secure
             # Build Set-Cookie header value (manual, no http.cookies overhead)
             max_age = 86400 * 7
             cookie_value = (

@@ -55,6 +55,12 @@ services:
       # development apaga el fail-closed de firma de webhooks: sin esto el panel
       # no arranca sin TWILIO_AUTH_TOKEN ni TELEGRAM_WEBHOOK_SECRET reales.
       - ENVIRONMENT=development
+      # La laptop sirve por http://127.0.0.1:8010. Safari y Firefox descartan
+      # una cookie `Secure` sobre http — incluso en localhost — y sin la cookie
+      # de CSRF el login responde 403 "La sesion expiro o el formulario no es
+      # valido". Va false SOLO aca: staging tambien es ENVIRONMENT=development
+      # pero se sirve por HTTPS detras de nginx.
+      - COOKIE_SECURE=false
       # Los guardas de salida. Con estos en false nada de lo que corre local
       # puede escribirle a una persona real.
       - WA_SEND_ENABLED=false
