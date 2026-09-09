@@ -29,7 +29,10 @@ class Contact(Base):
     baja_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     phone_normalized: Mapped[Optional[str]] = mapped_column(String(20))
     source_id: Mapped[Optional[str]] = mapped_column(String(100))
-    property_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("properties.id"))
+    # `properties` se fue con el vertical inmobiliario; la columna y su FK
+    # siguen en la base (ver CLAUDE.md). Sin la tabla en el metadata de
+    # SQLAlchemy la FK no resuelve, asi que aca queda solo la columna.
+    property_id: Mapped[Optional[int]] = mapped_column(Integer)
     first_message: Mapped[Optional[str]] = mapped_column(Text)
     last_activity_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     last_user_message_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

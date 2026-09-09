@@ -8,7 +8,6 @@ from datetime import datetime
 
 from sqlalchemy import select, exists, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.models.visit import Visit
 
@@ -23,15 +22,10 @@ class VisitRepo:
     async def list_by_contact(
         db: AsyncSession, contact_id: int,
     ) -> list[Visit]:
-        """SELECT * FROM visits WHERE contact_id=:cid ORDER BY scheduled_at DESC.
-
-        Eagerly loads `Visit.property` so the UI can render
-        "{property_type} — {city}" without an N+1 fetch (Phase 116 UAT fix).
-        """
+        """SELECT * FROM visits WHERE contact_id=:cid ORDER BY scheduled_at DESC."""
         result = await db.execute(
             select(Visit)
             .where(Visit.contact_id == contact_id)
-            .options(selectinload(Visit.property))
             .order_by(Visit.scheduled_at.desc())
         )
         return list(result.scalars().all())

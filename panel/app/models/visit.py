@@ -29,11 +29,9 @@ class Visit(Base):
         ForeignKey("contacts.id", ondelete="CASCADE"),
         nullable=False,
     )
-    property_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        ForeignKey("properties.id", ondelete="SET NULL"),
-        nullable=True,
-    )
+    # Idem contacts.property_id: columna y FK viven en la base, no en el
+    # metadata — el modelo Property se fue con el vertical inmobiliario.
+    property_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     agent_user_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="RESTRICT"),
@@ -68,7 +66,6 @@ class Visit(Base):
     )
 
     # Optional relationships — use sparingly to avoid N+1. Route handlers
-    # generally prefer explicit joins. Mirror Property / Contact patterns.
+    # generally prefer explicit joins.
     contact = relationship("Contact", lazy="select")
-    property = relationship("Property", lazy="select")
     agent = relationship("User", lazy="select")

@@ -33,25 +33,6 @@
                 </div>
 
                 <div>
-                    <label class="text-xs text-gray-500 block mb-1">Propiedad</label>
-                    {% if v.property %}
-                        {% set p_type = (v.property.property_type or 'Propiedad') | capitalize %}
-                        {% set p_city = v.property.city or '' %}
-                        {% set p_label = p_type + (' — ' + p_city if p_city else '') %}
-                    {% elif v.property_id %}
-                        {% set p_label = 'Propiedad #' ~ v.property_id %}
-                    {% else %}
-                        {% set p_label = 'Sin propiedad' %}
-                    {% endif %}
-                    {# Lo pinta `input[type="text"]:disabled` en custom.css, con los tokens. #}
-                    <input type="text" disabled value="{{ p_label }}" aria-label="Propiedad de la visita, no editable"
-                           class="w-full border rounded px-3 py-2 text-sm">
-                    <p class="text-xs text-onnix-ink-400 mt-1">
-                        Para cambiar propiedad, cancelá y agendá una nueva.
-                    </p>
-                </div>
-
-                <div>
                     <label class="text-xs text-gray-500 block mb-1">Notas</label>
                     <textarea name="notes" rows="3" aria-label="Notas de la visita"
                               class="w-full border rounded px-3 py-2 text-sm

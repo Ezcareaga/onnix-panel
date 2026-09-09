@@ -5,21 +5,6 @@
         <div class="text-xs text-gray-500">{{ v.scheduled_at | pyt('%H:%M') }}</div>
     </td>
     <td>
-        {% if v.property %}
-            {% set p_type = (v.property.property_type or 'Propiedad') | capitalize %}
-            {% set p_city = v.property.city or '' %}
-            <a href="/properties/{{ v.property.id }}" class="text-onnix-accent-ink hover:underline">
-                {{ p_type }}{% if p_city %} — {{ p_city }}{% endif %}
-            </a>
-        {% elif v.property_id %}
-            <a href="/properties/{{ v.property_id }}" class="text-onnix-accent-ink hover:underline">
-                Propiedad #{{ v.property_id }}
-            </a>
-        {% else %}
-            <span class="text-onnix-ink-400">Sin propiedad</span>
-        {% endif %}
-    </td>
-    <td>
         {% if v.status == 'scheduled' %}
             <span class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">Agendada</span>
         {% elif v.status == 'done' %}

@@ -528,7 +528,9 @@ class TestVisitServiceReadAndErrors:
         assert visit is None
         assert error == "Source inválido"
 
-    async def test_create_visit_unknown_property(self, db):
+    async def test_create_visit_ignores_property_id(self, db):
+        """Sin catalogo, `property_id` se descarta: la visita se crea igual y
+        la columna queda en None. Si alguien vuelve a cablearla, esto se cae."""
         c = await _make_contact(db, status="bot_replied")
         future = datetime.now(timezone.utc) + timedelta(days=1)
         visit, error = await visit_service.create_visit(
@@ -538,8 +540,9 @@ class TestVisitServiceReadAndErrors:
             agent_user_id=None,
             property_id=999_999_999,
         )
-        assert visit is None
-        assert error == "Propiedad no encontrada"
+        assert error is None
+        assert visit is not None
+        assert visit.property_id is None
 
     async def test_cancel_visit_unknown(self, db):
         visit, error = await visit_service.cancel_visit(

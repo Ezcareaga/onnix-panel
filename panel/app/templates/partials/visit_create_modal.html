@@ -64,23 +64,6 @@
                 </div>
 
                 <div>
-                    <label class="text-xs text-gray-500 block mb-1">Propiedad</label>
-                    <select name="property_id" aria-label="Propiedad de la visita"
-                            class="w-full border rounded px-3 py-2 text-sm
-                                   focus:ring-onnix-accent focus:border-onnix-accent">
-                        <option value="">— Sin propiedad —</option>
-                        {% for opt in property_options %}
-                        <option value="{{ opt.id }}">
-                            {{ opt.label }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <p class="text-xs text-onnix-ink-400 mt-1">
-                        Historial del contacto (visitada / linkeada / IC).
-                    </p>
-                </div>
-
-                <div>
                     <label class="text-xs text-gray-500 block mb-1">Notas</label>
                     <textarea name="notes" rows="3" aria-label="Notas de la visita"
                               class="w-full border rounded px-3 py-2 text-sm

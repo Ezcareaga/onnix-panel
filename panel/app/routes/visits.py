@@ -72,16 +72,6 @@ def _hx_trigger_payload(toast: str) -> str:
     })
 
 
-def _build_property_options(*_args, **_kwargs) -> list[dict]:
-    """Sin catálogo no hay propiedades que ofrecer al agendar una visita.
-
-    Devolvía las propiedades candidatas del contacto (la vinculada, la de
-    InfoCasas, y las que había visto) para el selector del modal. Se fue con el
-    vertical inmobiliario. La visita sigue existiendo: es una reunión con un
-    contacto, y `property_id` quedó opcional y siempre en None.
-    """
-    return []
-
 async def _build_users_map(db: AsyncSession) -> dict[int, str]:
     """Map of {user.id: display_name_or_name} for "Reg. por: …" labels."""
     users = await user_repo.get_all(db, active=None)
@@ -143,7 +133,6 @@ async def _render_visits_block(
         )
 
     bucketed = await VisitService.list_visits_for_contact(db, contact_id=contact_id)
-    property_options = await _build_property_options(db, contact_id)
     agent_options, default_agent_id = await _build_agent_options(db, contact, user)
     users_map = await _build_users_map(db)
     now_iso_local = datetime.now(_ASUNCION).strftime("%Y-%m-%dT%H:%M")
@@ -156,7 +145,6 @@ async def _render_visits_block(
             "contact": contact,
             "proximas": bucketed["proximas"],
             "historico": bucketed["historico"],
-            "property_options": property_options,
             "agent_options": agent_options,
             "default_agent_id": default_agent_id,
             "users_map": users_map,
