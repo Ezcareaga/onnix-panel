@@ -22,19 +22,16 @@ import asyncio
 import logging
 import os
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Awaitable, Callable, Optional
+from typing import Awaitable, Callable, Optional
 
 import httpx
-
-if TYPE_CHECKING:
-    from app.bot.services.admin_notifier import AdminNotifier
 
 logger = logging.getLogger(__name__)
 
 # Delays before attempt 2, 3, 4 (i.e. before retry 1, 2, 3).
 RETRY_DELAYS: tuple[float, ...] = (1.0, 3.0, 9.0)
 
-# Twilio subcodes that are expected / noisy — log only, no admin alert.
+# Twilio subcodes that are expected / noisy — log only.
 NO_ALERT_TWILIO_CODES: frozenset[str] = frozenset({"63016", "63003"})
 
 _MAX_ATTEMPTS: int = len(RETRY_DELAYS) + 1  # 4 total
@@ -95,7 +92,6 @@ async def twilio_post_with_retry(
     auth: tuple[str, str],
     *,
     timeout: float = 15.0,
-    admin_notifier: Optional["AdminNotifier"] = None,
     to_number: str = "",
     message_type: str = "text",
     on_permanent_failure: Optional[Callable[["TwilioPostResult"], Awaitable[None]]] = None,
@@ -117,9 +113,6 @@ async def twilio_post_with_retry(
     timeout:
         Per-request timeout in seconds (default 15).  Passed to ``client.post``
         unless the client already has a timeout set at construction time.
-    admin_notifier:
-        Optional ``AdminNotifier`` instance.  When provided, used to fire TG
-        alerts on permanent failures or exhausted retries.
     to_number:
         Destination ``whatsapp:+NNN`` string — included in log / alert context
         and propagated into the returned :class:`TwilioPostResult`.
@@ -188,12 +181,6 @@ async def twilio_post_with_retry(
                 ' "type": "%s", "attempts": %d}',
                 to_number, message_type, attempt,
             )
-            await _fire_alert(
-                admin_notifier,
-                error_code="network_error",
-                error_message=str(exc),
-                to_number=to_number,
-            )
             result = TwilioPostResult(
                 success=False,
                 status_code=None,
@@ -253,12 +240,6 @@ async def twilio_post_with_retry(
                 ' "type": "%s", "http_status": %d, "attempts": %d}',
                 to_number, message_type, resp.status_code, attempt,
             )
-            await _fire_alert(
-                admin_notifier,
-                error_code=str(resp.status_code),
-                error_message=_extract_message(last_body),
-                to_number=to_number,
-            )
             result = TwilioPostResult(
                 success=False,
                 status_code=resp.status_code,
@@ -278,13 +259,6 @@ async def twilio_post_with_retry(
             to_number, message_type, resp.status_code, twilio_code or "",
             resp.text,
         )
-        if twilio_code not in NO_ALERT_TWILIO_CODES:
-            await _fire_alert(
-                admin_notifier,
-                error_code=twilio_code or str(resp.status_code),
-                error_message=_extract_message(last_body),
-                to_number=to_number,
-            )
         result = TwilioPostResult(
             success=False,
             status_code=resp.status_code,
@@ -294,7 +268,8 @@ async def twilio_post_with_retry(
             to_number=to_number,
             message_type=message_type,
         )
-        # Only fire callback for non-silent codes (same gate as admin alert)
+        # 63016 (no tiene WhatsApp) y 63003 no disparan el callback: son
+        # respuestas normales del canal, no fallas que haya que arrastrar.
         if twilio_code not in NO_ALERT_TWILIO_CODES:
             await _fire_permanent_failure_callback(on_permanent_failure, result)
         return result
@@ -321,25 +296,6 @@ def _extract_message(body: Optional[dict]) -> str:
     if not body:
         return ""
     return str(body.get("message", ""))
-
-
-async def _fire_alert(
-    notifier: Optional["AdminNotifier"],
-    error_code: str,
-    error_message: str,
-    to_number: str,
-) -> None:
-    """Call ``notifier.notify_twilio_error`` if a notifier is provided."""
-    if notifier is None:
-        return
-    try:
-        await notifier.notify_twilio_error(
-            error_code,
-            error_message,
-            to_number=to_number,
-        )
-    except Exception:
-        logger.warning("twilio_retry: admin alert failed (non-fatal)", exc_info=True)
 
 
 async def _fire_permanent_failure_callback(

@@ -123,16 +123,29 @@ error y «apagado» sobre un elemento que **ya nombra ese estado en palabras**. 
 icono de color en una lista, el fondo de un contador, la tinta de una pestaña
 activa y el color de una serie de gráfico **son decoración** y sí gastan cupo.
 
-### Las dos excepciones declaradas
+### La excepción declarada: los colores de canal
 
-Decisión de Ez del 2026-08-22. **El verde de WhatsApp y el azul de Telegram se
-quedan y no gastan cupo**, porque no son una elección estética: son la marca de
-un tercero y lo que hacen es decir por qué canal va el mensaje. Cambiarlos no
-ahorraría una señal, costaría el reconocimiento del canal.
+Decisión de Ez del 2026-08-22. **Los colores de canal se quedan y no gastan
+cupo**, porque no son una elección estética: son la marca de un tercero y lo que
+hacen es decir por qué canal va el mensaje. Cambiarlos no ahorraría una señal,
+costaría el reconocimiento del canal.
 
-Vale solo donde identifican el canal —el botón que abre WhatsApp, el badge que
-dice que un contacto llegó por Telegram—, no como color decorativo en cualquier
+Los canales son tres y el color de cada uno sale de la paleta que ya existe, no
+de una paleta nueva — el techo de matices manda igual:
+
+| Canal | Matiz | Por qué ese |
+|---|---|---|
+| WhatsApp | `green` | Es su verde. |
+| Messenger | `blue` | Es su azul, y es el matiz que dejó libre Telegram. |
+| Instagram | `orange` | Su marca es un degradado rosa/naranja/violeta, y **los degradados están prohibidos** tres secciones más arriba. `orange` es el tramo del degradado que ya estaba en la paleta; un `pink` o un `fuchsia` serían un matiz nuevo. |
+
+Vale solo donde identifican el canal —el botón que abre WhatsApp, el chip que
+filtra la bandeja, el ícono de la fila—, no como color decorativo en cualquier
 otro lado.
+
+**El azul de Telegram estuvo acá hasta el 2026-09-09**, cuando el canal salió
+del producto. La sustitución fue pareja: Messenger heredó sus usos, así que el
+techo de `blue` no subió.
 
 **Esto está escrito acá porque no estarlo salió caro.** La decisión se tomó el
 22/08 y quedó anotada en `ESTADO_UI.md`, que es un doc de estado, no una regla.

@@ -13,7 +13,11 @@ from app.repositories.lead_event_repo import lead_event_repo
 
 logger = logging.getLogger(__name__)
 
-# Shared HTTP client with connection pooling for Twilio and Telegram APIs
+# Canales que hoy solo ENTRAN. El envio de salida por la Graph API todavia no
+# esta; hasta que este, contestar por aca tiene que fallar, no re-rutearse.
+_CANALES_SIN_SALIDA = frozenset({"instagram", "messenger"})
+
+# Shared HTTP client with connection pooling for the Twilio API
 _http_client = httpx.AsyncClient(
     timeout=httpx.Timeout(10.0),
     limits=httpx.Limits(max_connections=20, max_keepalive_connections=5),
@@ -64,26 +68,6 @@ class ReplyService:
         return resp.json()
 
     @staticmethod
-    async def _send_telegram(chat_id: str, body: str) -> dict:
-        """Send a Telegram message via Bot API.
-
-        Returns dict with 'message_id' on success.
-        Raises httpx.HTTPStatusError on Telegram API errors.
-        """
-        bot_token = bot_settings.TELEGRAM_BOT_TOKEN
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-
-        resp = await _http_client.post(
-            url,
-            json={"chat_id": chat_id, "text": body},
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        if not data.get("ok"):
-            raise ValueError(f"Telegram API error: {data.get('description', 'unknown')}")
-        return data.get("result", {})
-
-    @staticmethod
     async def send_reply(
         db: AsyncSession,
         conversation_id: int,
@@ -112,6 +96,18 @@ class ReplyService:
 
         # 4. Check 24h WhatsApp session window — BLOCK if expired (WhatsApp only)
         warning = None
+        # Instagram y Messenger entran por `/webhooks/meta` pero todavia no
+        # tienen salida. Sin este corte la respuesta caeria en el envio por
+        # Twilio de abajo y saldria por WHATSAPP al telefono del contacto: un
+        # mensaje escrito para un hilo de Instagram, entregado por otro canal
+        # y a un numero que el cliente quiza nunca dio. Falla ruidoso y a
+        # tiempo en vez de mandar mal.
+        if channel in _CANALES_SIN_SALIDA:
+            raise ValueError(
+                f"Todavia no se puede responder por {channel.capitalize()} desde el "
+                "panel: el canal recibe mensajes pero no los envia."
+            )
+
         if channel == "whatsapp":
             # Always use max of cached field and actual messages — field may be stale (N8N era)
             last_inbound_ts = await message_repo.get_last_inbound_at(db, conv.contact_id)
@@ -137,18 +133,12 @@ class ReplyService:
             user_id,
         )
 
-        external_sid = ""
-        if channel == "telegram":
-            chat_id = conv.platform_chat_id
-            if not chat_id:
-                raise ValueError("Conversacion Telegram sin chat_id")
-            tg_result = await ReplyService._send_telegram(chat_id, message_text)
-            external_sid = str(tg_result.get("message_id", ""))
-            logger.info("Telegram message_id: %s", external_sid)
-        else:
-            twilio_response = await ReplyService._send_twilio_whatsapp(contact.phone, message_text)
-            external_sid = twilio_response.get("sid", "")
-            logger.info("Twilio response SID: %s", external_sid)
+        # WhatsApp por Twilio es hoy el unico transporte de salida. Instagram y
+        # Messenger entran por `/webhooks/meta` pero todavia no salen: cuando
+        # salgan, el `if` vuelve aca y no en la ruta (ver `channels/base.py`).
+        twilio_response = await ReplyService._send_twilio_whatsapp(contact.phone, message_text)
+        external_sid = twilio_response.get("sid", "")
+        logger.info("Twilio response SID: %s", external_sid)
 
         # 5. Insert message
         msg = await message_repo.create(

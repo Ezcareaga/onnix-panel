@@ -19,7 +19,6 @@ from app.bot.scheduler.scheduler_service import SchedulerService
 from app.bot.scheduler.settings_manager import SettingsManager
 from app.bot.scheduler.tasks.cold_lead_check import run_cold_lead_check
 from app.bot.scheduler.tasks.daily_report import run_daily_report
-from app.bot.scheduler.tasks.heartbeat import run_heartbeat
 from app.bot.scheduler.tasks.cleanup_inactive_refs import run_cleanup_inactive_refs
 
 logger = logging.getLogger(__name__)
@@ -82,16 +81,10 @@ async def scheduler_lifespan(app: FastAPI):
             else:
                 logger.info("Task skipped (disabled): daily_report")
 
-            # --- Register heartbeat (every 3600s) ---
-            if await settings_mgr.is_task_enabled("heartbeat"):
-                scheduler.add_interval_task(
-                    "heartbeat",
-                    run_heartbeat,
-                    seconds=3600,
-                )
-                logger.info("Task registered: heartbeat (interval 3600s)")
-            else:
-                logger.info("Task skipped (disabled): heartbeat")
+            # heartbeat se fue con Telegram: chequeaba la base y mandaba el
+            # resultado —y el snapshot de salud del bot— al chat de admin. Sin
+            # ese chat no le quedaba salida ninguna. El toggle sigue en
+            # `bot_settings` para no romper la fila; no lo lee nadie.
 
 
             # followup_sender se fue con el bot: mandaba plantillas de

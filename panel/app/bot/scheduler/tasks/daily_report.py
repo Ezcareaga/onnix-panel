@@ -1,8 +1,7 @@
 """Daily report — sends a summary email at 08:00 PYT.
 
-Queries leads, messages, errors, InfoCasas contacts, and property
-counts for the last 24 hours and sends an HTML email via Gmail SMTP.
-Also sends a Telegram notification with the summary.
+Queries leads, messages and errors for the last 24 hours and sends an HTML
+email via Gmail SMTP. El resumen por Telegram se fue con el canal.
 """
 from __future__ import annotations
 
@@ -16,7 +15,6 @@ from email.mime.text import MIMEText
 from sqlalchemy import func, select, text
 
 from app.bot.config import bot_settings
-from app.bot.services.admin_notifier import AdminNotifier
 from app.database import async_session_factory
 from app.tz import PYT
 from app.models.bot_error import BotError
@@ -24,6 +22,10 @@ from app.models.contact import Contact
 from app.models.message import Message
 
 logger = logging.getLogger(__name__)
+
+# Las fuentes que cuenta el reporte. 'telegram' se fue con el canal; queda
+# 'infocasas' porque hay contactos viejos con esa `source`.
+_FUENTES = ("whatsapp", "infocasas")
 
 # El huso sale de app.tz, que ya lo tiene como ZoneInfo. Acá vivía un
 # `timezone(timedelta(hours=-4))` escrito a mano: mal por dos motivos. Uno,
@@ -36,7 +38,10 @@ SMTP_PORT = 587
 
 
 class DailyReportGenerator:
-    """Gathers metrics and sends the daily summary email + Telegram.
+    """Gathers metrics and sends the daily summary email.
+
+    El resumen por Telegram se fue el 2026-09-09 con el canal. El email por
+    SMTP era la otra mitad y sigue: es la unica salida que le queda.
 
     Parameters
     ----------
@@ -48,8 +53,6 @@ class DailyReportGenerator:
         Recipient email address.
     session_factory:
         Optional async session factory override (for testing).
-    notifier:
-        Optional AdminNotifier override (for testing).
     """
 
     def __init__(
@@ -59,16 +62,11 @@ class DailyReportGenerator:
         report_to: str,
         *,
         session_factory=None,
-        notifier: AdminNotifier | None = None,
     ) -> None:
         self._smtp_email = smtp_email
         self._smtp_password = smtp_password
         self._report_to = report_to
         self._session_factory = session_factory or async_session_factory
-        self._notifier = notifier or AdminNotifier(
-            chat_id=bot_settings.TELEGRAM_EZ_CHAT_ID,
-            bot_token=bot_settings.TELEGRAM_BOT_TOKEN,
-        )
 
     # ------------------------------------------------------------------
     # Public API
@@ -82,16 +80,13 @@ class DailyReportGenerator:
         # Send email (sync SMTP — fast enough for a daily task)
         email_sent = self._send_email(metrics)
 
-        # Send Telegram summary
-        tg_sent = await self._send_telegram(metrics)
-
         elapsed_ms = (time.monotonic() - start) * 1000
         logger.info(
             'Job executed — {"task": "daily_report", "duration_ms": %.0f, '
-            '"email_sent": %s, "tg_sent": %s}',
-            elapsed_ms, email_sent, tg_sent,
+            '"email_sent": %s}',
+            elapsed_ms, email_sent,
         )
-        return {**metrics, "email_sent": email_sent, "tg_sent": tg_sent}
+        return {**metrics, "email_sent": email_sent}
 
     # ------------------------------------------------------------------
     # Private: gather metrics
@@ -106,7 +101,7 @@ class DailyReportGenerator:
             leads_result = await session.execute(
                 select(func.count()).select_from(Contact).where(
                     Contact.created_at >= cutoff,
-                    Contact.source.in_(("whatsapp", "telegram", "infocasas")),
+                    Contact.source.in_(_FUENTES),
                 )
             )
             leads_count = leads_result.scalar_one()
@@ -115,7 +110,7 @@ class DailyReportGenerator:
             leads_detail_result = await session.execute(
                 select(Contact.name, Contact.phone, Contact.source).where(
                     Contact.created_at >= cutoff,
-                    Contact.source.in_(("whatsapp", "telegram", "infocasas")),
+                    Contact.source.in_(_FUENTES),
                 ).order_by(Contact.created_at.desc()).limit(20)
             )
             leads_list = [
@@ -166,15 +161,6 @@ class DailyReportGenerator:
             )
             infocasas_count = ic_result.scalar_one()
 
-            # Bot uptime — count heartbeat errors in 24h
-            hb_errors = await session.execute(
-                select(func.count()).select_from(BotError).where(
-                    BotError.created_at >= cutoff,
-                    BotError.workflow == "heartbeat",
-                )
-            )
-            heartbeat_fails = hb_errors.scalar_one()
-
         return {
             "date": datetime.now(PYT).strftime("%Y-%m-%d"),
             "leads_count": leads_count,
@@ -183,8 +169,6 @@ class DailyReportGenerator:
             "errors_count": errors_count,
             "error_summary": error_summary,
             "infocasas_count": infocasas_count,
-            "heartbeat_fails": heartbeat_fails,
-            "heartbeat_status": "OK" if heartbeat_fails == 0 else f"FAIL ({heartbeat_fails})",
         }
 
     # ------------------------------------------------------------------
@@ -217,22 +201,6 @@ class DailyReportGenerator:
         except Exception:
             logger.warning("Daily report: email send failed", exc_info=True)
             return False
-
-    # ------------------------------------------------------------------
-    # Private: send Telegram summary
-    # ------------------------------------------------------------------
-
-    async def _send_telegram(self, metrics: dict) -> bool:
-        """Send a concise Telegram summary."""
-        lines = [
-            f"<b>Reporte Diario — {metrics['date']}</b>",
-            f"Leads nuevos: {metrics['leads_count']}",
-            f"  InfoCasas: {metrics['infocasas_count']}",
-            f"Mensajes: {metrics['messages_count']}",
-            f"Errores: {metrics['errors_count']}",
-            f"Heartbeat: {metrics['heartbeat_status']}",
-        ]
-        return await self._notifier.notify("\n".join(lines))
 
     # ------------------------------------------------------------------
     # Private: build HTML
@@ -277,10 +245,6 @@ class DailyReportGenerator:
                 <tr>
                     <td style="padding: 8px; border: 1px solid #ddd;"><b>Errores</b></td>
                     <td style="padding: 8px; border: 1px solid #ddd;">{m['errors_count']}</td>
-                </tr>
-                <tr style="background: #f5f5f5;">
-                    <td style="padding: 8px; border: 1px solid #ddd;">Heartbeat</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{m['heartbeat_status']}</td>
                 </tr>
             </table>
 

@@ -71,7 +71,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -79,7 +78,6 @@ class TestTwilioPostWithRetry:
         assert result.attempts == 1
         assert result.status_code == 200
         sleep_mock.assert_not_called()
-        notifier.notify_twilio_error.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_retries_on_500_then_succeeds(self):
@@ -97,7 +95,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -106,7 +103,6 @@ class TestTwilioPostWithRetry:
         assert sleep_mock.call_count == 2
         sleep_mock.assert_any_call(RETRY_DELAYS[0])  # 1.0
         sleep_mock.assert_any_call(RETRY_DELAYS[1])  # 3.0
-        notifier.notify_twilio_error.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_retries_on_429_then_succeeds(self):
@@ -123,7 +119,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -147,7 +142,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -172,7 +166,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             to_number="whatsapp:+595981000001",
             sleep=sleep_mock,
         )
@@ -180,7 +173,6 @@ class TestTwilioPostWithRetry:
         assert result.success is False
         assert result.attempts == 4
         assert sleep_mock.call_count == 3  # delays before retries 1, 2, 3
-        notifier.notify_twilio_error.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_permanent_4xx_alerts_admin_no_retry(self):
@@ -196,7 +188,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             to_number="whatsapp:+5959INVALID",
             sleep=sleep_mock,
         )
@@ -204,7 +195,6 @@ class TestTwilioPostWithRetry:
         assert result.success is False
         assert result.attempts == 1
         sleep_mock.assert_not_called()
-        notifier.notify_twilio_error.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_twilio_code_63016_no_retry_no_alert(self):
@@ -220,7 +210,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -228,7 +217,6 @@ class TestTwilioPostWithRetry:
         assert result.attempts == 1
         assert result.twilio_error_code == "63016"
         sleep_mock.assert_not_called()
-        notifier.notify_twilio_error.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_twilio_code_63003_no_retry_no_alert(self):
@@ -244,7 +232,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -252,7 +239,6 @@ class TestTwilioPostWithRetry:
         assert result.attempts == 1
         assert result.twilio_error_code == "63003"
         sleep_mock.assert_not_called()
-        notifier.notify_twilio_error.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_injected_sleep_called_with_correct_delays(self):
@@ -271,7 +257,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -297,7 +282,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -320,7 +304,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             sleep=sleep_mock,
         )
 
@@ -328,11 +311,10 @@ class TestTwilioPostWithRetry:
         assert result.attempts == 2
         assert sleep_mock.call_count == 1
         sleep_mock.assert_called_once_with(RETRY_DELAYS[0])  # 1.0
-        notifier.notify_twilio_error.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_no_notifier_does_not_raise(self):
-        """admin_notifier=None on permanent 4xx must not raise."""
+    async def test_fallo_permanente_no_levanta(self):
+        """Un 4xx permanente no levanta: devuelve el resultado en falso."""
         client = _make_client_with_responses(
             _make_response(400, {"code": 21211, "message": "Invalid phone"})
         )
@@ -343,7 +325,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=None,
             sleep=sleep_mock,
         )
 
@@ -368,7 +349,6 @@ class TestTwilioPostWithRetry:
             url="https://api.twilio.com/Messages.json",
             data={"Body": "hi"},
             auth=("AC_sid", "token"),
-            admin_notifier=notifier,
             to_number="whatsapp:+595981000001",
             message_type="template",
             on_permanent_failure=cb,

@@ -135,7 +135,7 @@ class TestDowngradeGuardBlocksWhenVisitScheduledRowsExist:
         # --- Insert a contact with status='visit_scheduled' (only valid post-040).
         ins = psql(
             "INSERT INTO contacts (phone, status, source) "
-            f"VALUES ('{TEST_PHONE}', 'visit_scheduled', 'telegram');"
+            f"VALUES ('{TEST_PHONE}', 'visit_scheduled', 'instagram');"
         )
         assert ins.returncode == 0, (
             f"Could not insert test contact:\nstdout={ins.stdout}\nstderr={ins.stderr}"

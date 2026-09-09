@@ -53,7 +53,7 @@ services:
       - TZ=America/Asuncion
       - GEO_DATA_PATH=/app/data/geografia
       # development apaga el fail-closed de firma de webhooks: sin esto el panel
-      # no arranca sin TWILIO_AUTH_TOKEN ni TELEGRAM_WEBHOOK_SECRET reales.
+      # no arranca sin un TWILIO_AUTH_TOKEN real.
       - ENVIRONMENT=development
       # La laptop sirve por http://127.0.0.1:8010. Safari y Firefox descartan
       # una cookie `Secure` sobre http — incluso en localhost — y sin la cookie
@@ -64,9 +64,7 @@ services:
       # Los guardas de salida. Con estos en false nada de lo que corre local
       # puede escribirle a una persona real.
       - WA_SEND_ENABLED=false
-      - TELEGRAM_NOTIFICATIONS_ENABLED=false
       - INFOCASAS_POLL_ENABLED=false
-      - TELEGRAM_EZ_CHAT_ID=
     volumes:
       - ./data/geografia:/app/data/geografia:ro
       - ./logs:/app/logs

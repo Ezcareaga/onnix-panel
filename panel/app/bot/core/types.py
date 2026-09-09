@@ -14,16 +14,16 @@ from datetime import datetime, timezone
 class BotRequest:
     """Inbound message from any channel.
 
-    Captures all data from a Telegram or WhatsApp incoming message
-    needed by the orchestrator.
+    Captures all data from an incoming message needed to persist it and
+    empujarlo al panel.
     """
 
-    platform: str  # "telegram" or "whatsapp"
-    chat_id: str   # TG chat_id or WA phone
-    user_id: str   # TG user_id or WA phone
+    platform: str  # "whatsapp" | "instagram" | "messenger"
+    chat_id: str   # WA phone, o el id de conversacion de Meta
+    user_id: str   # WA phone, IGSID en Instagram, PSID en Messenger
     user_name: str
     text: str | None = None
-    external_id: str | None = None  # TG message_id or WA MessageSid
+    external_id: str | None = None  # WA MessageSid, o el mid de Meta
     callback_data: str | None = None  # Inline button callback
 
 
@@ -209,8 +209,8 @@ class ContactInfo:
     platform: str = ""
     phone: str | None = None
     source_id: str | None = None
-    # M6.3 Plan 123-02: contacts.source (e.g. 'vista_publica', 'infocasas',
-    # 'whatsapp', 'telegram') — used by _resolve_mode check 2b auto-detect.
+    # contacts.source: 'whatsapp', 'instagram', 'messenger', y los historicos
+    # 'vista_publica' / 'infocasas' que dejo el vertical.
     source: str | None = None
     infocasas_ref: str | None = None
     agent_user_id: int | None = None  # Panel user who took this lead (FK → users.id)

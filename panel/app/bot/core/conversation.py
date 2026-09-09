@@ -28,6 +28,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Los canales de Meta que NO traen telefono: el entrante llega con un id opaco
+# por usuario y por pagina (IGSID en Instagram, PSID en Messenger), asi que el
+# contacto se identifica por `(source, source_id)` y no por `phone`. WhatsApp
+# no esta aca: llega con el numero.
+_PLATAFORMAS_SIN_TELEFONO = frozenset({"instagram", "messenger"})
+
 HUMAN_COOLDOWN_MINUTES = 30
 
 
@@ -123,8 +129,12 @@ class ConversationManager:
     ) -> ContactInfo:
         """Upsert a contact by platform-specific identifier.
 
-        Telegram: lookup by (source='telegram', source_id=user_id).
-        WhatsApp: lookup by phone (E.164).
+        Hay dos formas de identificar a una persona y el canal decide cual:
+
+        - WhatsApp llega con telefono, asi que el upsert va por `phone`.
+        - Instagram y Messenger NO dan telefono: Meta manda un id opaco por
+          usuario y por pagina (IGSID / PSID). Van por `(source, source_id)`,
+          que es el mismo camino que usaba Telegram antes de irse.
 
         Returns ContactInfo with is_baja=True for discarded contacts.
 
@@ -144,15 +154,15 @@ class ConversationManager:
             new_source = "vista_publica"
             new_ref = _extract_prop_code(text_msg)
         else:
-            new_source = "whatsapp" if platform != "telegram" else "telegram"
+            new_source = platform
             new_ref = None
 
-        if platform == "telegram":
+        if platform in _PLATAFORMAS_SIN_TELEFONO:
             sql = text(
                 "INSERT INTO contacts "
                 "(name, source, source_id, status, first_message, "
                 " last_activity_at, created_at) "
-                "VALUES (:name, 'telegram', :user_id, 'new', :text, "
+                "VALUES (:name, :source, :user_id, 'new', :text, "
                 " NOW(), NOW()) "
                 "ON CONFLICT (source, source_id) DO UPDATE SET "
                 " last_activity_at = NOW(), "
@@ -161,6 +171,7 @@ class ConversationManager:
             )
             params = {
                 "name": user_name,
+                "source": new_source,
                 "user_id": user_id,
                 "text": text_msg,
             }

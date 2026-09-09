@@ -61,13 +61,6 @@ def _make_session_factory(stale_rows: list[tuple[int, str]] | None = None):
     return mock_factory, mock_session
 
 
-def _make_mock_notifier():
-    """Build a mock AdminNotifier for testing."""
-    notifier = AsyncMock()
-    notifier.notify_cold_leads = AsyncMock(return_value=True)
-    return notifier
-
-
 # ---------------------------------------------------------------------------
 # Tests: no stale contacts
 # ---------------------------------------------------------------------------
@@ -80,8 +73,6 @@ class TestNoStaleContacts:
         """Returns zeros when no stale contacts found."""
         factory, _ = _make_session_factory(stale_rows=[])
         checker = ColdLeadChecker(
-            notification_chat_id="123",
-            telegram_bot_token="tok",
             session_factory=factory,
         )
         result = await checker.run()
@@ -92,8 +83,6 @@ class TestNoStaleContacts:
         """Session should not commit when nothing to update."""
         factory, session = _make_session_factory(stale_rows=[])
         checker = ColdLeadChecker(
-            notification_chat_id="123",
-            telegram_bot_token="tok",
             session_factory=factory,
         )
         await checker.run()
@@ -112,8 +101,6 @@ class TestStaleTransition:
         """A stale 'new' contact is transitioned."""
         factory, session = _make_session_factory(stale_rows=[(1, "new")])
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=factory,
         )
         result = await checker.run()
@@ -126,8 +113,6 @@ class TestStaleTransition:
         """A stale 'bot_replied' contact is transitioned."""
         factory, session = _make_session_factory(stale_rows=[(2, "bot_replied")])
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=factory,
         )
         result = await checker.run()
@@ -140,8 +125,6 @@ class TestStaleTransition:
         rows = [(10, "new"), (20, "bot_replied"), (30, "new")]
         factory, session = _make_session_factory(stale_rows=rows)
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=factory,
         )
         result = await checker.run()
@@ -177,8 +160,6 @@ class TestLeadEventCreation:
         rows = [(1, "new"), (2, "bot_replied")]
         factory, session = _make_session_factory(stale_rows=rows)
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=factory,
         )
         await checker.run()
@@ -191,8 +172,6 @@ class TestLeadEventCreation:
         rows = [(42, "bot_replied")]
         factory, session = _make_session_factory(stale_rows=rows)
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=factory,
         )
         await checker.run()
@@ -220,7 +199,7 @@ class TestSourceFilter:
         assert set(_BOT_SOURCES) == {
             "whatsapp",
             "infocasas",
-            "telegram",
+            
             "vista_publica",
         }
 
@@ -237,8 +216,6 @@ class TestNullLastActivityExcluded:
         """If the query returns nothing (because all are NULL), result is zero."""
         factory, _ = _make_session_factory(stale_rows=[])
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=factory,
         )
         result = await checker.run()
@@ -257,8 +234,6 @@ class TestRecentActivityNotAffected:
         """Query returns empty when all contacts have recent activity."""
         factory, _ = _make_session_factory(stale_rows=[])
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=factory,
         )
         result = await checker.run()
@@ -276,8 +251,6 @@ class TestCustomStaleHours:
     async def test_custom_stale_hours(self):
         """ColdLeadChecker stores custom stale_hours."""
         checker = ColdLeadChecker(
-            notification_chat_id="123",
-            telegram_bot_token="tok",
             stale_hours=48,
             session_factory=MagicMock(),
         )
@@ -287,8 +260,6 @@ class TestCustomStaleHours:
     async def test_default_stale_hours(self):
         """Default stale_hours is 24."""
         checker = ColdLeadChecker(
-            notification_chat_id="123",
-            telegram_bot_token="tok",
             session_factory=MagicMock(),
         )
         assert checker.stale_hours == 24
@@ -298,99 +269,6 @@ class TestCustomStaleHours:
 # Tests: notification (via AdminNotifier)
 # ---------------------------------------------------------------------------
 
-class TestNotification:
-    """Telegram notification is sent via AdminNotifier when there are transitions."""
-
-    @pytest.mark.asyncio
-    async def test_notification_sent(self):
-        """AdminNotifier.notify_cold_leads is called when contacts are updated."""
-        rows = [(1, "new")]
-        factory, _ = _make_session_factory(stale_rows=rows)
-        mock_notifier = _make_mock_notifier()
-
-        checker = ColdLeadChecker(
-            notification_chat_id="999",
-            telegram_bot_token="bot_token_123",
-            session_factory=factory,
-            notifier=mock_notifier,
-        )
-        await checker.run()
-
-        mock_notifier.notify_cold_leads.assert_awaited_once()
-        call_args = mock_notifier.notify_cold_leads.call_args
-        assert call_args[0][0] == 1  # updated count
-        assert call_args[0][1] == [1]  # contact_ids
-
-    @pytest.mark.asyncio
-    async def test_no_notification_when_no_stale(self):
-        """No notification when no stale contacts found."""
-        factory, _ = _make_session_factory(stale_rows=[])
-        mock_notifier = _make_mock_notifier()
-
-        checker = ColdLeadChecker(
-            notification_chat_id="999",
-            telegram_bot_token="tok",
-            session_factory=factory,
-            notifier=mock_notifier,
-        )
-        await checker.run()
-        mock_notifier.notify_cold_leads.assert_not_awaited()
-
-
-# ---------------------------------------------------------------------------
-# Tests: notification failure is non-fatal
-# ---------------------------------------------------------------------------
-
-class TestNotificationFailureNonFatal:
-    """Notification failure must not break the task."""
-
-    @pytest.mark.asyncio
-    async def test_notification_exception_non_fatal(self):
-        """Task completes even when AdminNotifier raises."""
-        rows = [(1, "new")]
-        factory, _ = _make_session_factory(stale_rows=rows)
-        mock_notifier = _make_mock_notifier()
-        mock_notifier.notify_cold_leads = AsyncMock(side_effect=Exception("network error"))
-
-        checker = ColdLeadChecker(
-            notification_chat_id="999",
-            telegram_bot_token="tok",
-            session_factory=factory,
-            notifier=mock_notifier,
-        )
-        # AdminNotifier.notify_cold_leads is best-effort; however the
-        # exception propagates from _notify. The run() method should still
-        # not crash because AdminNotifier internally never raises.
-        # But since we're mocking the notifier directly with side_effect,
-        # we test that the caller (_notify) does not swallow it — the
-        # AdminNotifier itself would never raise in production.
-        # For robustness, we verify the task still raises (as _notify is
-        # called after commit, so data is safe).
-        with pytest.raises(Exception, match="network error"):
-            await checker.run()
-
-    @pytest.mark.asyncio
-    async def test_notification_returns_false_non_fatal(self):
-        """Task completes even when notification returns False."""
-        rows = [(1, "new")]
-        factory, _ = _make_session_factory(stale_rows=rows)
-        mock_notifier = _make_mock_notifier()
-        mock_notifier.notify_cold_leads = AsyncMock(return_value=False)
-
-        checker = ColdLeadChecker(
-            notification_chat_id="999",
-            telegram_bot_token="tok",
-            session_factory=factory,
-            notifier=mock_notifier,
-        )
-        result = await checker.run()
-        assert result["checked"] == 1
-        assert result["updated"] == 1
-
-
-# ---------------------------------------------------------------------------
-# Tests: factory function
-# ---------------------------------------------------------------------------
 
 class TestFactoryFunction:
     """Module-level run_cold_lead_check() factory."""
@@ -464,8 +342,6 @@ class TestBajaAtFilter:
         mock_factory.return_value = mock_ctx
 
         checker = ColdLeadChecker(
-            notification_chat_id="",
-            telegram_bot_token="",
             session_factory=mock_factory,
         )
         await checker.run()

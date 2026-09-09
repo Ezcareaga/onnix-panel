@@ -2,12 +2,11 @@
 Tests for app/services/reply_service.py
 
 Uses unittest.mock to patch the module-level _http_client so no real
-Twilio/Telegram API requests are made.  The DB session is the live test
+Twilio API requests are made.  The DB session is the live test
 NullPool session from conftest so we exercise the real repository layer.
 
 Covers:
   - WhatsApp (Twilio) send success path
-  - Telegram send success path
   - Missing conversation raises ValueError
   - Contact without phone raises ValueError
   - HTTP error from Twilio propagates as httpx.HTTPStatusError
@@ -93,37 +92,6 @@ class TestSendTwilioWhatsApp:
 
 
 # ---------------------------------------------------------------------------
-# Unit tests for _send_telegram
-# ---------------------------------------------------------------------------
-
-class TestSendTelegram:
-    async def test_success_returns_message_id(self):
-        mock_resp = _make_response(200, {"ok": True, "result": {"message_id": 42}})
-        patcher, _ = _patch_http_client(mock_resp)
-
-        with patcher:
-            result = await ReplyService._send_telegram("12345678", "Hola Telegram")
-
-        assert result["message_id"] == 42
-
-    async def test_telegram_ok_false_raises_value_error(self):
-        mock_resp = _make_response(200, {"ok": False, "description": "Chat not found"})
-        patcher, _ = _patch_http_client(mock_resp)
-
-        with patcher:
-            with pytest.raises(ValueError, match="Telegram API error"):
-                await ReplyService._send_telegram("99999", "Bad chat")
-
-    async def test_http_error_propagates(self):
-        mock_resp = _make_response(403, {})
-        patcher, _ = _patch_http_client(mock_resp)
-
-        with patcher:
-            with pytest.raises(httpx.HTTPStatusError):
-                await ReplyService._send_telegram("12345", "Forbidden")
-
-
-# ---------------------------------------------------------------------------
 # Integration tests for send_reply (uses real DB, mocked HTTP)
 # ---------------------------------------------------------------------------
 
@@ -183,48 +151,6 @@ class TestSendReply:
         assert result["message"].body == "Test WA reply"
         assert result["message"].direction == "outbound"
 
-    async def test_telegram_send_success_returns_message(self, db):
-        """Create a telegram conversation and mock Telegram API."""
-        from app.models.contact import Contact
-        from app.models.conversation import Conversation
-        from datetime import datetime, timezone, timedelta
-
-        c = Contact(
-            name="Reply TG Test",
-            phone="+595981888002",
-            phone_normalized="+595981888002",
-            source="manual",
-            status="new",
-            last_user_message_at=datetime.now(timezone.utc) - timedelta(hours=1),
-            created_at=datetime.now(timezone.utc),
-        )
-        db.add(c)
-        await db.flush()
-
-        conv = Conversation(
-            contact_id=c.id,
-            status="active",
-            channel="telegram",
-            platform="telegram",
-            platform_chat_id="987654321",
-            message_count=0,
-            created_at=datetime.now(timezone.utc),
-        )
-        db.add(conv)
-        await db.flush()
-
-        mock_resp = _make_response(200, {"ok": True, "result": {"message_id": 99}})
-        patcher, _ = _patch_http_client(mock_resp)
-
-        with patcher:
-            result = await ReplyService.send_reply(
-                db=db,
-                conversation_id=conv.id,
-                message_text="Test TG reply",
-                user_id=1,
-            )
-
-        assert result["message"].body == "Test TG reply"
 
     async def test_discarded_contact_raises_value_error(self, db):
         """Discarded contacts must not receive messages."""
@@ -550,19 +476,30 @@ class TestSendReply:
 
         assert result["message"] is not None
 
-    async def test_telegram_not_blocked_when_no_last_message(self, db):
-        """Telegram must NOT be blocked by the 24h WhatsApp window rule."""
+    @pytest.mark.parametrize("canal", ["instagram", "messenger"])
+    async def test_los_canales_de_meta_no_salen_por_whatsapp(self, db, canal):
+        """Contestar un hilo de Instagram o Messenger tiene que FALLAR, no
+        re-rutearse.
+
+        Meta todavia no tiene salida: sin este corte la respuesta caia en el
+        envio por Twilio y salia por WhatsApp al telefono del contacto — un
+        mensaje escrito para otro hilo, entregado por otro canal, a un numero
+        que el cliente quiza nunca dio para eso. El assert mira que NO se haya
+        tocado el cliente HTTP: que levante ValueError no alcanza si el POST
+        ya salio.
+        """
         from app.models.contact import Contact
         from app.models.conversation import Conversation
         from datetime import datetime, timezone
 
+        telefono = "+5959818880" + ("13" if canal == "instagram" else "14")
         c = Contact(
-            name="TG No Window",
-            phone="+595981888012",
-            phone_normalized="+595981888012",
-            source="manual",
+            name=f"Meta {canal}",
+            phone=telefono,
+            phone_normalized=telefono,
+            source=canal,
             status="new",
-            last_user_message_at=None,  # No WA session at all
+            last_user_message_at=datetime.now(timezone.utc),
             created_at=datetime.now(timezone.utc),
         )
         db.add(c)
@@ -571,8 +508,8 @@ class TestSendReply:
         conv = Conversation(
             contact_id=c.id,
             status="active",
-            channel="telegram",
-            platform="telegram",
+            channel=canal,
+            platform=canal,
             platform_chat_id="111222333",
             message_count=0,
             created_at=datetime.now(timezone.utc),
@@ -580,17 +517,18 @@ class TestSendReply:
         db.add(conv)
         await db.flush()
 
-        mock_resp = _make_response(200, {"ok": True, "result": {"message_id": 77}})
-        patcher, _ = _patch_http_client(mock_resp)
+        mock_resp = _make_response(200, {"sid": "SM_no_deberia_salir"})
+        patcher, mock_client = _patch_http_client(mock_resp)
         with patcher:
-            result = await ReplyService.send_reply(
-                db=db,
-                conversation_id=conv.id,
-                message_text="Telegram test",
-                user_id=1,
-            )
+            with pytest.raises(ValueError, match="no se puede responder"):
+                await ReplyService.send_reply(
+                    db=db,
+                    conversation_id=conv.id,
+                    message_text="Esto no tiene que salir por WhatsApp",
+                    user_id=1,
+                )
 
-        assert result["message"] is not None
+        mock_client.post.assert_not_called()
 
     async def test_whatsapp_blocked_when_field_stale_but_no_recent_message(self, db):
         """Campo last_user_message_at stale y NO hay mensaje reciente en tabla → bloquea."""

@@ -6,6 +6,7 @@ import httpx
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.constants import CANALES
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.services.authz_service import ensure_contact_access, ensure_conversation_access
@@ -65,7 +66,7 @@ async def conversation_list(
     selected_id_int: int | None = int(selected_id) if selected_id else None
     query = q.strip() if q else ""
     # Normalise channel: only accept known values, ignore anything else
-    _valid_channels = {"whatsapp", "telegram"}
+    _valid_channels = CANALES
     channel_filter = channel if channel in _valid_channels else None
     solo_trabadas = stuck == "1"
     # ROLE-04: agents only see their assigned contacts' conversations
@@ -245,7 +246,7 @@ async def send_reply(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Send a manual reply (WhatsApp or Telegram) from the panel."""
+    """Send a manual reply from the panel."""
     # feat(authz): agent ownership check (ROLE-agent-write)
     await ensure_conversation_access(db, user, conv_id)
     text = message.strip()

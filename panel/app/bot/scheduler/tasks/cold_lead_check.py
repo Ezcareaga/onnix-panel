@@ -2,11 +2,13 @@
 
 Contacts with status 'new' or 'bot_replied' that have had no activity
 for a configurable number of hours are transitioned to 'no_response'
-and a LeadEvent is recorded for each transition.  A best-effort
-Telegram notification is sent to the admin chat via AdminNotifier.
+and a LeadEvent is recorded for each transition.
+
+El aviso por Telegram se fue el 2026-09-09 con el canal. El trabajo de
+verdad —la transicion y su LeadEvent— es lo que quedaba de valor: la cola de
+Leads muestra el resultado sin que nadie tenga que avisar nada.
 
 Plan 67-02: SCHED-TASK-01.
-Refactored in 71-03: Task 5 — replaced inline httpx with AdminNotifier.
 """
 from __future__ import annotations
 
@@ -17,8 +19,6 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.bot.config import bot_settings
-from app.bot.services.admin_notifier import AdminNotifier
 from app.database import async_session_factory
 from app.models.contact import Contact
 from app.models.lead_event import LeadEvent
@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 
 # Statuses eligible for cold-lead transition
 _STALE_STATUSES = ("new", "bot_replied")
-# Only bot-originated contacts.
-# M6.3 Plan 123-10 (BOT-16 §9/§11): 'vista_publica' (public-site CTA leads)
-# is bot-originated → stale vista_publica leads must be cold-swept too.
-_BOT_SOURCES = ("whatsapp", "infocasas", "telegram", "vista_publica")
+# Las fuentes que barre. 'telegram' se fue con el canal; 'infocasas' y
+# 'vista_publica' se fueron con el vertical y no llegan mas, pero quedan en la
+# lista porque hay contactos viejos con esa `source` que igual se enfrian.
+_BOT_SOURCES = ("whatsapp", "infocasas", "vista_publica")
 
 
 class ColdLeadChecker:
@@ -38,36 +38,21 @@ class ColdLeadChecker:
 
     Parameters
     ----------
-    notification_chat_id:
-        Telegram chat ID to send the summary notification to.
-    telegram_bot_token:
-        Telegram Bot API token for sending notifications.
     stale_hours:
         Number of hours of inactivity before a lead is considered stale.
         Defaults to 24.
     session_factory:
         Optional async session factory override (for testing).
-    notifier:
-        Optional AdminNotifier override (for testing).
     """
 
     def __init__(
         self,
-        notification_chat_id: str,
-        telegram_bot_token: str,
         stale_hours: int = 24,
         *,
         session_factory=None,
-        notifier: AdminNotifier | None = None,
     ) -> None:
-        self.notification_chat_id = notification_chat_id
-        self.telegram_bot_token = telegram_bot_token
         self.stale_hours = stale_hours
         self._session_factory = session_factory or async_session_factory
-        self._notifier = notifier or AdminNotifier(
-            chat_id=notification_chat_id,
-            bot_token=telegram_bot_token,
-        )
 
     # ------------------------------------------------------------------
     # Public API
@@ -94,9 +79,6 @@ class ColdLeadChecker:
 
             updated = await self._transition(session, stale_contacts)
             await session.commit()
-
-        # Best-effort notification — never let it break the task
-        await self._notify(updated, stale_contacts)
 
         elapsed_ms = (time.monotonic() - start) * 1000
         logger.info(
@@ -162,19 +144,6 @@ class ColdLeadChecker:
 
         return updated_count
 
-    # ------------------------------------------------------------------
-    # Private: notification (delegates to AdminNotifier)
-    # ------------------------------------------------------------------
-
-    async def _notify(
-        self,
-        updated: int,
-        stale_contacts: list[tuple[int, str]],
-    ) -> None:
-        """Send a summary Telegram notification (best-effort)."""
-        contact_ids = [cid for cid, _ in stale_contacts]
-        await self._notifier.notify_cold_leads(updated, contact_ids)
-
 
 # ------------------------------------------------------------------
 # Module-level factory
@@ -182,12 +151,6 @@ class ColdLeadChecker:
 
 
 async def run_cold_lead_check() -> dict:
-    """Factory function invoked by the scheduler.
-
-    Reads configuration from ``bot_settings`` and runs the check.
-    """
-    checker = ColdLeadChecker(
-        notification_chat_id=bot_settings.TELEGRAM_EZ_CHAT_ID,
-        telegram_bot_token=bot_settings.TELEGRAM_BOT_TOKEN,
-    )
+    """Factory function invoked by the scheduler."""
+    checker = ColdLeadChecker()
     return await checker.run()

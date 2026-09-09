@@ -1,9 +1,9 @@
-"""BotErrorService — records errors and auto-disables the bot.
+"""BotErrorService — deja los errores del webhook en ``bot_errors``.
 
-Inserts errors into the ``bot_errors`` table and checks if the error
-rate exceeds a threshold (default: 3 errors in 15 minutes).  When
-triggered, the bot is auto-disabled via ``bot_settings.bot_enabled``
-and an admin notification is sent.
+Tenia un segundo trabajo: pasado un umbral de errores apagaba el bot solo
+—`bot_settings.bot_enabled = false`— y avisaba por Telegram. Sin bot no hay
+nada que apagar y sin Telegram no hay a donde avisar, asi que ese camino se
+fue el 2026-09-09. Queda el registro, que es lo que mira el reporte diario.
 
 Plan 71-03: Task 3 (P1-05).
 """
@@ -12,11 +12,10 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.bot_error import BotError
-from app.models.bot_setting import BotSetting
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ class BotErrorService:
     Parameters
     ----------
     workflow:
-        Identifier for the workflow/pipeline that errored (e.g. "telegram", "whatsapp").
+        Identifier for the workflow/pipeline that errored (e.g. "whatsapp").
     """
 
     def __init__(self, workflow: str) -> None:
@@ -104,97 +103,3 @@ class BotErrorService:
         )
         result = await session.execute(stmt)
         return result.scalar_one()
-
-    # ------------------------------------------------------------------
-    # Check threshold and auto-disable
-    # ------------------------------------------------------------------
-
-    async def check_and_disable(
-        self,
-        session: AsyncSession,
-        *,
-        threshold: int = 3,
-        window_minutes: int = 15,
-    ) -> bool:
-        """Disable the bot if recent errors exceed *threshold*.
-
-        Returns True if the bot was disabled, False otherwise.
-        """
-        try:
-            count = await self.count_recent(session, window_minutes=window_minutes)
-            if count < threshold:
-                return False
-
-            # Disable the bot
-            stmt = (
-                update(BotSetting)
-                .where(BotSetting.key == "bot_enabled")
-                .values(value="false")
-            )
-            await session.execute(stmt)
-            await session.commit()
-
-            reason = (
-                f"{count} errores en {window_minutes}min "
-                f"(workflow={self.workflow}, threshold={threshold})"
-            )
-            logger.critical(
-                "BotErrorService: AUTO-DISABLED bot — %s", reason,
-            )
-
-            # El apagado automatico tiene que dejar rastro DONDE SE MIRA.
-            #
-            # El unico aviso era `notify_bot_disabled`, que sale por Telegram, y
-            # Telegram esta caido (404) igual que el SMTP (535). Sin esto el bot
-            # se apaga solo y en la tabla de settings queda `bot_enabled=false`
-            # sin una palabra de por que: identico a que alguien lo hubiera
-            # apagado a mano desde el panel.
-            #
-            # `bot_settings` es key/value y el formulario de settings renderiza
-            # TODAS las filas no sensibles (`settings_service.get_all_settings`
-            # -> `partials/settings_form.html`), asi que una fila nueva aparece
-            # sola en el panel, con su `updated_at`. Cero UI, cero migracion.
-            try:
-                from app.repositories.bot_setting_repo import bot_setting_repo
-
-                await bot_setting_repo.upsert(
-                    session,
-                    "bot_disabled_reason",
-                    f"AUTO: {reason}. Ver tabla bot_errors.",
-                    description=(
-                        "Por que se apago el bot la ultima vez. Lo escribe el "
-                        "apagado automatico por errores; queda como historial "
-                        "hasta el proximo apagado."
-                    ),
-                )
-                await session.commit()
-            except Exception:
-                logger.warning(
-                    "BotErrorService: no se pudo dejar bot_disabled_reason "
-                    "(non-fatal)",
-                    exc_info=True,
-                )
-
-            # Best-effort admin notification
-            try:
-                from app.bot.services.admin_notifier import get_admin_notifier
-
-                notifier = get_admin_notifier()
-                await notifier.notify_bot_disabled(reason)
-            except Exception:
-                logger.warning(
-                    "BotErrorService: failed to notify admin about disable (non-fatal)",
-                    exc_info=True,
-                )
-
-            return True
-        except Exception:
-            logger.warning(
-                "BotErrorService: check_and_disable failed (non-fatal)",
-                exc_info=True,
-            )
-            try:
-                await session.rollback()
-            except Exception:
-                pass
-            return False

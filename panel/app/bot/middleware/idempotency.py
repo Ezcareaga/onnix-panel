@@ -1,6 +1,6 @@
 """In-memory idempotency guard for message deduplication.
 
-Tracks processed message external IDs (Telegram message_id or
+Tracks processed message external IDs (Meta mid or
 WhatsApp MessageSid) using an OrderedDict with LRU eviction.
 
 Plan 64-01: MW-02 Idempotency.

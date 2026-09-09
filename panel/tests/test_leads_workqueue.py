@@ -66,7 +66,8 @@ class TestSourceBadge:
         # las siglas pasan a nombres, que es lo que se lee sin traducir.
         cases = [
             ("whatsapp", "WhatsApp"),
-            ("telegram", "Telegram"),
+            ("instagram", "Instagram"),
+            ("messenger", "Messenger"),
             ("infocasas", "InfoCasas"),
             ("vista_publica", "Portal"),
             ("manual", "Manual"),
@@ -590,21 +591,21 @@ class TestLeadsSearch:
 class TestLeadsFilters:
     async def test_leads_filter_by_source(self, admin_client, db):
         marker = f"Wqsrc{_suffix()}"
-        tg = _make_contact(
-            db, f"+5959818{_suffix()}", name=f"{marker} TG", source="telegram",
+        ig = _make_contact(
+            db, f"+5959818{_suffix()}", name=f"{marker} IG", source="instagram",
         )
         wa = _make_contact(
             db, f"+5959818{_suffix()}", name=f"{marker} WA", source="whatsapp",
         )
         await db.commit()
-        await db.refresh(tg)
+        await db.refresh(ig)
         await db.refresh(wa)
 
         resp = await admin_client.get(
-            "/leads", params={"tab": "leads", "q": marker, "source": "telegram"},
+            "/leads", params={"tab": "leads", "q": marker, "source": "instagram"},
         )
         assert resp.status_code == 200
-        assert tg.phone in resp.text
+        assert ig.phone in resp.text
         assert wa.phone not in resp.text, "source filter must exclude other sources"
 
     async def test_leads_filter_by_agent(self, admin_client, db):

@@ -283,11 +283,13 @@ class TestGetThread:
 
         assert result["window_expired"] is True
 
-    async def test_window_not_expired_for_telegram_with_no_last_message(self):
-        """Telegram contact with last_user_message_at=None and no inbound messages → not expired."""
+    async def test_window_not_expired_for_instagram_with_no_last_message(self):
+        """La ventana de 24h es una regla de WhatsApp y no aplica a los canales
+        de Meta: un hilo de Instagram sin `last_user_message_at` no queda
+        marcado como vencido."""
         conv = _make_conv(contact_id=1, conv_id=10)
-        conv.channel = 'telegram'
-        conv.platform = 'telegram'
+        conv.channel = 'instagram'
+        conv.platform = 'instagram'
         contact = _make_contact(last_msg_at=None)
 
         with (

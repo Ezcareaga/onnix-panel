@@ -31,28 +31,18 @@ def _count_audit(email: str, result: str | None = None) -> int:
     return int(proc.stdout.strip() or "0")
 
 
-@pytest.fixture
-def mock_notify_login_locked(monkeypatch):
-    """Patch AdminNotifier.notify_login_locked with an AsyncMock.
-
-    Note: lockout_service must call `get_admin_notifier().notify_login_locked(...)`.
-    We patch on the class so every instance returned by the factory uses the mock.
-    """
-    mock = AsyncMock(return_value=True)
-    # Import here to avoid circular import at collection time
-    from app.bot.services import admin_notifier as an_module
-
-    monkeypatch.setattr(
-        an_module.AdminNotifier, "notify_login_locked", mock, raising=False
-    )
-    return mock
 
 
 @pytest.mark.asyncio
-async def test_lockout_after_5_failures_blocks_and_fires_alert_once(
-    client, test_user_email, mock_notify_login_locked
+async def test_lockout_after_5_failures_blocks(
+    client, test_user_email
 ):
-    """Spec test #5: 5 fails → 6th attempt locked + alert fired once."""
+    """Spec test #5: 5 fails → el 6º intento queda bloqueado aunque acierte.
+
+    Antes esto tambien verificaba que saliera UNA alerta por Telegram. El
+    aviso se fue con el canal; lo que se audita ahora es la fila `locked`,
+    que es lo que se lee en Configuración > Accesos.
+    """
     # 5 failed attempts with bad password (each returns 401, no lock yet)
     for i in range(5):
         resp = await client.post(
@@ -74,53 +64,48 @@ async def test_lockout_after_5_failures_blocks_and_fires_alert_once(
     assert _count_audit(test_user_email, result="wrong_password") == 5
     assert _count_audit(test_user_email, result="locked") >= 1
 
-    # Alert fired EXACTLY once across these 6 attempts (threshold crossing event)
-    assert mock_notify_login_locked.await_count == 1, (
-        f"expected exactly 1 lockout alert, got {mock_notify_login_locked.await_count}"
-    )
-    # Sanity: alert was called with this email
-    args, kwargs = mock_notify_login_locked.await_args
-    all_kwargs = {**kwargs}
-    # First positional arg (if any) or kwarg 'email' must equal our test email
-    email_in_call = kwargs.get("email") if "email" in kwargs else (args[0] if args else None)
-    assert email_in_call == test_user_email
 
 
 @pytest.mark.asyncio
-async def test_lockout_alert_is_idempotent_within_30min_window(
-    client, test_user_email, mock_notify_login_locked
-):
-    """Spec test #6: subsequent fails inside lock window do NOT re-fire alert."""
-    # 5 fails → triggers alert + lock
-    for i in range(5):
-        resp = await client.post(
-            "/login",
-            data={"email": test_user_email, "password": "wrong-pw"},
-            headers={"User-Agent": f"pytest-idem-{i}"},
-        )
-        assert resp.status_code == 401
+async def test_el_cruce_del_umbral_es_idempotente(db, test_user_email):
+    """`maybe_trigger_lockout_alert` escribe UNA sola fila `locked` por ventana.
 
-    # 3 more attempts while locked — each writes 'locked' row but NO new alert
-    for i in range(3):
-        resp = await client.post(
-            "/login",
-            data={"email": test_user_email, "password": "wrong-pw"},
-            headers={"User-Agent": f"pytest-idem-after-{i}"},
-        )
-        assert resp.status_code == 401
+    Se llama al servicio directo y dos veces a proposito: por la ruta no se
+    llega dos veces —el pre-check corta antes— asi que un test que pase por
+    /login no puede ver este guard. Antes esto se verificaba contando las
+    llamadas al aviso de Telegram; sin aviso, lo observable es la fila.
+    """
+    from app.services import lockout_service
 
-    # Still only ONE alert call across all 8 attempts
-    assert mock_notify_login_locked.await_count == 1, (
-        f"alert must be idempotent within 30min window; "
-        f"got {mock_notify_login_locked.await_count} calls"
+    for i in range(lockout_service.LOCKOUT_THRESHOLD):
+        await lockout_service.record_attempt(
+            db, test_user_email, "10.0.0.1", f"pytest-idem-{i}",
+            result="wrong_password",
+        )
+    await db.commit()
+
+    await lockout_service.maybe_trigger_lockout_alert(
+        db, test_user_email, "10.0.0.1", "pytest-idem-cruce-1",
     )
-    # Multiple 'locked' rows are fine (we audit every blocked attempt)
-    assert _count_audit(test_user_email, result="locked") >= 3
+    await db.commit()
+    despues_del_primero = _count_audit(test_user_email, result="locked")
+
+    await lockout_service.maybe_trigger_lockout_alert(
+        db, test_user_email, "10.0.0.1", "pytest-idem-cruce-2",
+    )
+    await db.commit()
+    despues_del_segundo = _count_audit(test_user_email, result="locked")
+
+    assert despues_del_primero == 1, "el cruce tiene que dejar su fila"
+    assert despues_del_segundo == 1, (
+        "el segundo cruce dentro de la ventana escribio otra fila: el guard "
+        "de idempotencia dejo de cortar"
+    )
 
 
 @pytest.mark.asyncio
 async def test_lockout_auto_expires_after_30_minutes(
-    client, test_user_email, mock_notify_login_locked
+    client, test_user_email
 ):
     """Spec test #7: after 31 min, correct password unlocks (no 'locked' row).
 
@@ -166,7 +151,7 @@ async def test_lockout_auto_expires_after_30_minutes(
 
 @pytest.mark.asyncio
 async def test_lockout_is_email_scoped_d2(
-    client, test_user_email, mock_notify_login_locked
+    client, test_user_email
 ):
     """Spec test #8: D-2 — 5 fails from 5 distinct IPs to same email → lock.
 
@@ -203,8 +188,6 @@ async def test_lockout_is_email_scoped_d2(
 
     # Audit reflects the email-scoped lock
     assert _count_audit(test_user_email, result="locked") >= 1
-    # Alert fired once (threshold crossing)
-    assert mock_notify_login_locked.await_count == 1
 
 
 @pytest.mark.asyncio

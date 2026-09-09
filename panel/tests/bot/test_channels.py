@@ -1,4 +1,4 @@
-"""Tests for channel senders — Telegram and WhatsApp.
+"""Tests for channel senders — WhatsApp.
 
 Plan 63-01: CHAN-01, CHAN-02, CHAN-03.
 All HTTP calls are mocked via httpx.MockTransport — no real API calls.
@@ -12,7 +12,6 @@ import httpx
 import pytest
 
 from app.bot.channels.base import BaseSender
-from app.bot.channels.telegram import TelegramSender
 from app.bot.channels.whatsapp import WhatsAppSender
 from app.bot.core.types import ChannelPayload, PayloadMessage
 
@@ -20,36 +19,6 @@ from app.bot.core.types import ChannelPayload, PayloadMessage
 # ---------------------------------------------------------------------------
 # Helpers: mock httpx transports
 # ---------------------------------------------------------------------------
-
-def _tg_ok_transport() -> httpx.MockTransport:
-    """Returns a mock transport that simulates Telegram API success."""
-    def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(
-            200,
-            json={"ok": True, "result": {"message_id": 42}},
-        )
-    return httpx.MockTransport(handler)
-
-
-def _tg_error_transport(status: int = 400) -> httpx.MockTransport:
-    """Returns a mock transport that simulates Telegram API error."""
-    def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(
-            status,
-            json={"ok": False, "description": "Bad Request"},
-        )
-    return httpx.MockTransport(handler)
-
-
-def _tg_not_ok_transport() -> httpx.MockTransport:
-    """Returns 200 but ok=False."""
-    def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(
-            200,
-            json={"ok": False, "description": "Forbidden: bot was blocked"},
-        )
-    return httpx.MockTransport(handler)
-
 
 def _twilio_ok_transport() -> httpx.MockTransport:
     """Returns a mock transport that simulates Twilio API success."""
@@ -111,186 +80,6 @@ class TestBaseSender:
 
         sender = MockSender()
         assert sender is not None
-
-
-# ===========================================================================
-# TestTelegramSender
-# ===========================================================================
-
-class TestTelegramSender:
-    """CHAN-03: Telegram sender tests."""
-
-    @pytest.mark.asyncio
-    async def test_send_text_message(self):
-        """Send a plain text message successfully."""
-        client = httpx.AsyncClient(transport=_tg_ok_transport())
-        sender = TelegramSender("fake_token", client=client)
-
-        payload = ChannelPayload(
-            messages=[PayloadMessage(text="Hola!")],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_send_text_with_buttons(self):
-        """Send text with inline keyboard buttons."""
-        captured = {}
-
-        def handler(request: httpx.Request) -> httpx.Response:
-            captured["body"] = request.content.decode()
-            return httpx.Response(200, json={"ok": True, "result": {"message_id": 1}})
-
-        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-        sender = TelegramSender("fake_token", client=client)
-
-        buttons = [{"text": "Ver mas", "callback_data": "ver_mas"}]
-        payload = ChannelPayload(
-            messages=[PayloadMessage(text="Resultados:", buttons=buttons)],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is True
-        assert "reply_markup" in captured["body"]
-
-    @pytest.mark.asyncio
-    async def test_send_photo(self):
-        """Send a photo message with caption."""
-        captured = {}
-
-        def handler(request: httpx.Request) -> httpx.Response:
-            captured["url"] = str(request.url)
-            return httpx.Response(200, json={"ok": True, "result": {"message_id": 1}})
-
-        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-        sender = TelegramSender("fake_token", client=client)
-
-        payload = ChannelPayload(
-            messages=[PayloadMessage(
-                text="Casa linda",
-                photo_url="https://example.com/photo.webp",
-            )],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is True
-        assert "sendPhoto" in captured["url"]
-
-    @pytest.mark.asyncio
-    async def test_send_multiple_messages(self):
-        """Send a payload with multiple messages."""
-        call_count = {"n": 0}
-
-        def handler(request: httpx.Request) -> httpx.Response:
-            call_count["n"] += 1
-            return httpx.Response(200, json={"ok": True, "result": {"message_id": call_count["n"]}})
-
-        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-        sender = TelegramSender("fake_token", client=client)
-
-        payload = ChannelPayload(
-            messages=[
-                PayloadMessage(text="Msg 1"),
-                PayloadMessage(text="Msg 2"),
-                PayloadMessage(text="Msg 3"),
-            ],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is True
-        assert call_count["n"] == 3
-
-    @pytest.mark.asyncio
-    async def test_empty_payload_returns_true(self):
-        """Empty payload (no messages) returns True immediately."""
-        sender = TelegramSender("fake_token")
-        payload = ChannelPayload(messages=[], channel="telegram")
-        result = await sender.send(payload, "12345")
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_http_error_returns_false(self):
-        """HTTP error from Telegram returns False."""
-        client = httpx.AsyncClient(transport=_tg_error_transport(400))
-        sender = TelegramSender("fake_token", client=client)
-
-        payload = ChannelPayload(
-            messages=[PayloadMessage(text="Hola")],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_ok_false_returns_false(self):
-        """200 with ok=False returns False."""
-        client = httpx.AsyncClient(transport=_tg_not_ok_transport())
-        sender = TelegramSender("fake_token", client=client)
-
-        payload = ChannelPayload(
-            messages=[PayloadMessage(text="Hola")],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_timeout_returns_false(self):
-        """Connection timeout returns False."""
-        client = httpx.AsyncClient(transport=_timeout_transport())
-        sender = TelegramSender("fake_token", client=client)
-
-        payload = ChannelPayload(
-            messages=[PayloadMessage(text="Hola")],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_partial_failure_stops_early(self):
-        """If second message fails, send returns False."""
-        call_count = {"n": 0}
-
-        def handler(request: httpx.Request) -> httpx.Response:
-            call_count["n"] += 1
-            if call_count["n"] == 2:
-                return httpx.Response(500, json={"ok": False, "description": "Error"})
-            return httpx.Response(200, json={"ok": True, "result": {"message_id": 1}})
-
-        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-        sender = TelegramSender("fake_token", client=client)
-
-        payload = ChannelPayload(
-            messages=[
-                PayloadMessage(text="Msg 1"),
-                PayloadMessage(text="Msg 2"),
-                PayloadMessage(text="Msg 3"),
-            ],
-            channel="telegram",
-        )
-        result = await sender.send(payload, "12345")
-        assert result is False
-        # Third message should not be attempted
-        assert call_count["n"] == 2
-
-    @pytest.mark.asyncio
-    async def test_keyboard_format(self):
-        """Inline keyboard is properly formatted."""
-        keyboard = TelegramSender._build_keyboard([
-            {"text": "A", "callback_data": "a"},
-            {"text": "B", "callback_data": "b"},
-        ])
-        assert keyboard is not None
-        assert "inline_keyboard" in keyboard
-        assert len(keyboard["inline_keyboard"]) == 2
-        assert keyboard["inline_keyboard"][0][0]["text"] == "A"
-
-    def test_empty_keyboard_returns_none(self):
-        """Empty button list returns None."""
-        assert TelegramSender._build_keyboard([]) is None
-
 
 # ===========================================================================
 # TestWhatsAppSender

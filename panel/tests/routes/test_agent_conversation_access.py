@@ -116,7 +116,7 @@ async def contact_assigned_to_a(db, access_users):
     conv = Conversation(
         contact_id=c.id,
         status="active",
-        channel="telegram",
+        channel="instagram",
         is_bot_active=True,
         is_open=True,
         message_count=0,

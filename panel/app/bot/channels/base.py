@@ -1,6 +1,7 @@
 """Abstract base class for channel senders.
 
-Defines the contract that TelegramSender and WhatsAppSender must
+Defines the contract that WhatsAppSender —y los senders de Meta que
+vengan— must
 implement. Each sender delivers a ChannelPayload to a target chat.
 
 Plan 63-01: CHAN-01 Base sender interface.

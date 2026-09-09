@@ -192,9 +192,7 @@ class WhatsAppSender(BaseSender):
         client: httpx.AsyncClient,
         data: dict,
     ) -> bool:
-        """POST to the Twilio Messages API with retry and admin alerting."""
-        from app.bot.services.admin_notifier import get_admin_notifier
-
+        """POST to the Twilio Messages API with retry."""
         msg_type = "template" if "ContentSid" in data else (
             "photo" if "MediaUrl" in data else "text"
         )
@@ -204,7 +202,6 @@ class WhatsAppSender(BaseSender):
             data=data,
             auth=(self._account_sid, self._auth_token),
             timeout=SEND_TIMEOUT,
-            admin_notifier=get_admin_notifier(),
             to_number=data.get("To", ""),
             message_type=msg_type,
         )

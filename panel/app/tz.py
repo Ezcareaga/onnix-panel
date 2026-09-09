@@ -152,7 +152,7 @@ def strip_markdown(text: str) -> str:
 
     WhatsApp-specific patterns covered:
       *bold*  _italic_  ~strikethrough~  `code`
-    Telegram/standard Markdown:
+    Markdown estandar:
       **bold**  __bold__  _italic_
 
     Usage in Jinja2: {{ item.last_message_preview | strip_markdown }}

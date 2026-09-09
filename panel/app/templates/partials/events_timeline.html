@@ -352,7 +352,8 @@
                 {% set src_label_map = {
                     'infocasas_poll': 'InfoCasas', 'infocasas': 'InfoCasas',
                     'manual': 'Panel admin', 'panel': 'Panel admin',
-                    'telegram': 'Telegram', 'whatsapp': 'WhatsApp'
+                    'instagram': 'Instagram', 'messenger': 'Messenger',
+                    'whatsapp': 'WhatsApp'
                 } %}
                 {% if meta.get('source') %}
                 <p class="text-onnix-ink-400">Fuente: {{ src_label_map.get(meta['source'], meta['source']) }}</p>

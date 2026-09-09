@@ -30,7 +30,6 @@ from app.repositories.bot_error_repo import bot_error_repo
 from app.repositories.contact_repo import contact_repo
 from app.repositories.conversation_repo import conversation_repo
 from app.repositories.lead_event_repo import lead_event_repo
-from app.repositories.lead_repo import lead_repo
 from app.repositories.message_repo import message_repo
 from app.repositories.metrics_repository import MetricsRepository
 from app.services import ai_metrics_service
@@ -331,69 +330,3 @@ class TestSerieDiariaDeCosto:
         assert inicio.utcoffset() != timedelta(0)
         assert (inicio.hour, inicio.minute) == (0, 0)
         assert inicio.astimezone(PYT).date() == datetime.now(PYT).date()
-
-
-# ---------------------------------------------------------------------------
-# Series mensuales
-# ---------------------------------------------------------------------------
-
-class TestSerieMensualDeBusquedas:
-    """conversation_repo.get_demand_filter_monthly_counts."""
-
-    async def test_la_busqueda_del_ultimo_dia_cae_en_el_mes_anterior(
-        self, db, borrar_al_final,
-    ):
-        cruce = _cruce_de_mes()
-        mes_pyt = cruce.astimezone(PYT).replace(day=1).date()
-        mes_utc = cruce.astimezone(timezone.utc).replace(day=1).date()
-        assert mes_pyt != mes_utc
-
-        def por_mes(filas):
-            return {f["month"].date(): f["n"] for f in filas}
-
-        contacto = await _nuevo_contacto(db, borrar_al_final, cruce)
-        antes = por_mes(await conversation_repo.get_demand_filter_monthly_counts(db))
-        await _insertar(
-            db, borrar_al_final,
-            "INSERT INTO conversations (contact_id, channel, search_context, "
-            "updated_at) VALUES (:c, 'whatsapp', "
-            "'{\"filtros\": {\"ciudad\": \"pytest_pyt\"}}'::jsonb, :ts) RETURNING id",
-            {"c": contacto, "ts": cruce},
-        )
-        despues = por_mes(await conversation_repo.get_demand_filter_monthly_counts(db))
-
-        assert despues.get(mes_pyt, 0) - antes.get(mes_pyt, 0) == 1
-        assert despues.get(mes_utc, 0) - antes.get(mes_utc, 0) == 0
-
-
-class TestSerieMensualDeDemanda:
-    """lead_repo.get_demand_monthly_counts."""
-
-    async def test_el_lead_del_ultimo_dia_cae_en_el_mes_anterior(
-        self, db, borrar_al_final,
-    ):
-        propiedad = (
-            await db.execute(text("SELECT id FROM properties LIMIT 1"))
-        ).scalar_one_or_none()
-        if propiedad is None:
-            pytest.skip(
-                "la tabla properties esta vacia: la base de test no fue sembrada "
-                "con scripts/seed_test.sql y este test necesita el JOIN"
-            )
-
-        cruce = _cruce_de_mes()
-        mes_pyt = cruce.astimezone(PYT).replace(day=1).date()
-        mes_utc = cruce.astimezone(timezone.utc).replace(day=1).date()
-
-        def por_mes(filas):
-            return {f["month"].date(): f["n"] for f in filas}
-
-        antes = por_mes(await lead_repo.get_demand_monthly_counts(db))
-        await _nuevo_contacto(
-            db, borrar_al_final, cruce,
-            source="whatsapp", property_id=propiedad,
-        )
-        despues = por_mes(await lead_repo.get_demand_monthly_counts(db))
-
-        assert despues.get(mes_pyt, 0) - antes.get(mes_pyt, 0) == 1
-        assert despues.get(mes_utc, 0) - antes.get(mes_utc, 0) == 0

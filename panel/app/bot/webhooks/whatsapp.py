@@ -31,10 +31,6 @@ logger = logging.getLogger(__name__)
 # Log status callbacks under bot.sender (app.bot.channels → bot.sender alias)
 _sender_logger = logging.getLogger("app.bot.channels")
 
-# Dedup: track last TG notification per ErrorCode (max 1 per hour)
-_twilio_error_notified: dict[str, float] = {}
-_TWILIO_ERROR_DEDUP_SECONDS = 3600
-
 router = APIRouter()
 
 # StatusCallback SmsStatus values that indicate delivery updates, not messages
@@ -44,7 +40,6 @@ _STATUS_CALLBACK_VALUES = frozenset({
 
 # Twilio error codes that should NOT trigger an admin alert (already imported
 # from twilio_retry to keep both paths in sync).
-from app.bot.channels.twilio_retry import NO_ALERT_TWILIO_CODES  # noqa: E402
 
 # Empty TwiML to acknowledge the webhook immediately
 _EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
@@ -282,7 +277,6 @@ async def _process_whatsapp(request: BotRequest) -> None:
                     node="webhook_process",
                     chat_id=request.chat_id,
                 )
-                await svc.check_and_disable(err_session)
             finally:
                 await err_session.close()
         except Exception:
@@ -439,36 +433,13 @@ async def whatsapp_status_callback(request: Request) -> Response:
             )
 
     if error_code:
+        # El aviso al chat de admin se fue con Telegram. El fallo igual queda
+        # en el log Y en la fila del mensaje —`messages.status`—, que es lo que
+        # pinta el hilo: quien mando el mensaje ve que no llego.
         _sender_logger.warning(
             '[STATUS] SID=%s FAILED status=%s error=%s to=%s',
             sid, status, error_code, to,
         )
-        # Suppress admin alert for known silent error codes (e.g. 63016 —
-        # recipient not on WhatsApp).  Still logged above for audit trail.
-        if str(error_code) in NO_ALERT_TWILIO_CODES:
-            _sender_logger.warning(
-                "[STATUS] Suppressed notification for silent error %s (to=%s)",
-                error_code, to,
-            )
-        else:
-            # Notify admin via TG (dedup: max 1 per error_code per hour)
-            now = time.time()
-            last_notified = _twilio_error_notified.get(error_code, 0.0)
-            if now - last_notified >= _TWILIO_ERROR_DEDUP_SECONDS:
-                _twilio_error_notified[error_code] = now
-                try:
-                    from app.bot.services.admin_notifier import get_admin_notifier
-                    notifier = get_admin_notifier()
-                    await notifier.notify_twilio_error(
-                        error_code=error_code,
-                        error_message=f"Status={status} SID={sid}",
-                        to_number=to.replace("whatsapp:", ""),
-                    )
-                except Exception:
-                    _sender_logger.warning(
-                        "Failed to notify admin about Twilio error (non-fatal)",
-                        exc_info=True,
-                    )
     else:
         _sender_logger.info(
             '[STATUS] SID=%s status=%s to=%s',

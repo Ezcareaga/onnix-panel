@@ -38,7 +38,7 @@ class ConversationService:
 
         agent_filter: user.id to restrict to contacts.agent_user_id == user.id.
         Pass None (default) for admin/unrestricted access.
-        channel: 'whatsapp' or 'telegram' to filter by channel, None for all.
+        channel: 'whatsapp', 'instagram' o 'messenger' to filter by channel, None for all.
         stuck: solo las trabadas, el mismo predicado que cuenta el KPI.
         offset: number of rows to skip for load-more pagination.
         """
@@ -66,7 +66,7 @@ class ConversationService:
         """Search conversations by contact name or message body content.
 
         agent_filter: restrict results to the agent's assigned contacts when set.
-        channel: 'whatsapp' or 'telegram' to filter by channel, None for all.
+        channel: 'whatsapp', 'instagram' o 'messenger' to filter by channel, None for all.
         stuck: solo las trabadas, el mismo predicado que cuenta el KPI.
         offset: number of rows to skip for load-more pagination.
         """

@@ -53,7 +53,7 @@ class TestIdxContactsAgentUserIdIsPartial:
         )
         psql(
             "INSERT INTO contacts (phone, source) "
-            "SELECT 'pytest_idx_' || g, 'telegram' "
+            "SELECT 'pytest_idx_' || g, 'instagram' "
             "FROM generate_series(1, 2000) g;"
         )
         psql(

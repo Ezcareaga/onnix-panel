@@ -5,7 +5,8 @@ Spec: .planning/phases/110-m6.1-plan-roles-auth/110-01-PLAN.md §4, §5.
 
 Reglas (D-2 email-only):
 - 5 fallos del mismo email en 15 min → lock 30 min.
-- Alerta Telegram al cruzar threshold (idempotente: 1 alerta por ventana 30min).
+- Fila 'locked' en auth_audit al cruzar threshold (idempotente: 1 por ventana
+  de 30min). Se ve en Configuración > Accesos.
 - Lock derivado de auth_audit (no hay columna users.locked_until).
 """
 from __future__ import annotations
@@ -206,12 +207,15 @@ async def maybe_trigger_lockout_alert(
     user_agent: str | None,
 ) -> None:
     """If the latest failure just crossed the threshold AND no 'locked' row
-    has been inserted in the last 30 min for this email:
-      1. INSERT auth_audit row with result='locked'.
-      2. Fire AdminNotifier.notify_login_locked(...).
+    has been inserted in the last 30 min for this email, INSERT an auth_audit
+    row with result='locked'.
+
+    El aviso por Telegram que salia junto con la fila se fue el 2026-09-09 con
+    el canal. La fila es lo que importaba: el bloqueo queda auditado y se lee
+    en Configuración > Accesos, que es donde se mira.
 
     Idempotent: subsequent calls within the 30-min lock window do NOT
-    re-insert/re-alert (one alert per lock event). Spec §4.5, §5.1.
+    re-insert (one row per lock event). Spec §4.5, §5.1.
 
     Called from route's failure path AFTER record_attempt has already
     written the latest failure row. Safe to call on every failure — the
@@ -226,28 +230,5 @@ async def maybe_trigger_lockout_alert(
         # by the route's lockout pre-check, not here.
         return
 
-    # Threshold crossed AND no prior alert in window → fire alert + write lock row.
+    # Threshold crossed AND no prior lock row in window → write it.
     await record_attempt(db, email, ip, user_agent, result="locked")
-
-    lock_until = datetime.now(timezone.utc) + timedelta(
-        minutes=LOCKOUT_DURATION_MINUTES
-    )
-    try:
-        # Local import keeps this module free of bot-stack import side effects.
-        from app.bot.services.admin_notifier import get_admin_notifier
-
-        notifier = get_admin_notifier()
-        await notifier.notify_login_locked(
-            email=email,
-            ip=ip,
-            user_agent=user_agent,
-            fail_count=fail_count,
-            lock_until_iso=lock_until.isoformat(),
-        )
-    except Exception:
-        # AP-equivalent invariant: lock persists even if Telegram fails.
-        logger.warning(
-            "lockout_service: notify_login_locked failed (non-fatal) email=%s",
-            email,
-            exc_info=True,
-        )

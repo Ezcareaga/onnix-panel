@@ -68,30 +68,20 @@ def validate_required_secrets(
     *,
     force_production: bool | None = None,
     twilio_auth_token: str | None = None,
-    telegram_webhook_secret: str | None = None,
-    gemini_api_key: str | None = None,
 ) -> None:
-    """Validate that the secrets the bot needs to run are present.
+    """Validate that the signing secrets are present.
 
     In production, missing secrets abort boot with a RuntimeError naming
     the missing secret.  In non-production environments, missing secrets
     only produce a warning (dev-mode skip is acceptable).
 
-    Se llamaba ``validate_webhook_secrets``.  Cambio de nombre porque ahora
-    tambien mira ``GEMINI_API_KEY``, que no es un secreto de firma — y por eso
-    **no aborta el boot aunque falte**.
+    El corte es de seguridad y no es cosmetico: sin el secreto de firma la app
+    aceptaria webhooks sin verificar, y eso es un agujero. ``scheduler_lifespan``
+    es el lifespan de TODA la app (``main.py``), asi que abortar aca tumba el
+    panel — por eso solo abortan los secretos de firma, nunca una key opcional.
 
-    La diferencia importa y no es cosmetica.  Sin los secretos de firma la app
-    aceptaria webhooks sin verificar: eso es un agujero de seguridad y el boot
-    tiene que morir.  Sin la key de Gemini el bot arranca degradado pero
-    arranca, y el panel anda perfecto — la key esta vacia a proposito desde que
-    se perdieron los embeddings.  Abortar el boot por eso tumbaria el panel
-    entero, que es lo que se usa todos los dias.  ``scheduler_lifespan`` es el
-    lifespan de TODA la app (``main.py:26``), no solo del bot.
-
-    Asi que Gemini avisa y no mata — ni aca ni en ``get_bot_dependencies()``,
-    que desde el 2026-08-24 arma el grafo sin ``GeminiClient`` en vez de
-    levantar ``RuntimeError`` y llevarse puesto el mensaje entrante.
+    ``TELEGRAM_WEBHOOK_SECRET`` se fue el 2026-09-09 con el canal, y
+    ``GEMINI_API_KEY`` con el ultimo cliente de LLM.
 
     Parameters
     ----------
@@ -102,12 +92,6 @@ def validate_required_secrets(
     twilio_auth_token:
         The Twilio auth token to validate.  Defaults to the value from
         ``bot_settings`` when None.
-    telegram_webhook_secret:
-        The Telegram webhook secret to validate.  Defaults to the value
-        from ``bot_settings`` when None.
-    gemini_api_key:
-        La API key de Gemini.  Defaults to the value from ``bot_settings``
-        when None.
     """
     import logging as _logging
     _log = _logging.getLogger(__name__)
@@ -119,27 +103,9 @@ def validate_required_secrets(
         from app.bot.config import bot_settings as _bs
         twilio_auth_token = _bs.TWILIO_AUTH_TOKEN
 
-    if telegram_webhook_secret is None:
-        from app.bot.config import bot_settings as _bs
-        telegram_webhook_secret = _bs.TELEGRAM_WEBHOOK_SECRET
-
-    if gemini_api_key is None:
-        from app.bot.config import bot_settings as _bs
-        gemini_api_key = _bs.GEMINI_API_KEY
-
-    if not gemini_api_key:
-        _log.warning(
-            "GEMINI_API_KEY vacia — el bot arranca DEGRADADO: la busqueda "
-            "queda SQL puro (sin pierna vectorial) y el fallback del circuit "
-            "breaker queda en el texto fijo. El panel funciona igual. "
-            "Ver TD-OPS-01."
-        )
-
     missing = []
     if not twilio_auth_token:
         missing.append("TWILIO_AUTH_TOKEN")
-    if not telegram_webhook_secret:
-        missing.append("TELEGRAM_WEBHOOK_SECRET")
 
     if not missing:
         return
@@ -153,6 +119,6 @@ def validate_required_secrets(
     else:
         _log.warning(
             "Secreto(s) no configurado(s) (dev mode): %s — "
-            "la verificacion de firma se saltea y el bot corre degradado.",
+            "la verificacion de firma se saltea.",
             ", ".join(missing),
         )

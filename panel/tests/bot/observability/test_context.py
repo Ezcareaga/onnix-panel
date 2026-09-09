@@ -54,7 +54,7 @@ def test_clear_resets_all():
 def test_context_isolated_across_tasks():
     """Child task gets a copy of context at creation time; mutations in child
     do not affect the parent's context."""
-    set_request_context(request_id="parent-req", channel="telegram")
+    set_request_context(request_id="parent-req", channel="instagram")
 
     result_inner: dict = {}
 
@@ -70,7 +70,7 @@ def test_context_isolated_across_tasks():
         # Parent context must be unchanged
         outer = get_request_context()
         assert outer["request_id"] == "parent-req"
-        assert outer["channel"] == "telegram"
+        assert outer["channel"] == "instagram"
 
     asyncio.run(run())
     assert result_inner["request_id"] == "child-req"

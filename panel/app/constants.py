@@ -24,6 +24,20 @@ VALID_STATUSES: frozenset[str] = frozenset({
     "discarded",
 })
 
+# Los canales por los que ENTRA un mensaje, que son los que el filtro de la
+# bandeja acepta. Es el mismo vocabulario que el CHECK de
+# `conversations.channel` (migracion 047), menos `web` y `manual`: esos dos
+# existen en la base pero no son canales que alguien pueda filtrar — `manual`
+# es una conversacion que abrio una persona desde el panel.
+#
+# 'telegram' estuvo aca hasta el 2026-09-09. Si vuelve a aparecer un canal,
+# entra por este frozenset Y por una migracion del CHECK, o la fila no entra.
+CANALES: frozenset[str] = frozenset({
+    "whatsapp",
+    "instagram",
+    "messenger",
+})
+
 # Extended set including the soft-delete sentinel — used by Pydantic schemas
 # that must accept "deleted" as a valid status value.
 VALID_STATUSES_WITH_DELETED: frozenset[str] = VALID_STATUSES | {"deleted"}

@@ -37,14 +37,6 @@ class BotSettings(Settings):
         "TWILIO_STATUS_CALLBACK_URL", ""
     )
 
-    # --- Telegram ---
-    TELEGRAM_BOT_TOKEN: str = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    TELEGRAM_BOT_USERNAME: str = os.environ.get("TELEGRAM_BOT_USERNAME", "")
-    TELEGRAM_EZ_CHAT_ID: str = os.environ.get("TELEGRAM_EZ_CHAT_ID", "")
-    TELEGRAM_WEBHOOK_SECRET: str = os.environ.get(
-        "TELEGRAM_WEBHOOK_SECRET", ""
-    )
-
     # --- Geographic data ---
     GEO_DATA_PATH: str = os.environ.get(
         "GEO_DATA_PATH", "/app/data/geografia"

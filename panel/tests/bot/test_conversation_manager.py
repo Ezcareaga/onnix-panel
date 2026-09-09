@@ -79,8 +79,8 @@ class TestResolveContact:
     """Contact resolution: platform-specific upsert."""
 
     @pytest.mark.asyncio
-    async def test_resolve_telegram_new_contact(self):
-        """New TG contact: INSERT with source='telegram', source_id=user_id."""
+    async def test_resolve_instagram_new_contact(self):
+        """New IG contact: INSERT with source='instagram', source_id=user_id."""
         session = _mock_session()
         # First call: lookup returns nothing. Second call: upsert returns new row.
         new_row = _mock_row(
@@ -91,21 +91,21 @@ class TestResolveContact:
 
         mgr = ConversationManager()
         result = await mgr.resolve_contact(
-            session, platform="telegram", user_id="12345",
+            session, platform="instagram", user_id="12345",
             user_name="Test User", text_msg="Hola",
         )
 
         assert isinstance(result, ContactInfo)
         assert result.status == "new"
-        assert result.platform == "telegram"
+        assert result.platform == "instagram"
         assert result.source_id == "12345"
         assert result.is_baja is False
         # Verify session.execute was called (SQL was issued)
         assert session.execute.called
 
     @pytest.mark.asyncio
-    async def test_resolve_telegram_existing_contact(self):
-        """Existing TG contact: returns existing data, updates last_activity_at."""
+    async def test_resolve_instagram_existing_contact(self):
+        """Existing IG contact: returns existing data, updates last_activity_at."""
         session = _mock_session()
         existing_row = _mock_row(
             id=42, name="Existing", phone="+595981111111",
@@ -115,7 +115,7 @@ class TestResolveContact:
 
         mgr = ConversationManager()
         result = await mgr.resolve_contact(
-            session, platform="telegram", user_id="12345",
+            session, platform="instagram", user_id="12345",
             user_name="Existing", text_msg="Busco algo",
         )
 
@@ -156,7 +156,7 @@ class TestResolveContact:
 
         mgr = ConversationManager()
         result = await mgr.resolve_contact(
-            session, platform="telegram", user_id="99999",
+            session, platform="instagram", user_id="99999",
             user_name="Banned User",
         )
 
@@ -174,7 +174,7 @@ class TestResolveContact:
 
         mgr = ConversationManager()
         await mgr.resolve_contact(
-            session, platform="telegram", user_id="55555",
+            session, platform="instagram", user_id="55555",
             user_name="Active User",
         )
 
@@ -194,7 +194,7 @@ class TestResolveContact:
 
         mgr = ConversationManager()
         result = await mgr.resolve_contact(
-            session, platform="telegram", user_id="77777",
+            session, platform="instagram", user_id="77777",
             user_name="New User", text_msg="Busco departamento en Asuncion",
         )
 
@@ -229,7 +229,7 @@ class TestGetOrCreateConversation:
         """New conversation: is_bot_active=True, is_open=True, status='active'."""
         session = _mock_session()
         new_conv = _mock_row(
-            id=1, contact_id=1, platform="telegram",
+            id=1, contact_id=1, platform="instagram",
             platform_chat_id="12345", is_bot_active=True,
             is_open=True, search_context={}, message_count=0,
             last_human_reply_at=None,
@@ -238,7 +238,7 @@ class TestGetOrCreateConversation:
 
         mgr = ConversationManager()
         result = await mgr.get_or_create_conversation(
-            session, contact_id=1, platform="telegram", chat_id="12345",
+            session, contact_id=1, platform="instagram", chat_id="12345",
         )
 
         assert isinstance(result, ConversationInfo)
@@ -272,7 +272,7 @@ class TestGetOrCreateConversation:
         """Two calls with same (contact_id, platform, chat_id) return same ID."""
         session = _mock_session()
         conv_row = _mock_row(
-            id=10, contact_id=1, platform="telegram",
+            id=10, contact_id=1, platform="instagram",
             platform_chat_id="12345", is_bot_active=True,
             is_open=True, search_context={}, message_count=0,
             last_human_reply_at=None,
@@ -281,10 +281,10 @@ class TestGetOrCreateConversation:
 
         mgr = ConversationManager()
         r1 = await mgr.get_or_create_conversation(
-            session, contact_id=1, platform="telegram", chat_id="12345",
+            session, contact_id=1, platform="instagram", chat_id="12345",
         )
         r2 = await mgr.get_or_create_conversation(
-            session, contact_id=1, platform="telegram", chat_id="12345",
+            session, contact_id=1, platform="instagram", chat_id="12345",
         )
 
         assert r1.id == r2.id
@@ -294,7 +294,7 @@ class TestGetOrCreateConversation:
         """New conversation: search_context defaults to empty dict."""
         session = _mock_session()
         new_conv = _mock_row(
-            id=3, contact_id=1, platform="telegram",
+            id=3, contact_id=1, platform="instagram",
             platform_chat_id="99999", is_bot_active=True,
             is_open=True, search_context={}, message_count=0,
             last_human_reply_at=None,
@@ -303,7 +303,7 @@ class TestGetOrCreateConversation:
 
         mgr = ConversationManager()
         result = await mgr.get_or_create_conversation(
-            session, contact_id=1, platform="telegram", chat_id="99999",
+            session, contact_id=1, platform="instagram", chat_id="99999",
         )
 
         assert result.search_context == {}

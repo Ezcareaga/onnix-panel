@@ -32,7 +32,6 @@ _COMPOSE = _RAIZ / "docker-compose.yml"
 
 # Las que el codigo exige y el compose no nombra, cada una con quien las exige.
 EXIGIDAS_POR_CODIGO = {
-    "TELEGRAM_WEBHOOK_SECRET": "fail-closed de panel/app/config.py en produccion",
     "TEST_ADMIN_PASSWORD": "panel/tests/conftest.py — sin ella ~400 tests dan 303",
 }
 

@@ -7,7 +7,7 @@ Logger namespaces (shown in log output):
     bot.webhook     — inbound requests, webhook parsing
     bot.middleware   — rate limit, idempotency, cooldown, error handler
     bot.orchestrator — message flow, contact/conversation resolution
-    bot.sender       — outbound messages (Twilio, Telegram API)
+    bot.sender       — outbound messages (Twilio)
     bot.scheduler    — cron tasks, heartbeat, cold lead check
     bot.db           — slow queries (>1s), connection errors
 """

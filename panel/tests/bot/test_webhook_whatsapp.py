@@ -345,8 +345,15 @@ class TestWhatsAppWebhookRoute:
 # Test status callback NO_ALERT_TWILIO_CODES suppression
 # ===========================================================================
 
-class TestStatusCallbackAlertSuppression:
-    """Tests that silent Twilio error codes skip admin notification."""
+class TestStatusCallbackDejaRastroDelFallo:
+    """Un envio fallido tiene que quedar registrado, aunque nadie avise.
+
+    Esta clase verificaba que 63016 («no tiene WhatsApp») no disparara el
+    aviso al chat de admin y que 21211 si. Los avisos se fueron con Telegram.
+    Lo que queda —y es lo que importa— es que el callback conteste 200 y que
+    el fallo quede en el log con su SID y su codigo: sin eso, un mensaje que
+    no llego no deja rastro en ningun lado.
+    """
 
     @pytest.fixture
     def client(self):
@@ -367,44 +374,17 @@ class TestStatusCallbackAlertSuppression:
             "From": "whatsapp:+595900000000",
         }
 
-    def test_status_callback_suppresses_63016(self, client, caplog):
-        """ErrorCode 63016 (not on WhatsApp) must NOT trigger notify_twilio_error."""
-        mock_notifier = MagicMock()
-        mock_notifier.notify_twilio_error = AsyncMock()
-
-        with patch(
-            "app.bot.webhooks.whatsapp.get_admin_notifier",
-            return_value=mock_notifier,
-            create=True,
-        ), caplog.at_level(logging.WARNING):
+    @pytest.mark.parametrize("codigo", ["63016", "21211"])
+    def test_el_fallo_queda_en_el_log_con_su_codigo(self, client, caplog, codigo):
+        with caplog.at_level(logging.WARNING):
             resp = client.post(
                 "/webhook/whatsapp/status",
-                data=self._status_error_form("63016"),
+                data=self._status_error_form(codigo),
             )
 
         assert resp.status_code == 200
-        mock_notifier.notify_twilio_error.assert_not_called()
         assert any(
-            "Suppressed notification" in record.message
-            and "63016" in record.message
+            "SMteststatuserror001" in record.getMessage()
+            and codigo in record.getMessage()
             for record in caplog.records
-        )
-
-    def test_status_callback_fires_alert_for_real_errors(self, client):
-        """ErrorCode 21211 (invalid phone) must call notify_twilio_error."""
-        mock_notifier = MagicMock()
-        mock_notifier.notify_twilio_error = AsyncMock()
-
-        with patch(
-            "app.bot.services.admin_notifier.get_admin_notifier",
-            return_value=mock_notifier,
-        ), patch(
-            "app.bot.webhooks.whatsapp._twilio_error_notified",
-            {},
-        ):
-            resp = client.post(
-                "/webhook/whatsapp/status",
-                data=self._status_error_form("21211"),
-            )
-
-        assert resp.status_code == 200
+        ), f"el fallo {codigo} no dejo rastro en el log"

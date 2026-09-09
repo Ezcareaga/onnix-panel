@@ -20,33 +20,35 @@ from __future__ import annotations
 
 import pytest
 
-from app.bot.channels.telegram import telegram_send_disabled
 from app.bot.channels.twilio_retry import wa_send_disabled
 
+# Quedo uno: `TELEGRAM_NOTIFICATIONS_ENABLED` se fue con el canal el
+# 2026-09-09, e `INFOCASAS_POLL_ENABLED` con el vertical. La lista sigue siendo
+# una lista porque el punto del archivo es que los guards que HAYA lean el
+# entorno igual: cuando salga el envio por Meta, su guard entra aca.
 GUARDS = [
     ("WA_SEND_ENABLED", wa_send_disabled),
-    ("TELEGRAM_NOTIFICATIONS_ENABLED", telegram_send_disabled),
 ]
 _IDS = [n for n, _ in GUARDS]
 
 
 @pytest.mark.parametrize("var,guard", GUARDS, ids=_IDS)
 @pytest.mark.parametrize("apagado", ["false", "FALSE", "False", "0", "", "   "])
-def test_apagado_significa_lo_mismo_para_los_tres(var, guard, apagado, monkeypatch):
+def test_apagado_significa_lo_mismo_para_todos(var, guard, apagado, monkeypatch):
     monkeypatch.setenv(var, apagado)
     assert guard() is True, f"{var}={apagado!r} tendria que contar como apagado"
 
 
 @pytest.mark.parametrize("var,guard", GUARDS, ids=_IDS)
 @pytest.mark.parametrize("prendido", ["true", "TRUE", "1", "yes", "si"])
-def test_prendido_significa_lo_mismo_para_los_tres(var, guard, prendido, monkeypatch):
+def test_prendido_significa_lo_mismo_para_todos(var, guard, prendido, monkeypatch):
     monkeypatch.setenv(var, prendido)
     assert guard() is False, f"{var}={prendido!r} tendria que contar como prendido"
 
 
 @pytest.mark.parametrize("var,guard", GUARDS, ids=_IDS)
-def test_sin_la_variable_los_tres_dejan_pasar(var, guard, monkeypatch):
-    """El default tiene que ser «prendido»: produccion no declara ninguna de
-    las tres, y un default al reves apagaria el bot en prod al desplegar."""
+def test_sin_la_variable_todos_dejan_pasar(var, guard, monkeypatch):
+    """El default tiene que ser «prendido»: produccion no las declara, y un
+    default al reves dejaria el panel mudo en prod al desplegar."""
     monkeypatch.delenv(var, raising=False)
     assert guard() is False, f"sin {var} el default cambio y prod se apaga"

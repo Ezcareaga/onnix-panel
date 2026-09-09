@@ -126,7 +126,7 @@ class ConversationRepository:
 
         agent_filter: if provided, restrict to conversations whose contact is
         assigned to that user (contacts.agent_user_id = agent_filter).
-        channel: if provided ('whatsapp' or 'telegram'), filter by conversation.channel.
+        channel: if provided ('whatsapp', 'instagram' o 'messenger'), filter by conversation.channel.
         stuck: solo las trabadas — ver ConversationRepository.stuck_clause().
         offset: number of rows to skip (for load-more pagination).
         """
@@ -177,7 +177,7 @@ class ConversationRepository:
         matching. Returns same format as get_with_contacts.
 
         agent_filter: if provided, restrict results to the agent's assigned contacts.
-        channel: if provided ('whatsapp' or 'telegram'), filter by conversation.channel.
+        channel: if provided ('whatsapp', 'instagram' o 'messenger'), filter by conversation.channel.
         stuck: solo las trabadas — ver ConversationRepository.stuck_clause().
         offset: number of rows to skip (for load-more pagination).
         """
@@ -229,71 +229,5 @@ class ConversationRepository:
             }
             for row in rows
         ]
-
-    @staticmethod
-    async def get_demand_filter_rows(
-        db: AsyncSession, days: int = 30,
-    ) -> list[dict]:
-        """Demanda bot — lo que la gente PIDE al bot (search_context.filtros).
-
-        Una fila por conversación con filtros no vacíos actualizada dentro
-        de la ventana. ``source`` es el canal (whatsapp/telegram).
-        ``*_key`` con lower(unaccent(trim(...))) (regla 7) para agrupar
-        variantes con/sin tilde; el spelling original queda para mostrar.
-        """
-        sql = text(
-            """
-            SELECT co.search_context->'filtros'->>'ciudad' AS city,
-                   NULLIF(lower(unaccent(trim(
-                       co.search_context->'filtros'->>'ciudad'))), '') AS city_key,
-                   co.search_context->'filtros'->>'tipo' AS ptype,
-                   NULLIF(lower(unaccent(trim(
-                       co.search_context->'filtros'->>'tipo'))), '') AS ptype_key,
-                   NULLIF(lower(trim(
-                       co.search_context->'filtros'->>'operacion')), '') AS operation,
-                   co.channel AS source
-            FROM conversations co
-            WHERE jsonb_exists(co.search_context, 'filtros')
-              AND co.search_context->'filtros' <> '{}'::jsonb
-              AND co.updated_at >= now() - make_interval(days => :days)
-            """
-        )
-        result = await db.execute(sql, {"days": days})
-        return [dict(r._mapping) for r in result]
-
-    @staticmethod
-    async def get_demand_filter_monthly_counts(
-        db: AsyncSession, months: int = 6,
-    ) -> list[dict]:
-        """Serie mensual de busquedas al bot — [{month, n}] por mes calendario.
-
-        Mismo universo que get_demand_filter_rows (conversaciones con
-        filtros no vacios), agrupado por mes de updated_at. Caveat: una
-        conversacion actualizada despues cambia de bucket — coherente con
-        la ventana movil de la seccion Demanda.
-
-        Mes CALENDARIO PARAGUAYO. El borde de la ventana vuelve a
-        ``timestamptz`` con el mismo ``AT TIME ZONE``: dejado como
-        ``timestamp`` pelado, Postgres lo leeria con el huso de la sesion
-        (UTC) y la ventana quedaria tres horas corrida del agrupamiento.
-        """
-        sql = text(
-            """
-            SELECT date_trunc('month',
-                       co.updated_at AT TIME ZONE 'America/Asuncion') AS month,
-                   count(*) AS n
-            FROM conversations co
-            WHERE jsonb_exists(co.search_context, 'filtros')
-              AND co.search_context->'filtros' <> '{}'::jsonb
-              AND co.updated_at >= (
-                      date_trunc('month', now() AT TIME ZONE 'America/Asuncion')
-                      - make_interval(months => :back)
-                  ) AT TIME ZONE 'America/Asuncion'
-            GROUP BY 1
-            """
-        )
-        result = await db.execute(sql, {"back": months - 1})
-        return [dict(r._mapping) for r in result]
-
 
 conversation_repo = ConversationRepository()

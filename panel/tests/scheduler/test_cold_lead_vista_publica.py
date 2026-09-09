@@ -71,8 +71,6 @@ async def test_find_stale_select_includes_vista_publica():
     """The _find_stale WHERE clause must list 'vista_publica' in source IN (...)."""
     factory, _, captured = _make_capturing_factory(stale_rows=[])
     checker = ColdLeadChecker(
-        notification_chat_id="",
-        telegram_bot_token="",
         session_factory=factory,
     )
     await checker.run()
@@ -99,8 +97,6 @@ async def test_stale_vista_publica_lead_swept():
     # for a vista_publica row.
     factory, session, _ = _make_capturing_factory(stale_rows=[(777, "bot_replied")])
     checker = ColdLeadChecker(
-        notification_chat_id="",
-        telegram_bot_token="",
         session_factory=factory,
     )
     result = await checker.run()
