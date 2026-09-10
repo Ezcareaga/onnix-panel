@@ -142,9 +142,26 @@
 {% endfor %}
 
 {% if not conversations and offset == 0 %}
-{% if stuck %}
+{#- El vacío tiene que decir POR QUÉ está vacío. Decía «No hay conversaciones
+    todavía» siempre: con 50 hilos de WhatsApp, filtrar a Instagram vaciaba la
+    lista y el panel contestaba que nunca escribió nadie. Se lee como que se
+    rompió, no como un filtro sin resultados. Y el estado vacío va con acción,
+    no con disculpa (ui.md), así que el que se puede deshacer ofrece deshacerlo. -#}
+{% set _nombre_canal = {'whatsapp': 'WhatsApp', 'instagram': 'Instagram', 'messenger': 'Messenger'} %}
+{% if q %}
+{{ vacio("Sin resultados para «" ~ q ~ "»",
+         "Probá con parte del nombre o del teléfono." if not channel
+         else "Ninguna conversación de " ~ _nombre_canal.get(channel, channel) ~ " coincide.",
+         href="/conversations", cta="Limpiar la búsqueda",
+         superficie=false) }}
+{% elif stuck %}
 {{ vacio("Está todo contestado",
          "Ninguna conversación espera respuesta hace más de 10 minutos.",
+         superficie=false) }}
+{% elif channel %}
+{{ vacio("Todavía no entró nada por " ~ _nombre_canal.get(channel, channel),
+         "Hay conversaciones en otros canales.",
+         href="/conversations", cta="Ver todas",
          superficie=false) }}
 {% else %}
 {{ vacio("No hay conversaciones todavía",

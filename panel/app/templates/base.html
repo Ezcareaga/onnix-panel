@@ -27,24 +27,13 @@
     <script defer src="/static/js/vendor/htmx-ext-sse-2.2.4.min.js"></script>
     <script>
       document.addEventListener("alpine:init", () => {
-        const LinkBasket = window.LinkBasket;
-            return { ok: true, count: this.count, added: this.has(d.propId) };
-          },
-          // Barra flotante: copia el bloque completo (texto plano para WA).
-          async copyAll() {
-            try {
-              await navigator.clipboard.writeText(LinkBasket.formatBlock(this.state));
-            } catch (e) {
-              return { ok: false };
-            }
-            return { ok: true, count: this.count };
-          },
-          _persist() {
-            try {
-              window.sessionStorage.setItem(LinkBasket.STORAGE_KEY, LinkBasket.serialize(this.state));
-            } catch (e) { /* sessionStorage no disponible → estado solo en memoria */ }
-          },
-        });
+        // La canasta de links de propiedades se fue con el vertical
+        // inmobiliario (ea8af4e), pero se llevo solo la CABECERA de su
+        // `Alpine.data("linkBasket", ...)`: quedaron los metodos sueltos
+        // colgando de un `const LinkBasket = window.LinkBasket;`. Eso es un
+        // SyntaxError, y un SyntaxError no rompe una linea: no ejecuta el
+        // <script> ENTERO, asi que `fixedMenu` —de aca abajo— nunca se
+        // registraba y todos los desplegables del panel quedaban abiertos.
 
         // Menú desplegable anclado a su botón con position:fixed. El fixed está
         // a propósito: escapa el overflow-x-auto de .table-scroll-container sin
