@@ -66,7 +66,7 @@ inmobiliario: existían para buscar en el catálogo.
 El 2026-09-09 se fue el resto: la pantalla «Salud del Bot» y Stats, la pestaña
 «Configuración del Bot» con sus cinco toggles y `settings_service` entero, el
 switch por conversación, el toggle global auto/manual, el auto-apagado por
-errores y `bot_gate.py`. Y **Telegram entero**, que además de canal era el
+errores y el módulo bot_gate. Y **Telegram entero**, que además de canal era el
 transporte de todos los avisos de ops — se cortó aviso por aviso mirando qué
 quedaba de valor sin el mensajero: `heartbeat` murió (no le quedaba salida),
 `daily_report` y `cold_lead_check` siguen sin su mitad de Telegram, y el

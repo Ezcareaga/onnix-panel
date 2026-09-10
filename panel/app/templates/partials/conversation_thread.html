@@ -189,7 +189,10 @@
 {% else %}
 <div class="flex-shrink-0 border-t bg-white p-3"
      x-data="{ submitting: false }"
-     @htmx:afterRequest.window="if ($event.detail.elt && $event.detail.elt.id === 'reply-form') { submitting = false; }">
+     {# kebab-case: ver el comentario en reply_composer.html. En camelCase este
+        handler NUNCA corria y `submitting` se quedaba en true para siempre —
+        el boton quedaba clavado en «Enviando…» despues del primer envio. #}
+     @htmx:after-request.window="if ($event.detail.elt && $event.detail.elt.id === 'reply-form') { submitting = false; }">
     {{ composer(thread.conversation.id) }}
     <div id="reply-status" aria-live="polite" class="mt-1.5 min-h-[20px] text-sm"></div>
 </div>

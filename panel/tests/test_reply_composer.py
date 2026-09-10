@@ -1,7 +1,7 @@
 """El composer del hilo existe una sola vez, y el doble envío no vuelve.
 
-El bug: `conversation_thread.html` traía el form con `hx-indicator`,
-`@htmx:beforeRequest` y el `@submit.prevent` que chequea `submitting`, y
+El bug: `conversation_thread.html` traía el form con `hx-indicator`, el
+listener de `before-request` y el `@submit.prevent` que chequea `submitting`, y
 `reply_response.html` lo reemplazaba entero por swap OOB **sin esos tres**. El
 primer mensaje estaba protegido contra el doble envío y desde el segundo, no —
 en la pantalla que le manda WhatsApp a gente real.
@@ -80,9 +80,15 @@ def _form_oob(html: str) -> str:
 
 # ── el doble envío ───────────────────────────────────────────────────────────
 
+# El nombre del evento va en kebab-case y eso NO es cosmetico: HTML baja el
+# nombre del atributo a minusculas, asi que `@htmx:beforeRequest` llega al DOM
+# como `htmx:beforerequest` — un evento que htmx no emite — y el handler no
+# corre nunca. Estuvo asi hasta el 2026-09-10 y este test lo daba por bueno:
+# verificaba que el ATRIBUTO estuviera, no que el evento existiera.
+# `tests/test_alpine_htmx_event_names.py` cubre esa parte.
 _GUARDS = [
     ('hx-indicator="#reply-spinner"', "sin indicador, el asesor no sabe si salió"),
-    ("@htmx:beforeRequest", "sin esto `submitting` nunca se pone en true"),
+    ("@htmx:before-request", "sin esto `submitting` nunca se pone en true"),
     ("@submit.prevent", "es el que corta el segundo submit"),
 ]
 

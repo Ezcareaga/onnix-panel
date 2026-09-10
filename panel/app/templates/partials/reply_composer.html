@@ -28,7 +28,12 @@
       hx-target="#reply-status"
       hx-swap="innerHTML"
       hx-indicator="#reply-spinner"
-      @htmx:beforeRequest="submitting = true"
+      {# kebab-case y NO `beforeRequest`: HTML baja el nombre del atributo a
+         minusculas, asi que `@htmx:beforeRequest` llega al DOM como
+         `htmx:beforerequest` y no matchea nada. htmx dispara cada evento
+         con los DOS nombres —camelCase y kebab— y el kebab es el unico que
+         sobrevive al minusculeo. #}
+      @htmx:before-request="submitting = true"
       @submit.prevent="if (!submitting) { submitting = true; $el.dispatchEvent(new Event('htmx:submit', {bubbles:true})); htmx.trigger($el, 'submit'); }">
     <div class="flex gap-2">
         <textarea name="message" rows="1" aria-label="Escribir una respuesta"
